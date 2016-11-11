@@ -2,6 +2,8 @@ This is the Readme file to Objective Development's firmware-only USB driver
 for Atmel AVR microcontrollers. For more information please visit
 http://www.obdev.at/vusb/
 
+It was downloaded from https://www.obdev.at/products/vusb/download.html
+
 This directory contains the USB firmware only. Copy it as-is to your own
 project and add all .c and .S files to your project (these files are marked
 with an asterisk in the list below). Then copy usbconfig-prototype.h as
