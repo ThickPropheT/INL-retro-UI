@@ -39,15 +39,15 @@ these macros are defined, the boot loader usees them.
 
 /* ---------------------------- Hardware Config ---------------------------- */
 
-#define USB_CFG_IOPORTNAME      B
+#define USB_CFG_IOPORTNAME      D
 /* This is the port where the USB bus is connected. When you configure it to
  * "B", the registers PORTB, PINB and DDRB will be used.
  */
-#define USB_CFG_DMINUS_BIT      0
+#define USB_CFG_DMINUS_BIT      4
 /* This is the bit number in USB_CFG_IOPORT where the USB D- line is connected.
  * This may be any bit in the port.
  */
-#define USB_CFG_DPLUS_BIT       1
+#define USB_CFG_DPLUS_BIT       2
 /* This is the bit number in USB_CFG_IOPORT where the USB D+ line is connected.
  * This may be any bit in the port. Please note that D+ must also be connected
  * to interrupt pin INT0! [You can also use other interrupts, see section
@@ -105,7 +105,7 @@ these macros are defined, the boot loader usees them.
  * an example: http://git.lochraster.org:2080/?p=fd0/usbload;a=tree
  */
 
-#define TIMEOUT_ENABLED            1
+#define TIMEOUT_ENABLED            0
 /* If TIMEOUT_ENABLED is defined to 1 then the boot loader will always load
  * and stay active until the programmer closes the connection or the time
  * out period has elapsed. Since the boot loader always loads there is no
@@ -131,7 +131,8 @@ these macros are defined, the boot loader usees them.
 #ifndef __ASSEMBLER__   /* assembler cannot parse function definitions */
 #include <util/delay.h>
 
-#define JUMPER_BIT  7   /* jumper is connected to this bit in port D, active low */
+#define JUMPER_PORT  PORTD   /* jumper is connected to this port */
+#define JUMPER_BIT  6   /* jumper is connected to this bit in port D, active low */
 
 #ifndef MCUCSR          /* compatibility between ATMega8 and ATMega88 */
 #   define MCUCSR   MCUSR
@@ -144,7 +145,7 @@ these macros are defined, the boot loader usees them.
 static inline void  bootLoaderInit(void)
 {
 #if !TIMEOUT_ENABLED
-    PORTD |= (1 << JUMPER_BIT);     /* activate pull-up */
+    JUMPER_PORT |= (1 << JUMPER_BIT);     /* activate pull-up */
     _delay_us(10);  /* wait for levels to stabilize */
 #endif
     if(!(MCUCSR & (1 << EXTRF)))    /* If this was not an external reset, ignore */
@@ -156,12 +157,11 @@ static inline void  bootLoaderExit(void)
 {
 
 #if !TIMEOUT_ENABLED
-    PORTD = 0;                      /* undo bootLoaderInit() changes */
+    JUMPER_PORT = 0;                      /* undo bootLoaderInit() changes */
 #else
     TCCR1B = 0; // turn off timer1 and reset to initial value
 #endif
 
-DDRC = 0; // turn off LEDs
 }
 
 #if !TIMEOUT_ENABLED

@@ -6,6 +6,9 @@
 # Copyright: (c) 2007 by OBJECTIVE DEVELOPMENT Software GmbH
 # License: GNU GPL v2 (see License.txt)
 # This Revision: $Id: Makefile 788 2010-05-30 20:54:41Z cs $
+#
+# Edited for INL Retro-Prog "kazzo" project
+# Uses Atmega164p
 
 ###############################################################################
 # Configure the following variables according to your AVR. The example below
@@ -14,29 +17,56 @@
 #     make flash   # to load the boot loader into flash
 #     make lock    # to protect the boot loader from overwriting
 
-DEVICE = atmega8
-BOOTLOADER_ADDRESS = 1800
-F_CPU = 12000000
-FUSEH = 0xc0
-FUSEL = 0xBF
-LOCK  = 0x0F
-# Fuse high byte:
-# 0xc0 = 1 1 0 0   0 0 0 0 <-- BOOTRST (boot reset vector at 0x1800)
-#        ^ ^ ^ ^   ^ ^ ^------ BOOTSZ0
-#        | | | |   | +-------- BOOTSZ1
-#        | | | |   + --------- EESAVE (preserve EEPROM over chip erase)
-#        | | | +-------------- CKOPT (full output swing)
-#        | | +---------------- SPIEN (allow serial programming)
-#        | +------------------ WDTON (WDT not always on)
-#        +-------------------- RSTDISBL (reset pin is enabled)
-# Fuse low byte:
-# 0xBF = 1 0 1 1   1 1 1 1
-#        ^ ^ \ /   \--+--/
-#        | |  |       +------- CKSEL 3..0 (external >8M crystal)
-#        | |  +--------------- SUT 1..0 (crystal osc, BOD enabled)
-#        | +------------------ BODEN (BrownOut Detector enabled)
-#        +-------------------- BODLEVEL (2.7V)
-
+DEVICE = atmega164a
+#BOOTLOADER_ADDRESS = datasheet: 0x1C00 * 2words/address = 0x3800
+BOOTLOADER_ADDRESS = 3800
+F_CPU = 16000000
+LOCK  = 0xFB
+EFUSE = 0xFD
+FUSEH = 0x98
+FUSEL = 0xDF
+#
+# Lock bit byte: 0xFB
+# Default: all set 0xFF
+#         +------------------- unused/reserved (def prgm = 1)
+#         |  +---------------- BLB12 read app section  1=allowed
+#         |  | +-------------- BLB11 write app section 1=allowed
+#         |  | |   +---------- BLB02 read BL section   1=allowed
+#         |  | |   | +-------- BLB01 write BL section  0=not allowed
+#        / \ v v   v v /-v---- LB[1:0] lock chip 11=unlocked
+# 0xFB = 1 1 1 1   1 0 1 1
+#
+#
+# Extended fuse byte: 0xFD
+# Default: all set 0xFF
+#             +--------------- unused/reserved (def prgm = 1)
+#             |        +------ BODLEVEL[2:0]
+#        /----+----\ /-+-\     111=BOD disbl 110=BOD 1.8V
+# 0xFD = 1 1 1 1   1 1 0 1     101=BOD 2.7V  100=BOD 4.3V
+#
+#
+# Fuse high byte: 0x98
+# Default: 0x99
+#        +-------------------- OCDEN  1=On-Chip-Debugger disabled
+#        | +------------------ JTAGEN 0=JTAG enabled
+#        | | +---------------- SPIEN  0=SPI prgm/dwnld enabled
+#        | | | +-------------- WDTON  1=WDT not always on
+#        | | | |
+#        | | | |   +---------- EESAVE 1=eeprom not preserved w/chip erase
+#        | | | |   |  +------- BOOTSZ[1:0] bootloader size
+#        v v v v   v / \       00=1Kwords App end= 0x1BFF BL start=0x1C00
+# 0x98 = 1 0 0 1   1 0 0 0 <-- BOOTRST 0=reset vector-> BL section
+#
+#
+# Fuse low byte: 0xDF
+# Default: 0x62
+#        +-------------------- CKDIV8 1=Clock not divided by 8
+#        | +------------------ CKOUT  1=Don't allow CLK O/P on PORTB1
+#        | |  +--------------- SUT[1:0]  01=xtal BOD enabled
+#        | |  |       +------- CKSEL[3:0] 1111=low pwr xtal 8-16Mhz 
+#        v v / \   /--^--\          [3:1] 111=low power 8-16Mhz
+# 0xDF = 1 1 0 1   1 1 1 1            [0] 1= xtal
+#
 ###############################################################################
 
 AVRDUDE = avrdude -c stk500v2 -P avrdoper -p $(DEVICE)
@@ -74,7 +104,7 @@ readflash:
 	$(AVRDUDE) -U flash:r:read.hex:i
 
 fuse:
-	$(AVRDUDE) -U hfuse:w:$(FUSEH):m -U lfuse:w:$(FUSEL):m
+	$(AVRDUDE) -U hfuse:w:$(FUSEH):m -U lfuse:w:$(FUSEL):m -U efuse:w:$(EFUSE)
 
 lock:
 	$(AVRDUDE) -U lock:w:$(LOCK):m
@@ -99,3 +129,7 @@ disasm:	main.bin
 
 cpp:
 	$(COMPILE) -E main.c
+
+size: ${TARGET}
+	@echo
+	@avr-size -C --mcu=${MCU} ${TARGET}
