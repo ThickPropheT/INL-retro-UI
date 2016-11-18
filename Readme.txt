@@ -16,8 +16,67 @@ install avr-gcc and avr-libc:
 sudo apt-get install gcc-avr
 sudo apt-get install avr-libc
 
+setting up permissions so don't need to run with sudo
+cd to /etc/udev/rules.d and run ls:
+paul@eeepc:/etc/udev/rules.d$ ls
+70-persistent-net.rules  README
+here you can see I only have one default number 70 rule.
+So we need to create a rule number greater than 70 to override that rule not giving us the permission we want.
+copy the file:
+sudo cp <exsistingrule##.rules> <## + 1>-libusb-permission.rules
+here's what I did, you rule number and name may differ:
+paul@eeepc:/etc/udev/rules.d$ sudo cp 70-persistent-net.rules 71-libusb-permission.rules
+paul@eeepc:/etc/udev/rules.d$ ls
+70-persistent-net.rules  71-libusb-permission.rules  README
+
+udevadm monitor
+plug in device:
+KERNEL[867.744361] add      /devices/pci0000:00/0000:00:1d.1/usb3/3-1 (usb)
+KERNEL[867.748427] add      /devices/pci0000:00/0000:00:1d.1/usb3/3-1/3-1:1.0 (usb)
+UDEV  [867.764925] add      /devices/pci0000:00/0000:00:1d.1/usb3/3-1 (usb)
+UDEV  [867.770804] add      /devices/pci0000:00/0000:00:1d.1/usb3/3-1/3-1:1.0 (usb)
+
+lsusb
+Bus 001 Device 003: ID 05e3:0505 Genesys Logic, Inc. 
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 005 Device 002: ID 0b05:b700 ASUSTek Computer, Inc. Broadcom Bluetooth 2.1
+Bus 005 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 004 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 003 Device 010: ID 16c0:05dc Van Ooijen Technische Informatica shared ID for use with libusb
+Bus 003 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+
+ls -ltr /dev/bus/usb/003/
+total 0
+crw-rw-r-- 1 root root 189, 256 Nov 12 00:37 001
+crw-rw-r-- 1 root root 189, 265 Nov 12 01:24 010
+
+sudo chown paul /dev/bus/usb/003/010
+
+ls -ltr /dev/bus/usb/003/010 
+crw-rw-r-- 1 paul root 189, 265 Nov 12 01:24 /dev/bus/usb/003/010
+
+https://ubuntuforums.org/showthread.php?t=168221
+
+
+
 BOOTLOADER:
+bootloadHID-master:
 https://github.com/ajd4096/bootloadHID
+fork of original obdev bootloader has option to remove BL switch with timeout.
+
+bootloadHID.2012-12-08:
+https://www.obdev.at/products/vusb/bootloadhid.html
+the original believe it has more upto date V-USB drivers.
+
+Both have identical commandline folders so they're identical on the host side.
+need to have libusb-dev installed can check by typing "libusb-config" in terminal
+will present usage options if installed on your system
+if not installed should report so with suggestion for apt-get:
+	paul@eeepc:~/Dropbox/retro_pgmr/INL-retro-progdump/bootloader/commandline$ libusb-config
+	The program 'libusb-config' is currently not installed. You can install it by typing:
+	sudo apt-get install libusb-dev
+then just run 'make' will hopefully build sucessfully
 
 
 ===================

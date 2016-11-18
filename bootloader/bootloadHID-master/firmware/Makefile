@@ -21,20 +21,20 @@ DEVICE = atmega164a
 #BOOTLOADER_ADDRESS = datasheet: 0x1C00 * 2words/address = 0x3800
 BOOTLOADER_ADDRESS = 3800
 F_CPU = 16000000
-LOCK  = 0xFB
+LOCK  = 0xEF
 EFUSE = 0xFD
 FUSEH = 0x98
 FUSEL = 0xDF
 #
-# Lock bit byte: 0xFB
+# Lock bit byte: 0xEF
 # Default: all set 0xFF
 #         +------------------- unused/reserved (def prgm = 1)
-#         |  +---------------- BLB12 read app section  1=allowed
-#         |  | +-------------- BLB11 write app section 1=allowed
-#         |  | |   +---------- BLB02 read BL section   1=allowed
-#         |  | |   | +-------- BLB01 write BL section  0=not allowed
-#        / \ v v   v v /-v---- LB[1:0] lock chip 11=unlocked
-# 0xFB = 1 1 1 1   1 0 1 1
+#         |  +---------------- BLB12 read BL section  1=allowed
+#         |  | +-------------- BLB11 write BL section 0=allowed
+#         |  | |   +---------- BLB02 read app section   1=allowed
+#         |  | |   | +-------- BLB01 write app section  1=not allowed
+#        / \ v v   v v /-v---- LB[2:1] lock chip 11=unlocked
+# 0xEF = 1 1 1 0   1 1 1 1
 #
 #
 # Extended fuse byte: 0xFD

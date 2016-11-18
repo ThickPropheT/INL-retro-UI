@@ -11,7 +11,7 @@
 #define __usbconfig_h_included__
 
 /*
-General Description:
+General Description: (from original usbconfig-prototype.h)
 This file is an example configuration (with inline documentation) for the USB
 driver. It configures V-USB for USB D+ connected to Port D bit 2 (which is
 also hardware interrupt 0 on many devices) and USB D- to Port D bit 4. You may
