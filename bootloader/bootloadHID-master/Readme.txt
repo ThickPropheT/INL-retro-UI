@@ -1,6 +1,8 @@
 This is the README file for bootloadHID.
 
 It was downloaded from https://github.com/ajd4096/bootloadHID on 11NOV2016
+This is a fork from obdev's original bootloaderHID
+This version provides means to cut out BL switch by utilizing a timeout.
 
 BootloadHID is a USB boot loader for AVR microcontrollers. It can be used on
 all AVRs with at least 2 kB of boot loader section, e.g. the popular ATMega8.
