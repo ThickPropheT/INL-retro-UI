@@ -1,5 +1,5 @@
 #compiler flags: -Wall Warnings all,  -g gdb debug markings, 
-CFLAGS=-Wall -g -O
+CFLAGS=-Wall -O
 INCLUDE= -I ./include
 WINLIB= -L ./winlib
 LIBUSB= -lusb-1.0
@@ -20,12 +20,13 @@ unix:
 	$(CC) $(INCLUDE) $(SOURCES) -o $(TARGET) $(CFLAGS) $(LIBUSB)
 
 # "make debug" will build program with debug print messages
-# -DNDEBUG show debug logs
-debug: CFLAGS += -DNDEBUG
+# -DDEBUG show debug logs
+# -g build with gdb debug tags
+debug: CFLAGS += -DDEBUG -g
 debug: all
 
 #unix debug build
-unixdebug: CFLAGS += -DNDEBUG
+unixdebug: CFLAGS += -DDEBUG -g
 unixdebug: unix
 
 #clean on unix and windows(.exe)

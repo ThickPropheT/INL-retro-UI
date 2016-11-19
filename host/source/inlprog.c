@@ -5,6 +5,11 @@
 #include <errno.h>
 #include <libusb.h>
 
+//uncomment to DEBUG this file alone
+//#define DEBUG
+//"make debug" to get DEBUG msgs on entire program
+#include "dbg.h"
+
 //control transfer request types
 //uint8_t libusb_control_setup::bmRequestType
 //Request type.
@@ -35,20 +40,19 @@
 
 int main(int argc, char *argv[]) 
 {	
-	int error = 0;
 
 	//context set to NULL since only acting as single user of libusb
 	libusb_context *context = NULL;
 
+	debug("Initalizing libusb");
 	//initialize libusb must be called prior to any other libusb function
 	//returns 0 on success LIBUSB_ERROR code on failure
 	//int libusb_init ( libusb_context **  context) 
-	error = libusb_init(&context);
-	if (error)
-		return error;
+	int usb_init = libusb_init(&context);
+	check( usb_init == LIBUSB_SUCCESS, "Failed to initialize libusb: %s", libusb_strerror(usb_init));
 
 	//void libusb_set_debug ( libusb_context *  ctx, int  level ) 
-	libusb_set_debug(context, LIBUSB_LOG_LEVEL_NONE);
+	libusb_set_debug(context, LIBUSB_LOG_LEVEL_ERROR);
 		//LIBUSB_LOG_LEVEL_NONE (0) : no messages ever printed by the library (default)
 		//LIBUSB_LOG_LEVEL_ERROR (1) : error messages are printed to stderr
 		//LIBUSB_LOG_LEVEL_WARNING (2) : warning and error messages are printed to stderr
@@ -61,14 +65,13 @@ int main(int argc, char *argv[])
 	libusb_device **device_list = NULL;
 	//ssize_t libusb_get_device_list (libusb_context *ctx, libusb_device ***list)
 	// Returns a list of USB devices currently attached to the system.
-	// return value is number of devices plus one as list is null terminated
-	ssize_t count = libusb_get_device_list( context, &device_list);
-	if (count < 0)
-		//TODO error returns libusb error code
-		return count;
+	// return value is number of devices plus one as list is null terminated, or LIBUSB_ERROR if negative.
+	// Must free device list after done with it
+	ssize_t dev_count = libusb_get_device_list( context, &device_list);
+	check( dev_count >= 0, "libusb unable to find any devices: %s", libusb_strerror(dev_count));
 
+	int rv = 0;
 	ssize_t i = 0;
-	error = 0;
 
 	libusb_device *retroprog = NULL;
 	libusb_device *device = NULL;
@@ -76,29 +79,25 @@ int main(int argc, char *argv[])
 	libusb_device_handle *handle = NULL;
 	unsigned char str[256];
 
-//	printf("searching %d devices\n", count-1);
-	for( i=0; i<count; i++) {
+
+	debug("searching %d total devices", dev_count-1);
+	for( i=0; i<dev_count; i++) {
 		device = device_list[i];
-//		printf("getting dev desc %d \n", i);
-		error = libusb_get_device_descriptor( device, &desc);
-			//TODO error if not 0
-			if (error) {
-				printf("cannot get dev desc %d\n", error);
-			}
+		debug("getting dev desc %d", i);
+		rv = libusb_get_device_descriptor( device, &desc);
+		check( rv == LIBUSB_SUCCESS, "Unable to get device #%d descriptor: %s", i, libusb_strerror(rv));
 				
-//		printf("checking %x vendor\n", desc.idVendor);
-//		printf("checking %x product\n", desc.idProduct);
+		debug("checking %x vendor", desc.idVendor);
+		debug("checking %x product", desc.idProduct);
 		if ((desc.idVendor == 0x16C0) && (desc.idProduct == 0x05DC)) {
 			retroprog = device;
-			printf("found vend %x prod %x\n", desc.idVendor, desc.idProduct);
-			printf("manf: %d prod: %d\n", desc.iManufacturer, desc.iProduct);
+			debug("found vend %x prod %x\n", desc.idVendor, desc.idProduct);
+			debug("manf: %d prod: %d\n", desc.iManufacturer, desc.iProduct);
 
 			//opening device allows performing I/O via USB with device
-			error = libusb_open( retroprog, &handle );
-			if (error) {
-				printf("cannot open device\n");
-				return 1;
-			}
+			rv = libusb_open( retroprog, &handle );
+			check( rv == LIBUSB_SUCCESS, "Unable to open USB device: %s", libusb_strerror(rv));
+
 			if (desc.iManufacturer) {
 				if ( libusb_get_string_descriptor_ascii( handle, desc.iManufacturer, str, sizeof(str) ) > 0) {
 					printf("manf_ascii: %s\n",str);
@@ -125,10 +124,12 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
+	check( retroprog != NULL, "Could not find INL retro-prog USB device");
 
 	//free device list now that INL retro-prog was found and opened
 	//void libusb_free_device_list ( libusb_device **  list, int  unref_devices ) 
 	libusb_free_device_list( device_list, 1);	//don't completely understand the unref_devices = 1...
+	device_list = NULL; //denote that device list is free if end up in error
 	//Guess this is what you're supposed to do..
 	// the process of opening a device can be viewed as follows:
 	//
@@ -226,12 +227,44 @@ int main(int argc, char *argv[])
 			exit(1);
 	}
 	
+	//free device list if it was left open
+	if (device_list) {
+		printf("Whoops! freeing device list\n");
+		libusb_free_device_list( device_list, 1);
+	}
 
 	//must close device before exiting
 	libusb_close(handle);
+	handle = NULL;	//delete handle reference so error won't retry closing
 
 	//deinitialize libusb to be called after closing all devices and before teminating application
 	libusb_exit(context);
+
 	
 	return 0;
+error:
+	printf("program went to error\n");
+
+		//must close device before exiting
+	//	libusb_close(handle);
+
+	if (device_list) {
+		printf("freeing device list\n");
+		libusb_free_device_list( device_list, 1);
+	}
+
+	if (handle) {
+		printf("closing usb device\n");
+		libusb_close(handle);
+	}
+
+	if (usb_init == LIBUSB_SUCCESS) {
+	//deinitialize libusb to be called after closing all devices and before teminating application
+		printf("exiting libusb\n");
+		libusb_exit(context);
+	}
+
+
+	return 1;
+
 }
