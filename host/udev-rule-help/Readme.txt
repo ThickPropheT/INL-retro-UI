@@ -1,5 +1,11 @@
 
-You'll probably have issues where the host app can't detect the device.
+You'll probably have issues where the host app can't detect the device with linux systems.
+
+If you don't have permission to write to the device you'll get an error message such as:
+libusbx: error [_get_usbfs_fd] libusbx couldn't open USB device /dev/bus/usb/002/021: Permission denied
+libusbx: error [_get_usbfs_fd] libusbx requires write access to USB device nodes.
+[ERROR] (source/inlprog.c:99: errno: Permission denied) Unable to open USB device: Access denied (insufficient permissions)
+
 This can be temporarily corrected by running as sudo
 But you'll want to update permissions so don't need to run as sudo
 need to create udev rule to give user permissions to device when inserted.
@@ -23,7 +29,7 @@ Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
 The "Van Ooijen..." device is the INL-retroprog as noted with 16c0:05dc Vendor:Prod ID
 you can check current permissions by checking /dev/ location
 use the Bus number and Device number to check permissions on the INL retro-prog 
-I'm not sure if all unix systems place usb devices in this location..
+the initial error should point out the /dev/ location of the device
 In my example:
 paul@eeepc:~$ ls -ltr /dev/bus/usb/002/021
 crw-rw-r-- 1 root root 189, 148 Nov 18 01:36 /dev/bus/usb/002/021

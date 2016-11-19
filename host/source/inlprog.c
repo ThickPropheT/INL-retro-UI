@@ -40,6 +40,7 @@
 
 int main(int argc, char *argv[]) 
 {	
+	int rv = 0;
 
 	//context set to NULL since only acting as single user of libusb
 	libusb_context *context = NULL;
@@ -70,7 +71,6 @@ int main(int argc, char *argv[])
 	ssize_t dev_count = libusb_get_device_list( context, &device_list);
 	check( dev_count >= 0, "libusb unable to find any devices: %s", libusb_strerror(dev_count));
 
-	int rv = 0;
 	ssize_t i = 0;
 
 	libusb_device *retroprog = NULL;
@@ -242,11 +242,9 @@ int main(int argc, char *argv[])
 
 	
 	return 0;
+
 error:
 	printf("program went to error\n");
-
-		//must close device before exiting
-	//	libusb_close(handle);
 
 	if (device_list) {
 		printf("freeing device list\n");
@@ -259,11 +257,16 @@ error:
 	}
 
 	if (usb_init == LIBUSB_SUCCESS) {
-	//deinitialize libusb to be called after closing all devices and before teminating application
-		printf("exiting libusb\n");
+		printf("deinitializing libusb\n");
 		libusb_exit(context);
 	}
 
+	if (rv == LIBUSB_ERROR_ACCESS) {
+		printf("-------------------------------------------------------\n");
+		printf("Denied Permission is expected for initial use on Linux.\n");
+		printf("See udev-rule-help/Readme.txt in host dir for help gaining permission.\n");
+		printf("Try command with sudo for a cheap temporary solution.\n");
+	}
 
 	return 1;
 
