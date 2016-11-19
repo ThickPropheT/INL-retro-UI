@@ -21,12 +21,13 @@ DEVICE = atmega164a
 #BOOTLOADER_ADDRESS = datasheet: 0x1C00 * 2words/address = 0x3800
 BOOTLOADER_ADDRESS = 3800
 F_CPU = 16000000
-LOCK  = 0xEF
-EFUSE = 0xFD
-FUSEH = 0x98
-FUSEL = 0xDF
+
+###############################################################################
+#			ATMEGA-164A FUSE TABLE
+#	see datasheet for further explaination of each fuse
+###############################################################################
 #
-# Lock bit byte: 0xEF
+# Lock bit byte:
 # Default: all set 0xFF
 #         +------------------- unused/reserved (def prgm = 1)
 #         |  +---------------- BLB12 read BL section  1=allowed
@@ -35,27 +36,30 @@ FUSEL = 0xDF
 #         |  | |   | +-------- BLB01 write app section  1=not allowed
 #        / \ v v   v v /-v---- LB[2:1] lock chip 11=unlocked
 # 0xEF = 1 1 1 0   1 1 1 1
+LOCK  = 0xEF
 #
 #
-# Extended fuse byte: 0xFD
+# Extended fuse byte:
 # Default: all set 0xFF
 #             +--------------- unused/reserved (def prgm = 1)
 #             |        +------ BODLEVEL[2:0]
 #        /----+----\ /-+-\     111=BOD disbl 110=BOD 1.8V
 # 0xFD = 1 1 1 1   1 1 0 1     101=BOD 2.7V  100=BOD 4.3V
+EFUSE = 0xFD
 #
 #
-# Fuse high byte: 0x98
+# Fuse high byte:
 # Default: 0x99
 #        +-------------------- OCDEN  1=On-Chip-Debugger disabled
-#        | +------------------ JTAGEN 0=JTAG enabled
+#        | +------------------ JTAGEN 1=JTAG disabled (enabled caused problems!)
 #        | | +---------------- SPIEN  0=SPI prgm/dwnld enabled
 #        | | | +-------------- WDTON  1=WDT not always on
 #        | | | |
 #        | | | |   +---------- EESAVE 1=eeprom not preserved w/chip erase
 #        | | | |   |  +------- BOOTSZ[1:0] bootloader size
 #        v v v v   v / \       00=1Kwords App end= 0x1BFF BL start=0x1C00
-# 0x98 = 1 0 0 1   1 0 0 0 <-- BOOTRST 0=reset vector-> BL section
+# 0xD8 = 1 1 0 1   1 0 0 0 <-- BOOTRST 0=reset vector-> BL section
+FUSEH = 0xD8
 #
 #
 # Fuse low byte: 0xDF
@@ -66,6 +70,7 @@ FUSEL = 0xDF
 #        | |  |       +------- CKSEL[3:0] 1111=low pwr xtal 8-16Mhz 
 #        v v / \   /--^--\          [3:1] 111=low power 8-16Mhz
 # 0xDF = 1 1 0 1   1 1 1 1            [0] 1= xtal
+FUSEL = 0xDF
 #
 ###############################################################################
 
