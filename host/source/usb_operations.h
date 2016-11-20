@@ -35,4 +35,6 @@ libusb_device_handle * open_usb_device( libusb_context *context );
 
 void close_usb(libusb_context *context, libusb_device_handle *handle);
 
+int usb_write_to_device( libusb_device_handle *handle, int command, unsigned char *data, uint16_t len );
+
 #endif
