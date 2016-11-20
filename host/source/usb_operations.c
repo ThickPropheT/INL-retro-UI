@@ -52,8 +52,19 @@ libusb_device_handle * open_usb_device( libusb_context *context )
 	libusb_device *device = NULL;
 	struct libusb_device_descriptor desc;
 	libusb_device_handle *handle = NULL;
-	unsigned char str[256];
-
+	const char manf[256];	//used to hold manf/prod strings
+	const char prod[256];	//used to hold manf/prod strings
+		//Original kazzo
+		// manf_ascii: obdev.at prod_ascii: kazzo bcd Device: 100
+		//INL Retro-Prog v1.0
+		// manf_ascii: InfiniteNesLives.com prod_ascii: INL Retro-Prog bcd Device: 100
+		//INL Retro-Prog v2.0 v2.0 released late 2016 (only ver supported by this app
+		// manf_ascii: InfiniteNesLives.com prod_ascii: INL Retro-Prog bcd Device: 200
+	const char *kazzo_manf = "obdev.at";
+	const char *kazzo_prod = "kazzo";
+	const char *inl_manf = "InfiniteNesLives.com";
+	const char *rprog_prod = "INL Retro-Prog";
+	uint16_t min_fw_ver = 0x200;
 
 	debug("searching %d total devices", dev_count-1);
 	for( i=0; i<dev_count; i++) {
@@ -65,41 +76,58 @@ libusb_device_handle * open_usb_device( libusb_context *context )
 		debug("checking %x vendor", desc.idVendor);
 		debug("checking %x product", desc.idProduct);
 		if ((desc.idVendor == 0x16C0) && (desc.idProduct == 0x05DC)) {
-			retroprog = device;
+			//Found a V-USB device with default VID/PID now see if it's actually a kazzo
 			debug("found vend %x prod %x\n", desc.idVendor, desc.idProduct);
 			debug("manf: %d prod: %d\n", desc.iManufacturer, desc.iProduct);
 
 			//opening device allows performing I/O via USB with device
-			rv = libusb_open( retroprog, &handle );
+			rv = libusb_open( device, &handle );
 			check( rv == LIBUSB_SUCCESS, "Unable to open USB device: %s", libusb_strerror(rv));
 
 			if (desc.iManufacturer) {
-				if ( libusb_get_string_descriptor_ascii( handle, desc.iManufacturer, str, sizeof(str) ) > 0) {
-					debug("manf_ascii: %s\n",str);
+				if ( libusb_get_string_descriptor_ascii( handle, 
+					desc.iManufacturer, (unsigned char *)manf, sizeof(manf) ) > LIBUSB_SUCCESS) {
+					debug("manf_ascii: %s\n",manf);
 				}
 			}
 			if (desc.iProduct) {
-				if ( libusb_get_string_descriptor_ascii( handle, desc.iProduct, str, sizeof(str) ) > 0) {
-					debug("prod_ascii: %s\n",str);
+				if ( libusb_get_string_descriptor_ascii( handle, 
+					desc.iProduct, (unsigned char *)prod, sizeof(prod) ) > LIBUSB_SUCCESS) {
+					debug("prod_ascii: %s\n",prod);
 				}
 			}
-			if (desc.bcdDevice) {
-				debug("bcd Device: %x\n",desc.bcdDevice);
-				//old firmware returns 256, new returns 512
-				//old firmware returns 0x100, new returns 0x200
-				//USB_CFG_DEVICE_VERSION 0x00, 0x01 for v1.0, 0x00, 0x02 for v2.0 (minor then major)
-				//v2.0 released late 2016
+
+			//Now that manf and prod ID's have been retrieved determine if it's a kazzo/retroprog
+			if ( strcmp( manf, kazzo_manf) == 0) {
+				if ( strcmp( prod, kazzo_prod) == 0) {
+					log_warn("Original kazzo found, firmware needs updated.");
+				}
 			}
 
-			//TODO verify it's INL Retro Prog by InfiniteNesLives.com, then break
-			//else close handle and keep searching as there might be other devices with matching prod/devIDs
-			//also verify firmware version is compatible
-			//
-			//TODO verify have permission to interface with device, else give notice to user
-				
-			break;
+			if ( strcmp( manf, inl_manf) == 0) {
+				debug("INL manufactured device found.");
+				if ( strcmp( prod, rprog_prod) == 0) {
+					debug("INL Retro-Prog found.");
+					debug("bcd Device fw version: %x required: %x",
+						desc.bcdDevice, min_fw_ver);
+					if (desc.bcdDevice < min_fw_ver) { 
+						//close device since can't use it
+						log_warn("INL Retro-Prog found, but firmware is too old, see Readme for instructions to update firmware.");
+					} else {
+						//Finally found the supported device!!!
+						retroprog = device;
+						break;
+					}
+				}
+			}
+			//Getting here means the device was opened because it matched V-USB
+			//VID/PID, but it wasn't a compatible device.	
+			//Can't use this device, so close it
+			libusb_close(handle);
+			handle = NULL;	//Don't want to try and reclose
 		}
 	}
+	//looped through all devices retroprog will be assigned if it was found.
 	check( retroprog != NULL, "Could not find INL retro-prog USB device");
 
 	//free device list now that INL retro-prog was found and opened
@@ -123,7 +151,7 @@ libusb_device_handle * open_usb_device( libusb_context *context )
 
 	//free device list if it was left open
 	if (device_list) {
-		printf("Whoops! freeing device list\n");
+		log_err("USB Device list wasn't freed, freeing device list\n");
 		libusb_free_device_list( device_list, 1);
 	}
 
@@ -154,21 +182,17 @@ error:
 		printf("Try command with sudo for a cheap temporary solution.\n");
 	}
 
-	return NULL;
-
+	return NULL;	//Return NULL pointer if couldn't find INL Retro-Prog
 }
 
 void close_usb(libusb_context *context, libusb_device_handle *handle) 
 {
-	
-
 	//must close device before exiting
 	libusb_close(handle);
 	handle = NULL;	//delete handle reference so error won't retry closing
 
 	//deinitialize libusb to be called after closing all devices and before teminating application
 	libusb_exit(context);
-
 	
 	return;
 }
@@ -222,12 +246,9 @@ int usb_write_to_device( libusb_device_handle *handle, int command, unsigned cha
 	uint16_t wIndex = 0;		//setup packet wIndex field
 
 	int xfr_cnt = libusb_control_transfer( handle, 
-			//Request type: vendor (as we define),  recip: device, in: device->host
-			//TODO the endpoint direction seems to be backwards...?
-			LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_IN, 
+			//Request type: vendor (as we define),  recip: device, out: host->device
+			LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_OUT, 
 			request, wValue, wIndex, data, len, SEC_5);
-
-	printf("total bytes xfrd: %d \n", xfr_cnt);
 
 	check( xfr_cnt >=0, "Write xfr failed with libusb error: %s", libusb_strerror(xfr_cnt));
 	check( xfr_cnt == len, "Write transfer failed only %dB sent when expecting %dB", xfr_cnt, len);

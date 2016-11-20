@@ -64,22 +64,15 @@ int main(int argc, char *argv[])
 
 	switch (action) {
 		case 'o': //ON send REQ_LED_ON
-			//xfr_cnt = libusb_control_transfer(rprog_handle, 
-			//LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_IN, 
-			//REQ_LED_ON, wValue, wIndex, (unsigned char *)buffer254, sizeof(buffer254), SEC_5);
-			xfr_cnt = usb_write( rprog_handle, REQ_LED_ON, (unsigned char *)buffer254, sizeof(buffer254) );
-	
-			//printf("total bytes xfrd: %d \n", xfr_cnt);
-			
+			xfr_cnt = usb_write_to_device( rprog_handle, 
+				REQ_LED_ON, (unsigned char *)buffer254, sizeof(buffer254) );
+			printf("total bytes xfrd: %d \n", xfr_cnt);
 			break;
 
 		case 'f':
-			xfr_cnt = usb_write( rprog_handle, REQ_LED_ON, (unsigned char *)buffer254, sizeof(buffer254) );
-			//xfr_cnt = libusb_control_transfer(rprog_handle, 
-			//LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_IN, 
-			//REQ_LED_OFF, wValue, wIndex, (unsigned char *)buffer254, sizeof(buffer254), SEC_5);
-	
-			//printf("total bytes xfrd: %d \n", xfr_cnt);
+			xfr_cnt = usb_write_to_device( rprog_handle, 
+				REQ_LED_OFF, (unsigned char *)buffer254, sizeof(buffer254) );
+			printf("total bytes xfrd: %d \n", xfr_cnt);
 			
 			break;
 
