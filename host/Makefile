@@ -11,12 +11,12 @@ OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
 TARGET=inlretro
 
 #default to windows build
-all:
+all:	shared
 	$(CC) $(INCLUDE) $(SOURCES) -o $(TARGET) $(WINLIB) $(CFLAGS) $(LIBUSB) 
 
 #unix build doesn't need winlib directory as libusb should be installed on OS.
 #sudo apt-get install libusb-1.0-0-dev
-unix:
+unix:	shared
 	$(CC) $(INCLUDE) $(SOURCES) -o $(TARGET) $(CFLAGS) $(LIBUSB)
 
 # "make debug" will build program with debug print messages
@@ -28,6 +28,11 @@ debug: all
 #unix debug build
 unixdebug: CFLAGS += -DDEBUG -g
 unixdebug: unix
+
+
+#copy shared .h files which are used in host and firmware
+shared:
+	cp -r ../shared/* source/
 
 #clean on unix and windows(.exe)
 clean:

@@ -2,6 +2,7 @@
 #define _usb_operations_h
 
 #include "usb_operations.h"
+#include "usb_commands.h"
 
 //control transfer request types
 //uint8_t libusb_control_setup::bmRequestType
@@ -22,11 +23,6 @@
 //
 //LIBUSB_ENDPOINT_IN		In: device-to-host.
 //LIBUSB_ENDPOINT_OUT		Out: host-to-device. 
-
-// vendor requests also defined in firmware
-// TODO put in combined .h file for both host and fw
-#define REQ_LED_ON  1
-#define REQ_LED_OFF 2
 
 //USB timeout
 #define SEC_5 5000

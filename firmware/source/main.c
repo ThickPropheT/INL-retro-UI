@@ -5,9 +5,7 @@
 
 #include "usbdrv.h"
 #include "macro.h"
-
-#define REQ_LED_ON  1
-#define REQ_LED_OFF 2
+#include "usb_commands.h"
 
 
 //USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]);

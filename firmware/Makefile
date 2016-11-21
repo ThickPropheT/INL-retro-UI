@@ -55,7 +55,7 @@ clean:
 
 # file targets:
 
-main.elf: $(OBJECTS)
+main.elf: shared $(OBJECTS)
 	$(COMPILE) -o main.elf $(OBJECTS)
 
 main.hex: main.elf
@@ -70,3 +70,7 @@ disasm:	main.elf
 
 cpp:
 	$(COMPILE) -E main.c
+
+#copy shared .h files which are used in host and firmware
+shared:
+	cp -r ../shared/* source/

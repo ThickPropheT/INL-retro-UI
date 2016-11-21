@@ -13,12 +13,14 @@
 #include "dbg.h"
 
 #include "usb_operations.h"
+#include "usb_commands.h"
+#include "write_operations.h"
 
 
 // vendor requests also defined in firmware
 // TODO put in combined .h file for both host and fw
-#define REQ_LED_ON  1
-#define REQ_LED_OFF 2
+//#define REQ_LED_ON  1
+//#define REQ_LED_OFF 2
 
 
 int main(int argc, char *argv[]) 
@@ -45,33 +47,15 @@ int main(int argc, char *argv[])
 	while( (rv = getopt( argc, argv, "ofemw:d:s:i:b:")) != -1) {
 		
 		switch(rv) {
-			case 'o':
-				o_flag = 1;
-				break;
-			case 'f':
-				f_flag = 1;
-				break;
-			case 'e':
-				e_flag = 1;
-				break;
-			case 'm':
-				m_flag = 1;
-				break;
-			case 'w':
-				w_value = optarg;
-				break;
-			case 'd':
-				d_value = optarg;
-				break;
-			case 's':
-				s_value = optarg;
-				break;
-			case 'i':
-				i_value = optarg;
-				break;
-			case 'b':
-				b_value = optarg;
-				break;
+			case 'o': o_flag = 1; break;
+			case 'f': f_flag = 1; break;
+			case 'e': e_flag = 1; break;
+			case 'm': m_flag = 1; break;
+			case 'w': w_value = optarg; break;
+			case 'd': d_value = optarg; break;
+			case 's': s_value = optarg; break;
+			case 'i': i_value = optarg; break;
+			case 'b': b_value = optarg; break;
 			case '?':
 				if ( optopt == 'w' ) {
 					log_err("Option -%c requires an argument.", optopt);
@@ -126,6 +110,11 @@ int main(int argc, char *argv[])
 			REQ_LED_OFF, (unsigned char *)buffer254, sizeof(buffer254) );
 		printf("total bytes xfrd: %d \n", xfr_cnt);
 	}
+	if (w_value) { //OFF send REQ_LED_OFF
+		check( write_file( rprog_handle, w_value, i_value, b_value) == SUCCESS, 
+			"Failed to write file: %s", w_value); 
+	}
+
 
 	close_usb( context, rprog_handle);	
 	
