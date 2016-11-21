@@ -10,11 +10,10 @@ DEVICE  = atmega164a
 F_CPU   = 16000000	# in Hz
 # Fuses and ISP programming handled in bootloader firmware build
 
-#TODO find sources and objects automatically
-#SOURCES=$(wildcard source/**/*.c source/*.c)
-#OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
-CFLAGS  = -Iusbdrv -I. -DDEBUG_LEVEL=0
-OBJECTS = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o main.o
+SOURCES=$(wildcard source/**/*.c source/*.c)
+CFLAGS  = -Iusbdrv -Isource -DDEBUG_LEVEL=0
+USBOBJ = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o
+OBJECTS=$(patsubst %.c,%.o,$(SOURCES)) $(USBOBJ)
 
 COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 
@@ -36,7 +35,7 @@ program_unix: main.hex
 
 # rule for deleting dependent files (those which can be built by Make):
 clean:
-	rm -f main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf *.o usbdrv/*.o main.s usbdrv/oddebug.s usbdrv/usbdrv.s
+	rm -f main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf $(OBJECTS) main.s usbdrv/oddebug.s usbdrv/usbdrv.s
 
 # Generic rule for compiling C files:
 .c.o:
@@ -56,7 +55,7 @@ clean:
 
 # file targets:
 
-main.elf: usbdrv $(OBJECTS)	# usbdrv dependency only needed because we copy it
+main.elf: $(OBJECTS)
 	$(COMPILE) -o main.elf $(OBJECTS)
 
 main.hex: main.elf
