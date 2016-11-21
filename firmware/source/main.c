@@ -124,10 +124,13 @@ int main()
 
 	usbDeviceConnect();
 
+	//intialize i/o to default state
+	io_init();
+
 	//configure LED PORT/DDR
-	SETUP_LED();
+	//SETUP_LED();
 	//Always startup with LED ON
-	LED_ON();
+	//LED_ON();
         
 	//enable interrupts
 	sei();
