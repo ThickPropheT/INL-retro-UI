@@ -195,7 +195,7 @@
 #define ROMSEL	PC1	//(aka PRG/CE) NES, FC, & SNES 
 #define PRGRW	PC2	//PRG R/W on NES & FC 
 
-#define P_AXL	PC3	//EXP FF CLK on purple boards
+#define p_AXL	PC3	//EXP FF CLK on purple boards
 #define FREE	PC3	//Free pin on all other boards
 
 #define C_RD	PC4	//NES & FC CHR /RD
@@ -207,7 +207,7 @@
 #define CICE 	PC6	//NES & FC CIRAM /CE, most carts are 2screen tying this to CHR A13 making this an I/P
 
 #define AHL	PC7	//ADDR MID FF CLK per orig kazzo design
-#define G_AXL	PC7	//Also EXP/ADDRHI FF CLK on green prototype
+#define g_AXL	PC7	//Also EXP/ADDRHI FF CLK on green prototype
 
 //PIN MACROS
 #define	M2_IP()		CTL_DDR	&= ~(1<<M2)
@@ -265,7 +265,7 @@
 #define CIA10	PD5	//NES & FC CIRAM A10 (aka VRAM A10)
 #define BL	PD6	//Bootloader switch BL->GND, RUN->float
 
-#define P_XOE	PD7	//EXP/ADDRHI FF /OE pin on purple and green boards
+#define p_XOE	PD7	//EXP/ADDRHI FF /OE pin on purple and green boards
 #define AXLOE	PD7	//EXP/ADDRHI FF CLK & /OE pin on final board versions
 
 //PIN MACROS
