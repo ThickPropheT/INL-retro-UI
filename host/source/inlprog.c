@@ -13,14 +13,10 @@
 #include "dbg.h"
 
 #include "usb_operations.h"
-#include "usb_commands.h"
 #include "write_operations.h"
 
-
-// vendor requests also defined in firmware
-// TODO put in combined .h file for both host and fw
-//#define REQ_LED_ON  1
-//#define REQ_LED_OFF 2
+//TODO remove once commands removed from main
+#include "shared_usb_commands.h"
 
 
 int main(int argc, char *argv[]) 

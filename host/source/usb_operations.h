@@ -1,8 +1,19 @@
 #ifndef _usb_operations_h
 #define _usb_operations_h
 
-#include "usb_operations.h"
-#include "usb_commands.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <errno.h>
+#include <libusb.h>
+
+//uncomment to DEBUG this file alone
+//#define DEBUG
+//"make debug" to get DEBUG msgs on entire program
+#include "dbg.h"
+
+#include "shared_usb_commands.h"
 
 //control transfer request types
 //uint8_t libusb_control_setup::bmRequestType

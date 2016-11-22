@@ -1,18 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <errno.h>
-#include <libusb.h>
-
-//uncomment to DEBUG this file alone
-#define DEBUG
-//"make debug" to get DEBUG msgs on entire program
-#include "dbg.h"
-
 #include "write_operations.h"
-#include "usb_operations.h"
-#include "usb_commands.h"
 
 #define SIZE_NES_HEADER 16
 #define SIZE_PRG_BANK 16384
