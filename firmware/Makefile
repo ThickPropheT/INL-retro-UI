@@ -61,7 +61,8 @@ main.elf: shared $(OBJECTS)
 main.hex: main.elf
 	rm -f main.hex main.eep.hex
 	avr-objcopy -j .text -j .data -O ihex main.elf main.hex
-	avr-size main.hex
+	avr-size -C --mcu=${DEVICE} main.elf
+#	avr-size main.hex
 
 # debugging targets:
 

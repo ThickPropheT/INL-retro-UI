@@ -4,8 +4,8 @@
 #include <util/delay.h>
 
 #include "usbdrv.h"
-#include "macro.h"
-#include "usb_commands.h"
+#include "io.h"
+#include "shared_usb_commands.h"
 
 
 //USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]);
@@ -124,13 +124,13 @@ int main()
 
 	usbDeviceConnect();
 
-	//intialize i/o to default state
-	io_init();
+	//intialize i/o to pullup state
+	io_pullup();
 
 	//configure LED PORT/DDR
-	//SETUP_LED();
-	//Always startup with LED ON
-	//LED_ON();
+	LED_OP();
+	//boot with LED on to differentiate bettwen BL/RUN
+	LED_ON();
         
 	//enable interrupts
 	sei();
@@ -150,4 +150,3 @@ int main()
         
 	return 0;
 }
-
