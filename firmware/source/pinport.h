@@ -11,7 +11,7 @@ void software_AXL_CLK();
 //can be differentiated by solder mask color.
 //Final version is default and doesn't need any defines
 //#define PURPLE_KAZZO
-//#define GREEN_KAZZO
+#define GREEN_KAZZO
 
 //=======================================================
 //History of PCB revsisions produced by InfiniteNesLives
@@ -244,8 +244,8 @@ void software_AXL_CLK();
 #define PRGRW_RD()	CTL_OUT |=  (1<<PRGRW)	//HI for reads
 
 #ifdef PURPLE_KAZZO
-#define p_AXL_IP()	CTL_DDR &= ~(1<<p_AXL)
-#define p_AXL_OP()	CTL_DDR |=  (1<<p_AXL)
+#define p_AXL_ip()	CTL_DDR &= ~(1<<p_AXL)	//Don't use these, use software tied together versions instead.
+#define p_AXL_op()	CTL_DDR |=  (1<<p_AXL)	//Increases compatibility between versions
 #define p_AXL_lo()	CTL_OUT &= ~(1<<p_AXL)	//Don't recommend calling lo/hi, use CLK instead
 #define p_AXL_hi()	CTL_OUT |=  (1<<p_AXL)
 //AXL_CLK assumes AXL was previously left in default low state
@@ -280,6 +280,11 @@ void software_AXL_CLK();
 #define AXHL_CLK()	g_AXHL_hi(); g_AXHL_lo();	
 #define AHL_CLK()	software_AHL_CLK();
 #define AXL_CLK()	software_AXL_CLK();
+//can ~safely consider this pin as if it were only AHL due to software AHL/AXL CLK
+#define AHL_IP()	g_AXHL_IP();	
+#define AHL_OP()	g_AXHL_OP();
+#define AHL_lo()	g_AXHL_lo();
+#define AHL_hi()	g_AXHL_hi();
 #else	//purple and final design
 #define AHL_IP()	CTL_DDR &= ~(1<<AHL)
 #define AHL_OP()	CTL_DDR |=  (1<<AHL)
@@ -370,8 +375,21 @@ void software_AXL_CLK();
 //	Floating EXPFF also happens to clock it.  Think of it like it looses it's value if disabled.
 #define AXL_CLK()	EXPFF_FLT(); EXPFF_OP(); //same name and convention as purple
 #else	//purple and green versions
-#define	XOE_IP()	AUX_DDR	&= ~(1<<pg_XOE)
-#define	XOE_OP()	AUX_DDR	|=  (1<<pg_XOE)
-#define EXPFF_OP()	AUX_OUT &= ~(1<<pg_XOE)	//FF /OE pin low->enable o/p
-#define EXPFF_FLT()	AUX_OUT |=  (1<<pg_XOE)	//FF /OE pin high->disable o/p
+#define	XOE_ip()	AUX_DDR	&= ~(1<<pg_XOE)	//don't use these, use software tied together AXLOE instead
+#define	XOE_op()	AUX_DDR	|=  (1<<pg_XOE)
+#define XOE_lo()	AUX_OUT &= ~(1<<pg_XOE)	//FF /OE pin low->enable o/p
+#define XOE_hi()	AUX_OUT |=  (1<<pg_XOE)	//FF /OE pin high->disable o/p
+//Final version ties XOEn and AXL to same pin, we can do this in software to make other ver behave similarly
+#endif
+#ifdef PURPLE_KAZZO
+#define AXLOE_IP()	XOE_ip(); p_AXL_ip();
+#define AXLOE_OP()	XOE_op(); p_AXL_op();
+#define EXPFF_OP()	XOE_lo(); p_AXL_lo();
+#define EXPFF_FLT()	XOE_hi(); p_AXL_hi();
+#endif
+#ifdef GREEN_KAZZO	//green can't tie AXL, just don't worry about clocking effect while enabling/disabling
+#define AXLOE_IP()	XOE_ip();	//run risk that AHL isn't O/P because AXL was made O/P instead
+#define AXLOE_OP()	XOE_op();	//sofware AXL/AHL clock covers this case though.
+#define EXPFF_OP()	XOE_lo();
+#define EXPFF_FLT()	XOE_hi();
 #endif

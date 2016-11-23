@@ -2,7 +2,7 @@
 #include "logic.h"
 #include "pinport.h"
 
-//This file is generated from pinport.h
+//This file was created based on pinport.h
 //the close relationship between these two files must be kept in mind when making changes.
 //This file is also very dependent on macro definitions in host app.
 //the host app pinport.h was generated from this file, so any changes here must be forwarded.
@@ -54,7 +54,6 @@ uint8_t pinport_macro( uint8_t opcode )
 		case 12: M2_OP();	break;
 		case 13: M2_LO();	break;
 		case 14: M2_HI();	break;
-		//TODO read M2 PIN as input
 		
 		case 15: ROMSEL_IP(); break;
 		case 16: ROMSEL_OP(); break;
@@ -73,13 +72,11 @@ uint8_t pinport_macro( uint8_t opcode )
 		
 		//give each def different version numbers to detect errors
 		//where command given to board which doesn't have that function
-		#ifdef p_AXL //purple boards only
-		case 27: p_AXL_IP();	break;
-		case 28: p_AXL_OP();	break;
+		#ifdef PURPLE_KAZZO //purple boards only
+		case 27: p_AXL_ip();	break;	//Don't use these, use software tied together versions instead.
+		case 28: p_AXL_op();	break;	//Increases compatibility between versions
 		case 29: p_AXL_lo();	break;	//Don't recommend calling lo/hi, use CLK instead
 		case 30: p_AXL_hi();	break;
-		//AXL_CLK assumes AXL was previously left in default low state
-		//XX: AXL_CLK()	p_AXL_hi(); p_AXL_lo();	//same name and convention on final design
 		#else	//Green and final design
 		case 31: FREE_IP();	break;
 		case 32: FREE_OP();	break;
@@ -102,20 +99,19 @@ uint8_t pinport_macro( uint8_t opcode )
 		case 45: CICE_LO();	break;
 		case 46: CICE_HI();	break;
 		
-		#ifdef g_AXHL
+		#ifdef GREEN_KAZZO
 		case 47: g_AXHL_IP(); break;
 		case 48: g_AXHL_OP(); break;
 		case 49: g_AXHL_lo(); break;	//Don't recommend calling these as AXHL should be left low
 		case 50: g_AXHL_hi(); break;	//That way AXHL_CLK(); is always effective
-		//XX: AXHL_CLK()	g_AXHL_hi(); g_AXHL_lo();	
-		#else	//purple and final design
+		#endif
+		//purple and final design, safe to pretend green is similar due to software AHL/AXL CLK
 		case 51: AHL_IP();	break;
 		case 52: AHL_OP();	break;
 		case 53: AHL_lo();	break;	//Don't recommend calling these as AHL should be left low
-		case 54: AHL_hi();	break;	//That way AHL_CLK(); is always effective
-		//XX: AHL_CLK()	AHL_hi(); AHL_lo();
-		#endif
-		
+		case 54: AHL_hi();	break;	//That way AHL_CLK(); is always effective.
+			 			//also helps maintain validity of software AHL/AXL CLK
+						
 		//============================
 		//AUX PORTD
 		//============================
@@ -156,37 +152,39 @@ uint8_t pinport_macro( uint8_t opcode )
 		case 79: BL_LO();	break;
 		case 80: BL_HI();	break;
 		
-		#ifndef pg_XOE	//FINAL_DESIGN
+		//#ifndef pg_XOE	//FINAL_DESIGN
+		//purple and green have versions of these which tie two pins together in software
 		case 81: AXLOE_IP();	break;
 		case 82: AXLOE_OP();	break;
 		//Caution AXL_CLK() relies on EXPFF_OP() to be called beforehand
 		//	Think of it like you must enable the output before you can clock it.
 		//	Floating EXPFF also happens to clock it.  Think of it like it looses it's value if disabled.
-		//XX: AXL_CLK()	EXPFF_FLT(); EXPFF_OP(); //same name and convention as purple
-		#else	//purple and green versions
-		case 83: XOE_IP();	break;	
-		case 84: XOE_OP();	break;	
+		#ifdef PURPLE_KAZZO or GREEN_KAZZO //purple and green versions
+		case 83: XOE_ip();	break;	//Don't call these, use AXLOE instead	
+		case 84: XOE_op();	break;	
+		case 85: XOE_lo();	break;	
+		case 86: XOE_hi();	break;	
 		#endif
 
 		//Same definition on all board versions
 		//Only need to be cognizant that AXL_CLK won't work if EXPFF_FLT was called beforehand
 		//This is only an issue on final design, so an error here should only cause probs on final design
 		//Net effect is it it works on final design should be fine on other versions which is the goal
-		case 85: EXPFF_OP();	break;	//FF /OE pin low->enable o/p
-		case 86: EXPFF_FLT(); 	break;	//FF /OE pin high->disable o/p
+		case 87: EXPFF_OP();	break;	//FF /OE pin low->enable o/p
+		case 88: EXPFF_FLT(); 	break;	//FF /OE pin high->disable o/p
 
 		//AXL_CLK this is similar between purple and green versions, just on a different pin.
 		//green boards don't have an AXL_CLK nor a AHL_CLK, as the two are combined.
 		//green boards must resolve this in software storing value of FF's so can have the effect
 		//of only clocking one of them.	
-		//#ifdef g_AXHL
+		//#ifdef GREEN_KAZZO
 		//case XX: AXHL_CLK();	break;	//don't want to call this as software AXL/AHL don't track
 		//case 87: software_AXL_CLK();	break;
 		//case 88: software_AHL_CLK();	break;
 		//#else
 		//these two cases covers all designs with macro calling sofware versions for green board.
-		case 87: AXL_CLK();	break;
-		case 88: AHL_CLK();	break;
+		case 89: AXL_CLK();	break;
+		case 90: AHL_CLK();	break;
 		//#endif
 		//these work fine in hardware for purple and final.
 		//green had to separate these two with software.
