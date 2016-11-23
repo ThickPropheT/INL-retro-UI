@@ -1,6 +1,10 @@
 #include <avr/io.h>
 #include "logic.h"
 
+uint8_t pinport_macro( uint8_t opcode );
+void software_AHL_CLK();
+void software_AXL_CLK();
+
 //This file contains pinout translations from AVR names to "kazzo" names
 //this file also works to make all kazzo versions compatible and "alike" 
 //There are defines for kazzo version, turns out unique early versions 
@@ -239,7 +243,7 @@
 #define PRGRW_WR()	CTL_OUT &= ~(1<<PRGRW)	//LO for writes
 #define PRGRW_RD()	CTL_OUT |=  (1<<PRGRW)	//HI for reads
 
-#ifdef p_AXL
+#ifdef PURPLE_KAZZO
 #define p_AXL_IP()	CTL_DDR &= ~(1<<p_AXL)
 #define p_AXL_OP()	CTL_DDR |=  (1<<p_AXL)
 #define p_AXL_lo()	CTL_OUT &= ~(1<<p_AXL)	//Don't recommend calling lo/hi, use CLK instead
@@ -268,12 +272,14 @@
 #define CICE_LO()	CTL_OUT &= ~(1<<CICE)
 #define CICE_HI()	CTL_OUT |=  (1<<CICE)
 
-#ifdef g_AXHL
+#ifdef GREEN_KAZZO
 #define g_AXHL_IP()	CTL_DDR &= ~(1<<g_AXHL)
 #define g_AXHL_OP()	CTL_DDR |=  (1<<g_AXHL)
 #define g_AXHL_lo()	CTL_OUT &= ~(1<<g_AXHL)	//Don't recommend calling these as AXHL should be left low
 #define g_AXHL_hi()	CTL_OUT |=  (1<<g_AXHL)	//That way AXHL_CLK(); is always effective
 #define AXHL_CLK()	g_AXHL_hi(); g_AXHL_lo();	
+#define AHL_CLK()	software_AHL_CLK();
+#define AXL_CLK()	software_AXL_CLK();
 #else	//purple and final design
 #define AHL_IP()	CTL_DDR &= ~(1<<AHL)
 #define AHL_OP()	CTL_DDR |=  (1<<AHL)
@@ -281,6 +287,8 @@
 #define AHL_hi()	CTL_OUT |=  (1<<AHL)	//That way AHL_CLK(); is always effective
 #define AHL_CLK()	AHL_hi(); AHL_lo();
 #endif
+
+//green board software AXL & AHL are separated in software in pinport.c
 
 //============================
 //AUX PORTD
