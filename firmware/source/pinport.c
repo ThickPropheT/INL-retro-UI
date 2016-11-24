@@ -330,7 +330,7 @@ uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand )
 		//NES:  ADDRX[7:0] -> EXP PORT [8:1]
 		//SNES: ADDRX[7:0] -> CPU A[23:16]
 		case ADDRX_SET:	
-			_ADDRX_SET(operant); 
+			_ADDRX_SET(operand); 
 			break;
 
 		//Set ADDR/DATA bus DDR registers with bit granularity
@@ -429,10 +429,11 @@ uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t 
 		//	This is important for NES carts with on board CHR-ROM and VRAM for 4screen mirroring.
 		case NPPU_ADDR_SET:
 			ADDR_OUT = operandLSB;
-			// below PPU $2000, A13 clear, SET PPU /A13
-			if (operandMSB < 0x20) _ADDRH_SET(operandMSB & PPU_A13N);
-			// above PPU $1FFF, A13 set, PPU /A13 already clear in operandMSB
-			else _ADDRH_SET(operandMSB); 
+			if (operandMSB < 0x20) { // below PPU $2000, A13 clear, SET PPU /A13
+				_ADDRH_SET(operandMSB & PPU_A13N);
+			} else { // above PPU $1FFF, A13 set, PPU /A13 already clear in operandMSB
+			_ADDRH_SET(operandMSB); 
+			}
 			break;
 
 		default:
@@ -473,10 +474,10 @@ uint8_t pinport_opcode_24b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t 
 			ADDR_OUT = operandLSB;
 			_DATA_OP();
 			DATA_OUT = operandMID;
-			_CLK_AHL();
+			_AHL_CLK();
 			DATA_OUT = operandMSB;
-			_CLK_AXL();
-			DATA_IP();
+			_AXL_CLK();
+			_DATA_IP();
 			break;
 
 		default:
@@ -505,46 +506,58 @@ uint8_t pinport_opcode_8b_return( uint8_t opcode, uint8_t *rvalue )
 		//READ MCU I/O PORT INPUT 'PIN' REGISTERS
 		//ADDR[7:0] PINA
 		case ADDR_RD:
-			rvalue = ADDR_IN;
+			*rvalue = ADDR_IN;
+			break;
 		//DATA[7:0] PINB
 		case DATA_RD:
-			rvalue = DATA_IN;
+			*rvalue = DATA_IN;
+			break;
 		//CTL PINC
 		case CTL_RD:
-			rvalue = CTL_IN;
+			*rvalue = CTL_IN;
+			break;
 		//AUX PIND
 		case AUX_RD:	
-			rvalue = AUX_IN;
+			*rvalue = AUX_IN;
+			break;
 
 
 		//READ MCU I/O PORT OUTPUT 'PORT' REGISTERS
 		//ADDR[7:0] PORTA
 		case ADDR_PORT_RD:
-			rvalue = ADDR_OUT;
+			*rvalue = ADDR_OUT;
+			break;
 		//DATA[7:0] PORTB
 		case DATA_PORT_RD:
-			rvalue = DATA_OUT;
+			*rvalue = DATA_OUT;
+			break;
 		//CTL PORTC
 		case CTL_PORT_RD:
-			rvalue = CTL_OUT;
+			*rvalue = CTL_OUT;
+			break;
 		//AUX PORTD
 		case AUX_PORT_RD:
-			rvalue = AUX_OUT;
+			*rvalue = AUX_OUT;
+			break;
 
 
 		//READ MCU I/O PORT DIRECTION 'DDR' REGISTERS
 		//ADDR[7:0] DDRA
 		case ADDR_DDR_RD:
-			rvalue = ADDR_DDR;
+			*rvalue = ADDR_DDR;
+			break;
 		//DATA[7:0] DDRB
 		case DATA_DDR_RD:
-			rvalue = DATA_DDR:
+			*rvalue = DATA_DDR;
+			break;
 		//CTL DDRC
 		case CTL_DDR_RD:
-			rvalue = CTL_DDR;
+			*rvalue = CTL_DDR;
+			break;
 		//AUX DDRD
 		case AUX_DDR_RD:
-			rvalue = AUX_DDR;
+			*rvalue = AUX_DDR;
+			break;
 
 		default:
 			 //macro doesn't exist

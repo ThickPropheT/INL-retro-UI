@@ -6,8 +6,9 @@
 
 uint8_t pinport_opcode_only( uint8_t opcode );
 uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand );
-uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t operandLSB ) 
-uint8_t pinport_opcode_24b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t operandMID, uint8_t operandLSB ) 
+uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t operandLSB );
+uint8_t pinport_opcode_24b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t operandMID, uint8_t operandLSB );
+uint8_t pinport_opcode_8b_return( uint8_t opcode, uint8_t *rvalue );
 void software_AHL_CLK();
 void software_AXL_CLK();
 
