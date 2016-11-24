@@ -1,7 +1,11 @@
+#ifndef _pinport_h
+#define _pinport_h
+
 #include <avr/io.h>
 #include "logic.h"
 
-uint8_t pinport_opcode2macro( uint8_t opcode );
+uint8_t pinport_opcode_only( uint8_t opcode );
+uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand );
 void software_AHL_CLK();
 void software_AXL_CLK();
 
@@ -11,7 +15,7 @@ void software_AXL_CLK();
 //can be differentiated by solder mask color.
 //Final version is default and doesn't need any defines
 //#define PURPLE_KAZZO
-#define GREEN_KAZZO
+//#define GREEN_KAZZO
 
 //=======================================================
 //History of PCB revsisions produced by InfiniteNesLives
@@ -174,8 +178,8 @@ void software_AXL_CLK();
 #define ADDR_IN		PINA
 #define ADDR_DDR	DDRA
 //DDR-PORT MACROS
-#define _ADDR_IP()	ADDR_DDR = LO
-#define _ADDR_OP()	ADDR_DDR = HI
+#define _ADDR_IP()	ADDR_DDR = IP
+#define _ADDR_OP()	ADDR_DDR = OP
 #define _ADDR_LO()	ADDR_OUT = LO
 #define _ADDR_HI()	ADDR_OUT = HI
 
@@ -188,8 +192,8 @@ void software_AXL_CLK();
 #define DATA_IN		PINB
 #define DATA_DDR	DDRB
 //DDR-PORT MACROS
-#define _DATA_IP()	DATA_DDR = LO
-#define _DATA_OP()	DATA_DDR = HI
+#define _DATA_IP()	DATA_DDR = IP
+#define _DATA_OP()	DATA_DDR = OP
 #define _DATA_LO()	DATA_OUT = LO
 #define _DATA_HI()	DATA_OUT = HI
 
@@ -202,7 +206,7 @@ void software_AXL_CLK();
 #define CTL_IN		PINC
 #define CTL_DDR		DDRC
 //DDR-PORT MACROS
-#define _CTL_IP()	CTL_DDR = LO
+#define _CTL_IP()	CTL_DDR = IP
 // No CTL_OP() macro as some of these are inputs or bidir, best to individually assert as output
 #define _CTL_LO()	CTL_OUT = LO
 #define _CTL_HI()	CTL_OUT = HI
@@ -394,4 +398,7 @@ void software_AXL_CLK();
 #define _AXLOE_OP()	_XOE_op();	//sofware AXL/AHL clock covers this case though.
 #define _EXPFF_OP()	_XOE_lo();
 #define _EXPFF_FLT()	_XOE_hi();
+#endif
+
+
 #endif

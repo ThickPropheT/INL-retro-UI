@@ -12,11 +12,11 @@
  * 	then decodes it to call designated macro.
  * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
  * Pre: Macro must be defined in firmware pinport.h
- * 	opcode must be defined in shared-pinport.h
+ * 	opcode must be defined in shared_pinport.h
  * Post:Macro call complete.
- * Rtn: SUCCESS if opcode found, ERROR_UNKNOWN_OPCODE if opcode not present.
+ * Rtn: SUCCESS if opcode found, ERR_UNKN_PP_OPCODE_ONLY if opcode not present.
  */
-uint8_t pinport_opcode2macro( uint8_t opcode ) 
+uint8_t pinport_opcode_only( uint8_t opcode ) 
 {
 	//these should be simple macros only for now
 	//ie only changes one pin/port, macro doesn't call other macros yet
@@ -156,7 +156,7 @@ uint8_t pinport_opcode2macro( uint8_t opcode )
 		//Caution AXL_CLK() relies on EXPFF_OP() to be called beforehand
 		//	Think of it like you must enable the output before you can clock it.
 		//	Floating EXPFF also happens to clock it.  Think of it like it looses it's value if disabled.
-		#ifdef PURPLE_KAZZO or GREEN_KAZZO //purple and green versions
+		#if defined(PURPLE_KAZZO) || defined(GREEN_KAZZO) //purple and green versions
 		case XOE_ip: _XOE_ip();		break;	//Don't call these, use AXLOE instead	
 		case XOE_op: _XOE_op();		break;	
 		case XOE_lo: _XOE_lo();		break;	
@@ -188,8 +188,8 @@ uint8_t pinport_opcode2macro( uint8_t opcode )
 
 
 		default:
-			 //macro doesn't exist on this PCB version
-			 return ERROR_UNKWN_PINP_OPCODE;
+			 //macro doesn't exist or isn't on this PCB version
+			 return ERR_UNKN_PP_OPCODE_ONLY;
 	}
 	
 	return SUCCESS;
@@ -224,7 +224,7 @@ static uint8_t curAXLaddr;
 void software_AXL_CLK()
 {
 	//first store current DATA & ADDR values
-	uint8_t	curAXLaddr = DATA_OUT;	//This is desired AXL value
+	curAXLaddr = DATA_OUT;	//This is desired AXL value
 	uint8_t orig_addr = ADDR_OUT;	//PORTA
 	
 	//Put current AHL latched value on DATA as that's where it'll be relatched
@@ -232,7 +232,7 @@ void software_AXL_CLK()
 	DATA_OUT = curAHLaddr;
 
 	//set ADDR as O/P and place desired value on bus
-	_ADDR_OP();	//should already be set, but in case not
+	_ADDR_OP();	//prob already be set, but in case not
 	ADDR_OUT = curAXLaddr;
 
 	//Clock both latches
@@ -262,7 +262,7 @@ void software_AXL_CLK()
 void software_AHL_CLK()
 {
 	//first store current DATA & ADDR values
-	uint8_t	curAHLaddr = DATA_OUT;	//This is desired AHL value (store it for other function's use)
+	curAHLaddr = DATA_OUT;	//This is desired AHL value (store it for other function's use)
 	uint8_t orig_addr = ADDR_OUT;	//PORTA
 	
 	//Desired AHL latch value should have already been placed on DATA_OUT.
@@ -284,3 +284,97 @@ void software_AHL_CLK()
 
 #endif	//GREEN_KAZZO
 
+
+/* Desc:Function takes an opcode and 8bit operand which was transmitted via USB
+ * 	then decodes it to call designated macro/function.
+ * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * Pre: Macro must be defined in firmware pinport.h
+ * 	opcode must be defined in shared_pinport.h
+ *	data bus must be free and clear
+ *	control pins must be initialized
+ *		-FF latch /OE pins set as outputs
+ *		-FF CLK pins low ready for CLK
+ *	See big CAUTION on shared_pinport.h for more details
+ * Post:Macro/function called with operand
+ *	data bus left free and clear when possible
+ *		-DATA_OPnSET diliberately drive the bus
+ * Rtn: SUCCESS if opcode found, ERR_UNKN_PP_OPCODE_8BOP if opcode not present.
+ */
+uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand ) 
+{
+
+	switch (opcode) { 
+
+		//ADDR[7:0] PORTA
+		case ADDR_SET:
+			ADDR_OUT = operand;
+			break;
+		//convienent/safer sets OP then value
+		case ADDR_OPnSET:
+			_ADDR_OP();
+			ADDR_OUT = operand;
+			break;
+
+		//DATA[7:0] PORTB
+		case DATA_SET:
+			DATA_OUT = operand;
+			break;
+		//convienent/safer sets OP then value
+		case DATA_OPnSET:
+			_DATA_OP();
+			DATA_OUT = operand;
+			break;
+
+		//ADDR[15:8] FLIPFLOP
+		case ADDRH_SET:
+			_DATA_OP();
+			DATA_OUT = operand;
+			_AHL_CLK();
+			_DATA_IP();
+			break;
+
+		//EXPANSION FLIPFLOP
+		//NES:  ADDRX[7:0] -> EXP PORT [8:1]
+		//SNES: ADDRX[7:0] -> CPU A[23:16]
+		case ADDRX_SET:
+			_DATA_OP();
+			DATA_OUT = operand;
+			_AXL_CLK();
+			_DATA_IP();
+			break;
+
+		//Set ADDR/DATA bus DDR registers with bit granularity
+		case ADDR_DDR_SET:
+			ADDR_DDR = operand;
+			break;
+		case DATA_DDR_SET:
+			DATA_DDR = operand;
+			break;
+
+		//lowercase, you shouldn't call these unless you *Really* know what you're doing..
+		case ctl_ddr_set:
+			CTL_DDR = operand;
+			break;
+		case aux_ddr_set: //must protect USB pins
+			//clear zeros
+			AUX_DDR &= (operand |  ((1<<USBP) | (1<<USBM)));
+			//set ones
+			AUX_DDR |= (operand & ~((1<<USBP) | (1<<USBM)));
+			break;
+		case ctl_port_set:
+			CTL_OUT = operand;
+			break;
+		case aux_port_set: //must protect USB pins
+			//clear zeros
+			AUX_OUT &= (operand |  ((1<<USBP) | (1<<USBM)));
+			//set ones
+			AUX_OUT |= (operand & ~((1<<USBP) | (1<<USBM)));
+			break;
+
+		default:
+			 //macro doesn't exist
+			 return ERR_UNKN_PP_OPCODE_8BOP;
+	}
+	
+	return SUCCESS;
+}

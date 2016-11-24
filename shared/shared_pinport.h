@@ -65,13 +65,6 @@
 #define 	ROMSEL_LO 17
 #define 	ROMSEL_HI 18
 
-//accidentally doubly defined...
-//having this shared .h file helped as the compiler points out these issues...
-//#define 	CICE_IP	19
-//#define 	CICE_OP	20
-//#define 	CICE_LO	21
-//#define 	CICE_HI	22
-		
 #define 	PRGRW_IP 23
 #define 	PRGRW_OP 24
 #define 	PRGRW_WR 25	//LO for writes
@@ -198,12 +191,44 @@
 
 
 
+//=============================================================================================
+//=============================================================================================
+//	CAUTION!!!	CAUTION!!!	CAUTION!!!	CAUTION!!!	CAUTION!!!
+//
+//	The opcodes that follow operate under some rules that you must adhere to if calling
+//	1) Data bus should be free and clear when possible
+//		-DATA_IP() is default state
+//		-Be cognizant if you're driving the data bus
+//			many of these opcodes use the data bus to function.
+//		-Many of these opcodes will end up driving the data bus
+//			know when that'll happen and free bus when data retreived
+//		
+//		-Flipflops must be initialized
+//			this primarily means CLK pin must be OP and LO ready for CLK command
+//		-output of FF must be enabled to actually feed latched value on cart
+//			final pcb version will enable EXP FF after clocking.
+//			early pcb versions have FF /OE on separate pin not so automatic.
+//
+//		-control pins must be initialized
+//		-enable OP on pins necessary to perform desire of command
+//			ie M2 and /ROMSEL must be OP if you're trying to change them with a command.
+//
+//		-be cognizant of what pins are inputs and which are outputs
+//			ie driving PPU /A13 will be fed back to CIRAM /CE so it needs to be IP
+//		-if in doubt, leave it as input with pull up, atleast that shouldn't break anything
+//
+//
+//=============================================================================================
+//=============================================================================================
+
+
+
 
 //=============================================================================================
 //	OPCODES WITH OPERAND and no return value besides SUCCESS/ERROR_CODE
 //=============================================================================================
 //	0x80-0x9F: opcodes with 8bit operand
-//		0x80-83 are only ones currently in use
+//		0x80-8B are only ones currently in use
 //	0xA0-0xAF: opcodes with 16bit operand
 //		0xA0-A4 are only ones currently in use
 //	0xB0-0xBF: opcodes with 24bit operand
@@ -224,9 +249,13 @@
 
 //ADDR[7:0] PORTA
 #define ADDR_SET	0x80
+//conveinent/safe yet slower function that sets ADDR as OP then sets value
+#define ADDR_OPnSET	0x81
 
 //DATA[7:0] PORTB
-#define DATA_SET	0x81
+#define DATA_SET	0x82
+//conveinent/safe yet slower function that sets ADDR as OP then sets value
+#define DATA_OPnSET	0x83
 
 //ADDR[15:8] FLIPFLOP
 //NES CPU: ADDRH[6:0] -> CPU A[14:8]
@@ -235,24 +264,31 @@
 //	   ADDRH[6]   -> NC on PPU side
 //	   ADDRH[7]   -> PPU /A13 (which drives CIRAM /CE on most carts "2-screen mirroring")
 //SNES:    ADDRH[7:0] -> CPU A[15:8]
-#define ADDRH_SET	0x82
+#define ADDRH_SET	0x84
 
 //EXPANSION FLIPFLOP
 //NES:  ADDRX[7:0] -> EXP PORT [8:1]
 //SNES: ADDRX[7:0] -> CPU A[23:16]
-#define ADDRX_SET	0x83
+#define ADDRX_SET	0x85
 
 //Set ADDR/DATA bus DDR registers with bit granularity
 //	OP() IP() macros affect entire 8bit port's direction
 //	Each pin can be controlled individually though
 //	This could be useful for advanced feature that doesn't treat DATA/ADDR as byte wide port.
-#define ADDR_DDR	0x84
-#define DATA_DDR	0x84
+#define ADDR_DDR_SET	0x86
+#define DATA_DDR_SET	0x87
 //Perhaps it will be useful to have this function on other ports as well
 //But probably wouldn't be very useful if standard carts are plugged in..
+//AUX port operations will shield USB pins from being affected
+//defined as lower case because you shouldn't call these unless you *Really* know what you're doing..
+#define ctl_ddr_set	0x88
+#define aux_ddr_set	0x89
+#define ctl_port_set	0x8A
+#define aux_port_set	0x8B
 
 //TODO consider listing AVR internal registers here..?
 //could be useful when utilizing SPI/I2C communications etc
+
 
 
 //=================================
@@ -318,21 +354,17 @@
 
 
 
-
 //=============================================================================================
 //	OPCODES with NO OPERAND but have RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================
-//	0xC0-0xCF: opcodes with 8bit operand
-//		0x80-83 are only ones currently in use
-//	0xA0-0xAF: opcodes with 16bit operand
-//		0xA0-A4 are only ones currently in use
-//	0xB0-0xBF: opcodes with 24bit operand
-//		0xA0 is currently only one in use
+//	0xC0-0xFF: opcodes with 8bit return value (plus SuCCESS/ERROR)
+//		0xC0-CD are only ones currently in use
+//
+//	0x??-0xFF: larger return values perhaps?
 //
 //
 //	Current limit for these types of opcodes is 192-255 (0xC0-0xFF)
 //	This allows for the MSBs' to be used for decoding pinport opcode to this type
-//
 //
 //=============================================================================================
 //=============================================================================================
@@ -342,46 +374,57 @@
 //This is what's used to read bus after setting DDR register to input with IP() command/macro
 //Current value of PORT Determines if pullups are activated or not, pull up with HI() macro, and float with LO() macro
 //ADDR[7:0] PINA
-#define ADDR_PIN	0xC1
+#define ADDR_RD		0xC0
+//conveinence fucntion sets as input then reads
+#define ADDR_INnRD	0xC1
 //DATA[7:0] PINB
-#define DATA_PIN	0xC0
+#define DATA_RD		0xC2
+//conveinence fucntion sets as input then reads
+#define DATA_INnRD	0xC3
+
 //CTL PINC
 //Should set pin of interest to input with IP with macros prior to reading 
 //you're still allowed to read value even if some/all pins are output though
-#define CTL_PIN		0xC2
+#define CTL_RD		0xC4
 //AUX PIND
 //Should set pin of interest to input with IP with macros prior to reading 
 //you're still allowed to read value even if some/all pins are output though
-#define AUX_PIN		0xC3
+#define AUX_RD		0xC5
 
 
 //READ MCU I/O PORT OUTPUT 'PORT' REGISTERS
 //Gives means to see what pins are currently being driven (or pulled up) to.
 //ADDR[7:0] PORTA
-#define ADDR_PORT	0xC4
+#define ADDR_PORT_RD	0xC6
 //DATA[7:0] PORTB
-#define DATA_PORT	0xC5
+#define DATA_PORT_RD	0xC7
 //CTL PORTC
-#define CTL_PORT	0xC6
+#define CTL_PORT_RD	0xC8
 //AUX PORTD
-#define AUX_PORT	0xC7
+#define AUX_PORT_RD	0xC9
 
 
 //READ MCU I/O PORT DIRECTION 'DDR' REGISTERS
 //Gives means to see what pins are currently set to I/P or O/P.
 //ADDR[7:0] DDRA
-#define ADDR_DDR	0xC8
+#define ADDR_DDR_RD	0xCA
 //DATA[7:0] DDRB
-#define DATA_DDR	0xC9
+#define DATA_DDR_RD	0xCB
 //CTL DDRC
-#define CTL_DDR		0xCA
+#define CTL_DDR_RD	0xCC
 //AUX DDRD
-#define AUX_DDR		0xCB
+#define AUX_DDR_RD	0xCD
 
 
 
 //TODO consider listing AVR internal registers here..?
 //could be useful when utilizing SPI/I2C communications etc
 
+
+
+//=============================================================================================
+//	OPCODES with OPERAND and RETURN VALUE plus SUCCESS/ERROR_CODE
+//=============================================================================================
+//Not sure if want these or not...
 
 #endif
