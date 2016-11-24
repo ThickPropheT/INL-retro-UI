@@ -378,3 +378,93 @@ uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand )
 	
 	return SUCCESS;
 }
+
+
+/* Desc:Function takes an opcode and 16bit operand which was transmitted via USB
+ *	operand_MS is most significant byte, operand_LS is least significant
+ * 	then decodes it to call designated macro/function.
+ * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * Pre: Macros must be defined in firmware pinport.h
+ * 	opcode must be defined in shared_pinport.h
+ *	data bus must be free and clear
+ *	control pins must be initialized
+ *		-FF latch /OE pins set as outputs
+ *		-FF CLK pins low ready for CLK
+ *	See big CAUTION on shared_pinport.h for more details
+ * Post:Macro/function called with operand
+ *	data bus left free and clear when possible
+ *		-some opcodes diliberately drive the bus
+ * Rtn: SUCCESS if opcode found, ERR_UNKN_PP_OPCODE_16BOP if opcode not present.
+ */
+uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operand_MS, uint8_t operand_LS ) 
+{
+
+	switch (opcode) { 
+
+
+//ADDR[15:0]	(ADDRH:ADDR) 
+//Doesn't affect control signals
+//bits[13:0] are applied to NES CPU, NES PPU, and SNES address bus
+//bit[14] is only applied to CPU A14 on NES
+//bit[15] is only applied to PPU /A13 on NES
+//bit[15:14] are applied to SNES A[15:14]
+		case ADDR16_SET:
+			_DATA_OP();
+			DATA_OUT = 
+			break;
+
+//Set NES CPU ADDRESS BUS SET with /ROMSEL
+//bit 15 is decoded to enable /ROMSEL properly (aka PRG /CE)
+//bit15 is actually inverted then applied to /ROMSEL since /ROMSEL is low when NES CPU A15 is high
+//NOTE! This does NOT affect M2 (aka phi2), so carts using M2 to decode things like WRAM is dependent on last value of M2
+//This will also stop current value of PPU /A13 with bit15
+		case NCPU_ADDR_ROMSEL:
+			break;
+
+//Set NES CPU ADDRESS BUS SET with M2
+//Identical to NCPU_ADDR_ROMSEL above, but M2 (aka phi2) affected instead of /ROMSEL 
+//bit 15 is decoded to assert M2 properly
+//bit15 is actually applied directly to M2 since carts use M2 being high as part of A15=1 detection
+//NOTE! This does NOT affect /ROMSEL, so /ROMSEL is whatever value it was previously
+//This will also stop current value of PPU /A13 with bit15
+		case NCPU_ADDR_M2:
+			break;
+
+//Set NES CPU ADDRESS BUS SET with M2 & /ROMSEL 
+//Combination of opcodes above, but M2 and /ROMSEL will be asserted 
+//bit 15 is decoded to assert M2 & /ROMSEL properly
+//bit15 is actually applied directly to M2 since carts use M2 being high as part of A15=1 detection
+//NOTE! This does NOT affect /ROMSEL, so /ROMSEL is whatever value it was previously
+//This will also stop current value of PPU /A13 with bit15
+		case NCPU_ADDR_M2ROMSEL:
+			break;
+
+
+//Set NES PPU ADDRESS BUS with /A13
+//PPU address bus is 14bits wide A[13:0] so operand bits [15:14] are ignored.
+//bit 13 is inverted and applied to PPU /A13
+//PPU control signals CHR /RD and CHR /WR are unaffected
+//Note: since PPU /A13 is tied to ADDRH[7] could perform this faster by using ADDR16_SET
+//	but this opcode is convienent and ensures PPU /A13 is always inverse of PPU A13
+//	This is important for NES carts with on board CHR-ROM and VRAM for 4screen mirroring.
+		case NPPU_ADDR_SET:
+			break;
+
+
+
+		default:
+			 //macro doesn't exist
+			 return ERR_UNKN_PP_OPCODE_16BOP;
+	}
+	
+	return SUCCESS;
+}
+
+//=================================
+//24bit operand
+//=================================
+
+//ADDR[23:0]	(ADDRX:ADDRH:ADDR) SNES full address bus
+//Sets SNES 24 bit address but to value of 24bit operand
+//No control signals are modified
+//#define	ADDR24_SET	0xB0
