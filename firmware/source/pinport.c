@@ -295,6 +295,7 @@ void software_AHL_CLK()
  *		-FF latch /OE pins set as outputs
  *		-FF CLK pins low ready for CLK
  *	See big CAUTION on shared_pinport.h for more details
+ *	ADDR_OP() expected to be set
  * Post:Macro/function called with operand
  *	data bus left free and clear when possible
  *		-DATA_OPnSET diliberately drive the bus
@@ -309,11 +310,6 @@ uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand )
 		case ADDR_SET:
 			ADDR_OUT = operand;
 			break;
-		//convienent/safer sets OP then value
-		case ADDR_OPnSET:
-			_ADDR_OP();
-			ADDR_OUT = operand;
-			break;
 
 		//DATA[7:0] PORTB
 		case DATA_SET:
@@ -326,21 +322,15 @@ uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand )
 			break;
 
 		//ADDR[15:8] FLIPFLOP
-		case ADDRH_SET:
-			_DATA_OP();
-			DATA_OUT = operand;
-			_AHL_CLK();
-			_DATA_IP();
+		case ADDRH_SET: 
+			_ADDRH_SET(operand); 
 			break;
 
 		//EXPANSION FLIPFLOP
 		//NES:  ADDRX[7:0] -> EXP PORT [8:1]
 		//SNES: ADDRX[7:0] -> CPU A[23:16]
-		case ADDRX_SET:
-			_DATA_OP();
-			DATA_OUT = operand;
-			_AXL_CLK();
-			_DATA_IP();
+		case ADDRX_SET:	
+			_ADDRX_SET(operant); 
 			break;
 
 		//Set ADDR/DATA bus DDR registers with bit granularity
@@ -381,8 +371,8 @@ uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand )
 
 
 /* Desc:Function takes an opcode and 16bit operand which was transmitted via USB
- *	operand_MS is most significant byte, operand_LS is least significant
  * 	then decodes it to call designated macro/function.
+ *	operandMSB is most significant byte, operandLSB is least significant
  * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
  * Pre: Macros must be defined in firmware pinport.h
  * 	opcode must be defined in shared_pinport.h
@@ -390,67 +380,60 @@ uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand )
  *	control pins must be initialized
  *		-FF latch /OE pins set as outputs
  *		-FF CLK pins low ready for CLK
+ *	ADDR_OP() is expected to be set.
+ *	/ROMSEL and M2 expected to be OP.
  *	See big CAUTION on shared_pinport.h for more details
  * Post:Macro/function called with operand
  *	data bus left free and clear when possible
  *		-some opcodes diliberately drive the bus
+ *	ADDR_OP() is left set as default state
  * Rtn: SUCCESS if opcode found, ERR_UNKN_PP_OPCODE_16BOP if opcode not present.
  */
-uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operand_MS, uint8_t operand_LS ) 
+uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t operandLSB ) 
 {
 
 	switch (opcode) { 
 
 
-//ADDR[15:0]	(ADDRH:ADDR) 
-//Doesn't affect control signals
-//bits[13:0] are applied to NES CPU, NES PPU, and SNES address bus
-//bit[14] is only applied to CPU A14 on NES
-//bit[15] is only applied to PPU /A13 on NES
-//bit[15:14] are applied to SNES A[15:14]
+		//ADDR[15:0]	(ADDRH:ADDR) 
+		//Doesn't affect control signals
+		//bits[13:0] are applied to NES CPU, NES PPU, and SNES address bus
+		//bit[14] is only applied to CPU A14 on NES
+		//bit[15] is only applied to PPU /A13 on NES
+		//bit[15:14] are applied to SNES A[15:14]
 		case ADDR16_SET:
-			_DATA_OP();
-			DATA_OUT = 
+			_ADDRH_SET(operandMSB);
+			ADDR_OUT = operandLSB;
 			break;
 
-//Set NES CPU ADDRESS BUS SET with /ROMSEL
-//bit 15 is decoded to enable /ROMSEL properly (aka PRG /CE)
-//bit15 is actually inverted then applied to /ROMSEL since /ROMSEL is low when NES CPU A15 is high
-//NOTE! This does NOT affect M2 (aka phi2), so carts using M2 to decode things like WRAM is dependent on last value of M2
-//This will also stop current value of PPU /A13 with bit15
+		//Set NES CPU ADDRESS BUS SET with /ROMSEL
+		//bit 15 is decoded to enable /ROMSEL properly (aka PRG /CE)
+		//bit15 is actually inverted then applied to /ROMSEL since /ROMSEL is low when NES CPU A15 is high
+		//NOTE! This does NOT affect M2 (aka phi2), so carts using M2 to decode things like WRAM is dependent on last value of M2
+		//This will also stop current value of PPU /A13 with bit15
 		case NCPU_ADDR_ROMSEL:
+			_ADDRH_SET(operandMSB);
+			ADDR_OUT = operandLSB;
+			//if $8000 or higher
+			if (operandMSB >= 0x80) _ROMSEL_LO();
+			//else $7FFF or lower
+			else _ROMSEL_HI();
 			break;
 
-//Set NES CPU ADDRESS BUS SET with M2
-//Identical to NCPU_ADDR_ROMSEL above, but M2 (aka phi2) affected instead of /ROMSEL 
-//bit 15 is decoded to assert M2 properly
-//bit15 is actually applied directly to M2 since carts use M2 being high as part of A15=1 detection
-//NOTE! This does NOT affect /ROMSEL, so /ROMSEL is whatever value it was previously
-//This will also stop current value of PPU /A13 with bit15
-		case NCPU_ADDR_M2:
-			break;
-
-//Set NES CPU ADDRESS BUS SET with M2 & /ROMSEL 
-//Combination of opcodes above, but M2 and /ROMSEL will be asserted 
-//bit 15 is decoded to assert M2 & /ROMSEL properly
-//bit15 is actually applied directly to M2 since carts use M2 being high as part of A15=1 detection
-//NOTE! This does NOT affect /ROMSEL, so /ROMSEL is whatever value it was previously
-//This will also stop current value of PPU /A13 with bit15
-		case NCPU_ADDR_M2ROMSEL:
-			break;
-
-
-//Set NES PPU ADDRESS BUS with /A13
-//PPU address bus is 14bits wide A[13:0] so operand bits [15:14] are ignored.
-//bit 13 is inverted and applied to PPU /A13
-//PPU control signals CHR /RD and CHR /WR are unaffected
-//Note: since PPU /A13 is tied to ADDRH[7] could perform this faster by using ADDR16_SET
-//	but this opcode is convienent and ensures PPU /A13 is always inverse of PPU A13
-//	This is important for NES carts with on board CHR-ROM and VRAM for 4screen mirroring.
+		//Set NES PPU ADDRESS BUS with /A13
+		//PPU address bus is 14bits wide A[13:0] so operand bits [15:14] are ignored.
+		//bit 13 is inverted and applied to PPU /A13
+		//PPU control signals CHR /RD and CHR /WR are unaffected
+		//Note: since PPU /A13 is tied to ADDRH[7] could perform this faster by using ADDR16_SET
+		//	but this opcode is convienent and ensures PPU /A13 is always inverse of PPU A13
+		//	This is important for NES carts with on board CHR-ROM and VRAM for 4screen mirroring.
 		case NPPU_ADDR_SET:
+			ADDR_OUT = operandLSB;
+			// below PPU $2000, A13 clear, SET PPU /A13
+			if (operandMSB < 0x20) _ADDRH_SET(operandMSB & PPU_A13N);
+			// above PPU $1FFF, A13 set, PPU /A13 already clear in operandMSB
+			else _ADDRH_SET(operandMSB); 
 			break;
-
-
 
 		default:
 			 //macro doesn't exist
@@ -460,11 +443,112 @@ uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operand_MS, uint8_t 
 	return SUCCESS;
 }
 
-//=================================
-//24bit operand
-//=================================
+/* Desc:Function takes an opcode and 24bit operand which was transmitted via USB
+ * 	then decodes it to call designated macro/function.
+ *	operandMSB is most signf byte, operandMID is center, operandLSB is least significant
+ * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * Pre: Macros must be defined in firmware pinport.h
+ * 	opcode must be defined in shared_pinport.h
+ *	data bus must be free and clear
+ *	control pins must be initialized
+ *		-FF latch /OE pins set as outputs
+ *		-FF CLK pins low ready for CLK
+ *	ADDR_OP() is expected to be set.
+ *	See big CAUTION on shared_pinport.h for more details
+ * Post:Macro/function called with operand
+ *	data bus left free and clear when possible
+ *		-some opcodes may diliberately drive the bus
+ *	ADDR_OP() is left set as default state
+ * Rtn: SUCCESS if opcode found, ERR_UNKN_PP_OPCODE_24BOP if opcode not present.
+ */
+uint8_t pinport_opcode_24b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t operandMID, uint8_t operandLSB ) 
+{
 
-//ADDR[23:0]	(ADDRX:ADDRH:ADDR) SNES full address bus
-//Sets SNES 24 bit address but to value of 24bit operand
-//No control signals are modified
-//#define	ADDR24_SET	0xB0
+	switch (opcode) { 
+
+		//ADDR[23:0]	(ADDRX:ADDRH:ADDR) SNES full address bus
+		//Sets SNES 24 bit address but to value of 24bit operand
+		//No control signals are modified
+		case ADDR24_SET:
+			ADDR_OUT = operandLSB;
+			_DATA_OP();
+			DATA_OUT = operandMID;
+			_CLK_AHL();
+			DATA_OUT = operandMSB;
+			_CLK_AXL();
+			DATA_IP();
+			break;
+
+		default:
+			 //macro doesn't exist
+			 return ERR_UNKN_PP_OPCODE_24BOP;
+	}
+	
+	return SUCCESS;
+}
+
+
+/* Desc:Function takes an opcode and pointer to return value byte
+ * 	then decodes it to retreive value.
+ * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * Pre: Macros must be defined in firmware pinport.h
+ * 	opcode must be defined in shared_pinport.h
+ *	See big CAUTION on shared_pinport.h for more details
+ * Post:pointer updated to value designated by opcode.
+ * Rtn: SUCCESS if opcode found, ERR_UNKN_PP_OPCODE_8BRV if opcode not present.
+ */
+uint8_t pinport_opcode_8b_return( uint8_t opcode, uint8_t *rvalue ) 
+{
+
+	switch (opcode) { 
+
+		//READ MCU I/O PORT INPUT 'PIN' REGISTERS
+		//ADDR[7:0] PINA
+		case ADDR_RD:
+			rvalue = ADDR_IN;
+		//DATA[7:0] PINB
+		case DATA_RD:
+			rvalue = DATA_IN;
+		//CTL PINC
+		case CTL_RD:
+			rvalue = CTL_IN;
+		//AUX PIND
+		case AUX_RD:	
+			rvalue = AUX_IN;
+
+
+		//READ MCU I/O PORT OUTPUT 'PORT' REGISTERS
+		//ADDR[7:0] PORTA
+		case ADDR_PORT_RD:
+			rvalue = ADDR_OUT;
+		//DATA[7:0] PORTB
+		case DATA_PORT_RD:
+			rvalue = DATA_OUT;
+		//CTL PORTC
+		case CTL_PORT_RD:
+			rvalue = CTL_OUT;
+		//AUX PORTD
+		case AUX_PORT_RD:
+			rvalue = AUX_OUT;
+
+
+		//READ MCU I/O PORT DIRECTION 'DDR' REGISTERS
+		//ADDR[7:0] DDRA
+		case ADDR_DDR_RD:
+			rvalue = ADDR_DDR;
+		//DATA[7:0] DDRB
+		case DATA_DDR_RD:
+			rvalue = DATA_DDR:
+		//CTL DDRC
+		case CTL_DDR_RD:
+			rvalue = CTL_DDR;
+		//AUX DDRD
+		case AUX_DDR_RD:
+			rvalue = AUX_DDR;
+
+		default:
+			 //macro doesn't exist
+			 return ERR_UNKN_PP_OPCODE_8BRV;
+	}
+	return SUCCESS;
+}

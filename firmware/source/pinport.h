@@ -6,6 +6,8 @@
 
 uint8_t pinport_opcode_only( uint8_t opcode );
 uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand );
+uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t operandLSB ) 
+uint8_t pinport_opcode_24b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t operandMID, uint8_t operandLSB ) 
 void software_AHL_CLK();
 void software_AXL_CLK();
 
@@ -399,6 +401,15 @@ void software_AXL_CLK();
 #define _EXPFF_OP()	_XOE_lo();
 #define _EXPFF_FLT()	_XOE_hi();
 #endif
+
+//clocks must be initialized, Data bus clear
+#define _ADDRH_SET(oper) _DATA_OP(); DATA_OUT = oper; _AHL_CLK(); _DATA_IP();
+#define _ADDRX_SET(oper) _DATA_OP(); DATA_OUT = oper; _AXL_CLK(); _DATA_IP();
+
+//PPU A13 is ADDRH bit 5
+#define PPU_A13  0x20
+//PPU /A13 is ADDRH bit 7
+#define PPU_A13N 0x80
 
 
 #endif

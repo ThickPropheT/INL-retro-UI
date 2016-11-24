@@ -217,6 +217,9 @@
 //			ie driving PPU /A13 will be fed back to CIRAM /CE so it needs to be IP
 //		-if in doubt, leave it as input with pull up, atleast that shouldn't break anything
 //
+//		-ADDR_OP is default state, these opcodes assume it to be set as it shouldn't conflict
+//		-/ROMSEL & M2 expected to be set as outputs
+//
 //
 //=============================================================================================
 //=============================================================================================
@@ -228,9 +231,9 @@
 //	OPCODES WITH OPERAND and no return value besides SUCCESS/ERROR_CODE
 //=============================================================================================
 //	0x80-0x9F: opcodes with 8bit operand
-//		0x80-8B are only ones currently in use
+//		0x80-8A are only ones currently in use
 //	0xA0-0xAF: opcodes with 16bit operand
-//		0xA0-A4 are only ones currently in use
+//		0xA0-A2 are only ones currently in use
 //	0xB0-0xBF: opcodes with 24bit operand
 //		0xA0 is currently only one in use
 //
@@ -249,13 +252,11 @@
 
 //ADDR[7:0] PORTA
 #define ADDR_SET	0x80
-//conveinent/safe yet slower function that sets ADDR as OP then sets value
-#define ADDR_OPnSET	0x81
 
 //DATA[7:0] PORTB
-#define DATA_SET	0x82
+#define DATA_SET	0x81
 //conveinent/safe yet slower function that sets ADDR as OP then sets value
-#define DATA_OPnSET	0x83
+#define DATA_OPnSET	0x82
 
 //ADDR[15:8] FLIPFLOP
 //NES CPU: ADDRH[6:0] -> CPU A[14:8]
@@ -264,27 +265,27 @@
 //	   ADDRH[6]   -> NC on PPU side
 //	   ADDRH[7]   -> PPU /A13 (which drives CIRAM /CE on most carts "2-screen mirroring")
 //SNES:    ADDRH[7:0] -> CPU A[15:8]
-#define ADDRH_SET	0x84
+#define ADDRH_SET	0x83
 
 //EXPANSION FLIPFLOP
 //NES:  ADDRX[7:0] -> EXP PORT [8:1]
 //SNES: ADDRX[7:0] -> CPU A[23:16]
-#define ADDRX_SET	0x85
+#define ADDRX_SET	0x84
 
 //Set ADDR/DATA bus DDR registers with bit granularity
 //	OP() IP() macros affect entire 8bit port's direction
 //	Each pin can be controlled individually though
 //	This could be useful for advanced feature that doesn't treat DATA/ADDR as byte wide port.
-#define ADDR_DDR_SET	0x86
-#define DATA_DDR_SET	0x87
+#define ADDR_DDR_SET	0x85
+#define DATA_DDR_SET	0x86
 //Perhaps it will be useful to have this function on other ports as well
 //But probably wouldn't be very useful if standard carts are plugged in..
 //AUX port operations will shield USB pins from being affected
 //defined as lower case because you shouldn't call these unless you *Really* know what you're doing..
-#define ctl_ddr_set	0x88
-#define aux_ddr_set	0x89
-#define ctl_port_set	0x8A
-#define aux_port_set	0x8B
+#define ctl_ddr_set	0x87
+#define aux_ddr_set	0x88
+#define ctl_port_set	0x89
+#define aux_port_set	0x8A
 
 //TODO consider listing AVR internal registers here..?
 //could be useful when utilizing SPI/I2C communications etc
@@ -310,22 +311,6 @@
 //This will also stop current value of PPU /A13 with bit15
 #define NCPU_ADDR_ROMSEL 0xA1
 
-//Set NES CPU ADDRESS BUS SET with M2
-//Identical to NCPU_ADDR_ROMSEL above, but M2 (aka phi2) affected instead of /ROMSEL 
-//bit 15 is decoded to assert M2 properly
-//bit15 is actually applied directly to M2 since carts use M2 being high as part of A15=1 detection
-//NOTE! This does NOT affect /ROMSEL, so /ROMSEL is whatever value it was previously
-//This will also stop current value of PPU /A13 with bit15
-#define NCPU_ADDR_M2 	 0xA2
-
-//Set NES CPU ADDRESS BUS SET with M2 & /ROMSEL 
-//Combination of opcodes above, but M2 and /ROMSEL will be asserted 
-//bit 15 is decoded to assert M2 & /ROMSEL properly
-//bit15 is actually applied directly to M2 since carts use M2 being high as part of A15=1 detection
-//NOTE! This does NOT affect /ROMSEL, so /ROMSEL is whatever value it was previously
-//This will also stop current value of PPU /A13 with bit15
-#define NCPU_ADDR_M2ROMSEL 0xA3
-
 //TODO consider opcode that preserves PPU /A13 instead of stomping it like the opcodes above.  
 //Can't think of why this would be useful so ignoring for now
 //One reason might be to keep VRAM silent on a NES board with 4screen mirroring..
@@ -338,10 +323,8 @@
 //Note: since PPU /A13 is tied to ADDRH[7] could perform this faster by using ADDR16_SET
 //	but this opcode is convienent and ensures PPU /A13 is always inverse of PPU A13
 //	This is important for NES carts with on board CHR-ROM and VRAM for 4screen mirroring.
-#define NPPU_ADDR_SET	0xA4
+#define NPPU_ADDR_SET	0xA2
 
-//TODO consider opcode that sets PPU A[12:0] and maintains previous value of A13 & /A13
-//might be useful if trying to latch/clock CHR memory with it's /CE pin instead of /OE /WE
 
 //=================================
 //24bit operand
@@ -358,7 +341,7 @@
 //	OPCODES with NO OPERAND but have RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================
 //	0xC0-0xFF: opcodes with 8bit return value (plus SuCCESS/ERROR)
-//		0xC0-CD are only ones currently in use
+//		0xC0-CB are only ones currently in use
 //
 //	0x??-0xFF: larger return values perhaps?
 //
@@ -375,45 +358,40 @@
 //Current value of PORT Determines if pullups are activated or not, pull up with HI() macro, and float with LO() macro
 //ADDR[7:0] PINA
 #define ADDR_RD		0xC0
-//conveinence fucntion sets as input then reads
-#define ADDR_INnRD	0xC1
 //DATA[7:0] PINB
-#define DATA_RD		0xC2
-//conveinence fucntion sets as input then reads
-#define DATA_INnRD	0xC3
-
+#define DATA_RD		0xC1
 //CTL PINC
 //Should set pin of interest to input with IP with macros prior to reading 
 //you're still allowed to read value even if some/all pins are output though
-#define CTL_RD		0xC4
+#define CTL_RD		0xC2
 //AUX PIND
 //Should set pin of interest to input with IP with macros prior to reading 
 //you're still allowed to read value even if some/all pins are output though
-#define AUX_RD		0xC5
+#define AUX_RD		0xC3
 
 
 //READ MCU I/O PORT OUTPUT 'PORT' REGISTERS
 //Gives means to see what pins are currently being driven (or pulled up) to.
 //ADDR[7:0] PORTA
-#define ADDR_PORT_RD	0xC6
+#define ADDR_PORT_RD	0xC4
 //DATA[7:0] PORTB
-#define DATA_PORT_RD	0xC7
+#define DATA_PORT_RD	0xC5
 //CTL PORTC
-#define CTL_PORT_RD	0xC8
+#define CTL_PORT_RD	0xC6
 //AUX PORTD
-#define AUX_PORT_RD	0xC9
+#define AUX_PORT_RD	0xC7
 
 
 //READ MCU I/O PORT DIRECTION 'DDR' REGISTERS
 //Gives means to see what pins are currently set to I/P or O/P.
 //ADDR[7:0] DDRA
-#define ADDR_DDR_RD	0xCA
+#define ADDR_DDR_RD	0xC8
 //DATA[7:0] DDRB
-#define DATA_DDR_RD	0xCB
+#define DATA_DDR_RD	0xC9
 //CTL DDRC
-#define CTL_DDR_RD	0xCC
+#define CTL_DDR_RD	0xCA
 //AUX DDRD
-#define AUX_DDR_RD	0xCD
+#define AUX_DDR_RD	0xCB
 
 
 
