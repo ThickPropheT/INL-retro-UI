@@ -48,10 +48,10 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
 	switch(spacket->bRequest) {
 		case REQ_LED_ON:
-			LED_ON(); //from macros
+			_LED_ON(); //from macros
 			break;
 		case REQ_LED_OFF:
-			LED_OFF();
+			_LED_OFF();
 			break;
 		default:
 			return 1;
@@ -128,9 +128,9 @@ int main()
 	io_pullup();
 
 	//configure LED PORT/DDR
-	LED_OP();
+	_LED_OP();
 	//boot with LED on to differentiate bettwen BL/RUN
-	LED_ON();
+	_LED_ON();
         
 	//enable interrupts
 	sei();

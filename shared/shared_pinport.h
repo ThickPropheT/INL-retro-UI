@@ -1,34 +1,32 @@
-#ifndef _pinport_h
-#define _pinport_h
+#ifndef _shared_pinport_h
+#define _shared_pinport_h
 
 //This file was created based on firmware version of pinport.h and pinport.c
 //the close relationship between these two files must be kept in mind when making changes.
 //This file is also very dependent on macro definitions in firmware.
 //Any changes to this file must be applied to firmware.
 //Don't recommend changing opcodes or anything here, change them in fw first then apply here.
+//making this a shared file helps cut room for error as changing opcode numbers here will
+//inherently get forwarded to both firmware and app at same time.
 
-	//these should be simple macros only for now
-	//ie only changes one pin/port, macro doesn't call other macros yet
-	//made exception to this rule for EXP0 since doesn't vary on board versions
-	//switch (opcode) { 
 //============================
 //ADDR[7:0] PORTA
 //============================
 //DDR-PORT MACROS
-#define ADDR_IP	0
-#define ADDR_OP	1
-#define ADDR_LO	2
-#define ADDR_HI 3
+#define 	ADDR_IP	0
+#define 	ADDR_OP	1
+#define 	ADDR_LO	2
+#define 	ADDR_HI 3
 			
 			
 //============================
 //DATA[7:0] PORTB
 //============================
 //DDR-PORT MACROS
-#define DATA_IP	4
-#define DATA_OP	5
-#define DATA_LO	6
-#define DATA_HI	7
+#define 	DATA_IP	4
+#define 	DATA_OP	5
+#define 	DATA_LO	6
+#define 	DATA_HI	7
 		
 		
 //============================
@@ -51,10 +49,12 @@
 #define 	ROMSEL_LO 17
 #define 	ROMSEL_HI 18
 
-#define 	CICE_IP	19
-#define 	CICE_OP	20
-#define 	CICE_LO	21
-#define 	CICE_HI	22
+//accidentally doubly defined...
+//having this shared .h file helped as the compiler points out these issues...
+//#define 	CICE_IP	19
+//#define 	CICE_OP	20
+//#define 	CICE_LO	21
+//#define 	CICE_HI	22
 		
 #define 	PRGRW_IP 23
 #define 	PRGRW_OP 24
@@ -114,13 +114,13 @@
 		
 //PIN MACROS
 //lower case aren't meant to be called unless certain pin is 5v tolerant
-#define 	EXP0_ip	58
-#define 	EXP0_op	59
-#define 	EXP0_lo	60	//Don't call this assuming EXP0 DDR is set to o/p
-#define 	EXP0_hi	61	//Don't call this unless you're certain pin is 5v tolerant
+#define 	EXP0_ip  58
+#define 	EXP0_op  59
+#define 	EXP0_lo  60	//Don't call this assuming EXP0 DDR is set to o/p
+#define 	EXP0_hi  61	//Don't call this unless you're certain pin is 5v tolerant
 //User options pull up, force low, and float
-#define 	EXP0_LO	62	//Sets low then DDR to o/p
-#define 	EXP0_PU	63	//maybe add some NOP(); to allow time for pull up
+#define 	EXP0_LO  62	//Sets low then DDR to o/p
+#define 	EXP0_PU  63	//maybe add some NOP(); to allow time for pull up
 #define 	EXP0_FLT 64	//Set to i/p w/o pullup
 		
 #define		LED_IP	65

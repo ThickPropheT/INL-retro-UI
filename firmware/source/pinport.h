@@ -1,7 +1,7 @@
 #include <avr/io.h>
 #include "logic.h"
 
-uint8_t pinport_macro( uint8_t opcode );
+uint8_t pinport_opcode2macro( uint8_t opcode );
 void software_AHL_CLK();
 void software_AXL_CLK();
 
@@ -158,6 +158,13 @@ void software_AXL_CLK();
 //
 
 
+//Firmware macro "functions" have underscore prefix
+//opcode macros have identical name but without the prefix
+//Haven't decided if PIN/PORT macros should be given underscore as well.
+//	Good chance I will want them with _ when writing read functions
+//	Easier to add them than take them out maybe..?
+//Current rule is _ goes with () type macro
+
 
 //============================
 //ADDR[7:0] PORTA
@@ -167,10 +174,10 @@ void software_AXL_CLK();
 #define ADDR_IN		PINA
 #define ADDR_DDR	DDRA
 //DDR-PORT MACROS
-#define ADDR_IP()	ADDR_DDR = LO
-#define ADDR_OP()	ADDR_DDR = HI
-#define ADDR_LO()	ADDR_OUT = LO
-#define ADDR_HI()	ADDR_OUT = HI
+#define _ADDR_IP()	ADDR_DDR = LO
+#define _ADDR_OP()	ADDR_DDR = HI
+#define _ADDR_LO()	ADDR_OUT = LO
+#define _ADDR_HI()	ADDR_OUT = HI
 
 
 //============================
@@ -181,10 +188,10 @@ void software_AXL_CLK();
 #define DATA_IN		PINB
 #define DATA_DDR	DDRB
 //DDR-PORT MACROS
-#define DATA_IP()	DATA_DDR = LO
-#define DATA_OP()	DATA_DDR = HI
-#define DATA_LO()	DATA_OUT = LO
-#define DATA_HI()	DATA_OUT = HI
+#define _DATA_IP()	DATA_DDR = LO
+#define _DATA_OP()	DATA_DDR = HI
+#define _DATA_LO()	DATA_OUT = LO
+#define _DATA_HI()	DATA_OUT = HI
 
 
 //============================
@@ -195,10 +202,10 @@ void software_AXL_CLK();
 #define CTL_IN		PINC
 #define CTL_DDR		DDRC
 //DDR-PORT MACROS
-#define CTL_IP()	CTL_DDR = LO
+#define _CTL_IP()	CTL_DDR = LO
 // No CTL_OP() macro as some of these are inputs or bidir, best to individually assert as output
-#define CTL_LO()	CTL_OUT = LO
-#define CTL_HI()	CTL_OUT = HI
+#define _CTL_LO()	CTL_OUT = LO
+#define _CTL_HI()	CTL_OUT = HI
 
 //PIN DEFN
 #define M2	PC0	//NES, FC, & SNES (SYSCLK)
@@ -222,75 +229,70 @@ void software_AXL_CLK();
 #endif
 
 //PIN MACROS
-#define	M2_IP()		CTL_DDR	&= ~(1<<M2)
-#define	M2_OP()		CTL_DDR	|=  (1<<M2)
-#define M2_LO()		CTL_OUT &= ~(1<<M2)
-#define M2_HI()		CTL_OUT |=  (1<<M2)
+#define	_M2_IP()	CTL_DDR	&= ~(1<<M2)
+#define	_M2_OP()	CTL_DDR	|=  (1<<M2)
+#define _M2_LO()	CTL_OUT &= ~(1<<M2)
+#define _M2_HI()	CTL_OUT |=  (1<<M2)
 //TODO read M2 PIN as input
 
-#define ROMSEL_IP()	CTL_DDR &= ~(1<<ROMSEL)
-#define ROMSEL_OP()	CTL_DDR |=  (1<<ROMSEL)
-#define ROMSEL_LO()	CTL_OUT &= ~(1<<ROMSEL)
-#define ROMSEL_HI()	CTL_OUT |=  (1<<ROMSEL)
+#define _ROMSEL_IP()	CTL_DDR &= ~(1<<ROMSEL)
+#define _ROMSEL_OP()	CTL_DDR |=  (1<<ROMSEL)
+#define _ROMSEL_LO()	CTL_OUT &= ~(1<<ROMSEL)
+#define _ROMSEL_HI()	CTL_OUT |=  (1<<ROMSEL)
 
-#define CICE_IP()	CTL_DDR &= ~(1<<CICE)
-#define CICE_OP()	CTL_DDR |=  (1<<CICE)
-#define CICE_LO()	CTL_OUT &= ~(1<<CICE)
-#define CICE_HI()	CTL_OUT |=  (1<<CICE)
-
-#define PRGRW_IP()	CTL_DDR &= ~(1<<PRGRW)
-#define PRGRW_OP()	CTL_DDR |=  (1<<PRGRW)
-#define PRGRW_WR()	CTL_OUT &= ~(1<<PRGRW)	//LO for writes
-#define PRGRW_RD()	CTL_OUT |=  (1<<PRGRW)	//HI for reads
+#define _PRGRW_IP()	CTL_DDR &= ~(1<<PRGRW)
+#define _PRGRW_OP()	CTL_DDR |=  (1<<PRGRW)
+#define _PRGRW_WR()	CTL_OUT &= ~(1<<PRGRW)	//LO for writes
+#define _PRGRW_RD()	CTL_OUT |=  (1<<PRGRW)	//HI for reads
 
 #ifdef PURPLE_KAZZO
-#define p_AXL_ip()	CTL_DDR &= ~(1<<p_AXL)	//Don't use these, use software tied together versions instead.
-#define p_AXL_op()	CTL_DDR |=  (1<<p_AXL)	//Increases compatibility between versions
-#define p_AXL_lo()	CTL_OUT &= ~(1<<p_AXL)	//Don't recommend calling lo/hi, use CLK instead
-#define p_AXL_hi()	CTL_OUT |=  (1<<p_AXL)
-//AXL_CLK assumes AXL was previously left in default low state
-#define AXL_CLK()	p_AXL_hi(); p_AXL_lo();	//same name and convention on final design
+#define _p_AXL_ip()	CTL_DDR &= ~(1<<p_AXL)	//Don't use these, use software tied together versions instead.
+#define _p_AXL_op()	CTL_DDR |=  (1<<p_AXL)	//Increases compatibility between versions
+#define _p_AXL_lo()	CTL_OUT &= ~(1<<p_AXL)	//Don't recommend calling lo/hi, use CLK instead
+#define _p_AXL_hi()	CTL_OUT |=  (1<<p_AXL)
+//_AXL_CLK assumes AXL was previously left in default low state
+#define _AXL_CLK()	_p_AXL_hi(); _p_AXL_lo();	//same name and convention on final design
 #else	//Green and final design
-#define FREE_IP()	CTL_DDR &= ~(1<<FREE)
-#define FREE_OP()	CTL_DDR |=  (1<<FREE)
-#define FREE_LO()	CTL_OUT &= ~(1<<FREE)
-#define FREE_HI()	CTL_OUT |=  (1<<FREE)
+#define _FREE_IP()	CTL_DDR &= ~(1<<FREE)
+#define _FREE_OP()	CTL_DDR |=  (1<<FREE)
+#define _FREE_LO()	CTL_OUT &= ~(1<<FREE)
+#define _FREE_HI()	CTL_OUT |=  (1<<FREE)
 #endif
 
-#define CSRD_IP()	CTL_DDR &= ~(1<<CSRD)
-#define CSRD_OP()	CTL_DDR |=  (1<<CSRD)
-#define CSRD_LO()	CTL_OUT &= ~(1<<CSRD)
-#define CSRD_HI()	CTL_OUT |=  (1<<CSRD)
+#define _CSRD_IP()	CTL_DDR &= ~(1<<CSRD)
+#define _CSRD_OP()	CTL_DDR |=  (1<<CSRD)
+#define _CSRD_LO()	CTL_OUT &= ~(1<<CSRD)
+#define _CSRD_HI()	CTL_OUT |=  (1<<CSRD)
 
-#define CSWR_IP()	CTL_DDR &= ~(1<<CSWR)
-#define CSWR_OP()	CTL_DDR |=  (1<<CSWR)
-#define CSWR_LO()	CTL_OUT &= ~(1<<CSWR)
-#define CSWR_HI()	CTL_OUT |=  (1<<CSWR)
+#define _CSWR_IP()	CTL_DDR &= ~(1<<CSWR)
+#define _CSWR_OP()	CTL_DDR |=  (1<<CSWR)
+#define _CSWR_LO()	CTL_OUT &= ~(1<<CSWR)
+#define _CSWR_HI()	CTL_OUT |=  (1<<CSWR)
 
-#define CICE_IP()	CTL_DDR &= ~(1<<CICE)
-#define CICE_OP()	CTL_DDR |=  (1<<CICE)
-#define CICE_LO()	CTL_OUT &= ~(1<<CICE)
-#define CICE_HI()	CTL_OUT |=  (1<<CICE)
+#define _CICE_IP()	CTL_DDR &= ~(1<<CICE)
+#define _CICE_OP()	CTL_DDR |=  (1<<CICE)
+#define _CICE_LO()	CTL_OUT &= ~(1<<CICE)
+#define _CICE_HI()	CTL_OUT |=  (1<<CICE)
 
 #ifdef GREEN_KAZZO
-#define g_AXHL_IP()	CTL_DDR &= ~(1<<g_AXHL)
-#define g_AXHL_OP()	CTL_DDR |=  (1<<g_AXHL)
-#define g_AXHL_lo()	CTL_OUT &= ~(1<<g_AXHL)	//Don't recommend calling these as AXHL should be left low
-#define g_AXHL_hi()	CTL_OUT |=  (1<<g_AXHL)	//That way AXHL_CLK(); is always effective
-#define AXHL_CLK()	g_AXHL_hi(); g_AXHL_lo();	
-#define AHL_CLK()	software_AHL_CLK();
-#define AXL_CLK()	software_AXL_CLK();
+#define _g_AXHL_IP()	CTL_DDR &= ~(1<<g_AXHL)
+#define _g_AXHL_OP()	CTL_DDR |=  (1<<g_AXHL)
+#define _g_AXHL_lo()	CTL_OUT &= ~(1<<g_AXHL)	//Don't recommend calling these as AXHL should be left low
+#define _g_AXHL_hi()	CTL_OUT |=  (1<<g_AXHL)	//That way _AXHL_CLK(); is always effective
+#define _AXHL_CLK()	_g_AXHL_hi(); _g_AXHL_lo();	
+#define _AHL_CLK()	software_AHL_CLK();
+#define _AXL_CLK()	software_AXL_CLK();
 //can ~safely consider this pin as if it were only AHL due to software AHL/AXL CLK
-#define AHL_IP()	g_AXHL_IP();	
-#define AHL_OP()	g_AXHL_OP();
-#define AHL_lo()	g_AXHL_lo();
-#define AHL_hi()	g_AXHL_hi();
+#define _AHL_IP()	_g_AXHL_IP();	
+#define _AHL_OP()	_g_AXHL_OP();
+#define _AHL_lo()	_g_AXHL_lo();
+#define _AHL_hi()	_g_AXHL_hi();
 #else	//purple and final design
-#define AHL_IP()	CTL_DDR &= ~(1<<AHL)
-#define AHL_OP()	CTL_DDR |=  (1<<AHL)
-#define AHL_lo()	CTL_OUT &= ~(1<<AHL)	//Don't recommend calling these as AHL should be left low
-#define AHL_hi()	CTL_OUT |=  (1<<AHL)	//That way AHL_CLK(); is always effective
-#define AHL_CLK()	AHL_hi(); AHL_lo();
+#define _AHL_IP()	CTL_DDR &= ~(1<<AHL)
+#define _AHL_OP()	CTL_DDR |=  (1<<AHL)
+#define _AHL_lo()	CTL_OUT &= ~(1<<AHL)	//Don't recommend calling these as AHL should be left low
+#define _AHL_hi()	CTL_OUT |=  (1<<AHL)	//That way _AHL_CLK(); is always effective
+#define _AHL_CLK()	_AHL_hi(); _AHL_lo();
 #endif
 
 //green board software AXL & AHL are separated in software in pinport.c
@@ -303,10 +305,10 @@ void software_AXL_CLK();
 #define AUX_IN		PIND
 #define AUX_DDR		DDRD
 //DDR-PORT MACROS
-#define AUX_IP()	AUX_DDR  &=  ((1<<USBP) | (1<<USBM))	//Don't touch USB pins!!!
+#define _AUX_IP()	AUX_DDR  &=  ((1<<USBP) | (1<<USBM))	//Don't touch USB pins!!!
 // No AUX_OP() macro as many of these are inputs or bidir, best to individually assert as output
-#define AUX_LO()	AUX_OUT  &=  ((1<<USBP) | (1<<USBM))
-#define AUX_HI()	AUX_OUT  |= ~((1<<USBP) | (1<<USBM))
+#define _AUX_LO()	AUX_OUT  &=  ((1<<USBP) | (1<<USBM))
+#define _AUX_HI()	AUX_OUT  |= ~((1<<USBP) | (1<<USBM))
 
 //PIN DEFN
 #define EXP0	PD0	//NES EXP0 controls a number of varying flash cart features...
@@ -335,61 +337,61 @@ void software_AXL_CLK();
 
 //PIN MACROS
 //lower case aren't meant to be called unless certain pin is 5v tolerant
-#define	EXP0_ip()	AUX_DDR	&=  ~(1<<EXP0)
-#define	EXP0_op()	AUX_DDR	|=  (1<<EXP0)
-#define EXP0_lo()	AUX_OUT &=  ~(1<<EXP0)	//Don't call this assuming EXP0 DDR is set to o/p
-#define EXP0_hi()	AUX_OUT |=  (1<<EXP0)	//Don't call this unless you're certain pin is 5v tolerant
+#define	_EXP0_ip()	AUX_DDR	&=  ~(1<<EXP0)
+#define	_EXP0_op()	AUX_DDR	|=  (1<<EXP0)
+#define _EXP0_lo()	AUX_OUT &=  ~(1<<EXP0)	//Don't call this assuming EXP0 DDR is set to o/p
+#define _EXP0_hi()	AUX_OUT |=  (1<<EXP0)	//Don't call this unless you're certain pin is 5v tolerant
 //User options pull up, force low, and float
-#define EXP0_LO()	EXP0_lo(); EXP0_op();	//Sets low then DDR to o/p
-#define EXP0_PU()	EXP0_ip(); EXP0_hi();	//maybe add some NOP() to allow time for pull up
-#define EXP0_FLT()	EXP0_ip(); EXP0_lo();	//Set to i/p w/o pullup
+#define _EXP0_LO()	_EXP0_lo(); _EXP0_op();	//Sets low then DDR to o/p
+#define _EXP0_PU()	_EXP0_ip(); _EXP0_hi();	//maybe add some NOP() to allow time for pull up
+#define _EXP0_FLT()	_EXP0_ip(); _EXP0_lo();	//Set to i/p w/o pullup
 
 
-#define	LED_IP()	AUX_DDR	&= ~(1<<LED)
-#define	LED_OP()	AUX_DDR	|=  (1<<LED)
-#define LED_OFF()	AUX_OUT &= ~(1<<LED)
-#define LED_ON()	AUX_OUT |=  (1<<LED)
+#define	_LED_IP()	AUX_DDR	&= ~(1<<LED)
+#define	_LED_OP()	AUX_DDR	|=  (1<<LED)
+#define _LED_OFF()	AUX_OUT &= ~(1<<LED)
+#define _LED_ON()	AUX_OUT |=  (1<<LED)
 
-#define	IRQ_IP()	AUX_DDR	&= ~(1<<IRQ)
-#define	IRQ_OP()	AUX_DDR	|=  (1<<IRQ)
-#define IRQ_LO()	AUX_OUT &= ~(1<<IRQ)
-#define IRQ_HI()	AUX_OUT |=  (1<<IRQ)
+#define	_IRQ_IP()	AUX_DDR	&= ~(1<<IRQ)
+#define	_IRQ_OP()	AUX_DDR	|=  (1<<IRQ)
+#define _IRQ_LO()	AUX_OUT &= ~(1<<IRQ)
+#define _IRQ_HI()	AUX_OUT |=  (1<<IRQ)
 
-#define	CIA10_IP()	AUX_DDR	&= ~(1<<CIA10)
-#define	CIA10_OP()	AUX_DDR	|=  (1<<CIA10)
-#define CIA10_LO()	AUX_OUT &= ~(1<<CIA10)
-#define CIA10_HI()	AUX_OUT |=  (1<<CIA10)
+#define	_CIA10_IP()	AUX_DDR	&= ~(1<<CIA10)
+#define	_CIA10_OP()	AUX_DDR	|=  (1<<CIA10)
+#define _CIA10_LO()	AUX_OUT &= ~(1<<CIA10)
+#define _CIA10_HI()	AUX_OUT |=  (1<<CIA10)
 
-#define	BL_IP()		AUX_DDR	&= ~(1<<BL)
-#define	BL_OP()		AUX_DDR	|=  (1<<BL)
-#define BL_LO()		AUX_OUT &= ~(1<<BL)
-#define BL_HI()		AUX_OUT |=  (1<<BL)
+#define	_BL_IP()	AUX_DDR	&= ~(1<<BL)
+#define	_BL_OP()	AUX_DDR	|=  (1<<BL)
+#define _BL_LO()	AUX_OUT &= ~(1<<BL)
+#define _BL_HI()	AUX_OUT |=  (1<<BL)
 
 #ifndef pg_XOE	//FINAL_DESIGN
-#define	AXLOE_IP()	AUX_DDR	&= ~(1<<AXLOE)
-#define	AXLOE_OP()	AUX_DDR	|=  (1<<AXLOE)
-#define EXPFF_OP()	AUX_OUT &= ~(1<<AXLOE)	//FF /OE pin low->enable o/p
-#define EXPFF_FLT()	AUX_OUT |=  (1<<AXLOE)	//FF /OE pin high->disable o/p
-//Caution AXL_CLK() relies on EXPFF_OP() to be called beforehand
+#define	_AXLOE_IP()	AUX_DDR	&= ~(1<<AXLOE)
+#define	_AXLOE_OP()	AUX_DDR	|=  (1<<AXLOE)
+#define _EXPFF_OP()	AUX_OUT &= ~(1<<AXLOE)	//FF /OE pin low->enable o/p
+#define _EXPFF_FLT()	AUX_OUT |=  (1<<AXLOE)	//FF /OE pin high->disable o/p
+//Caution _AXL_CLK() relies on _EXPFF_OP() to be called beforehand
 //	Think of it like you must enable the output before you can clock it.
 //	Floating EXPFF also happens to clock it.  Think of it like it looses it's value if disabled.
-#define AXL_CLK()	EXPFF_FLT(); EXPFF_OP(); //same name and convention as purple
+#define _AXL_CLK()	_EXPFF_FLT(); _EXPFF_OP(); //same name and convention as purple
 #else	//purple and green versions
-#define	XOE_ip()	AUX_DDR	&= ~(1<<pg_XOE)	//don't use these, use software tied together AXLOE instead
-#define	XOE_op()	AUX_DDR	|=  (1<<pg_XOE)
-#define XOE_lo()	AUX_OUT &= ~(1<<pg_XOE)	//FF /OE pin low->enable o/p
-#define XOE_hi()	AUX_OUT |=  (1<<pg_XOE)	//FF /OE pin high->disable o/p
+#define	_XOE_ip()	AUX_DDR	&= ~(1<<pg_XOE)	//don't use these, use software tied together AXLOE instead
+#define	_XOE_op()	AUX_DDR	|=  (1<<pg_XOE)
+#define _XOE_lo()	AUX_OUT &= ~(1<<pg_XOE)	//FF /OE pin low->enable o/p
+#define _XOE_hi()	AUX_OUT |=  (1<<pg_XOE)	//FF /OE pin high->disable o/p
 //Final version ties XOEn and AXL to same pin, we can do this in software to make other ver behave similarly
 #endif
 #ifdef PURPLE_KAZZO
-#define AXLOE_IP()	XOE_ip(); p_AXL_ip();
-#define AXLOE_OP()	XOE_op(); p_AXL_op();
-#define EXPFF_OP()	XOE_lo(); p_AXL_lo();
-#define EXPFF_FLT()	XOE_hi(); p_AXL_hi();
+#define _AXLOE_IP()	_XOE_ip(); _p_AXL_ip();
+#define _AXLOE_OP()	_XOE_op(); _p_AXL_op();
+#define _EXPFF_OP()	_XOE_lo(); _p_AXL_lo();
+#define _EXPFF_FLT()	_XOE_hi(); _p_AXL_hi();
 #endif
 #ifdef GREEN_KAZZO	//green can't tie AXL, just don't worry about clocking effect while enabling/disabling
-#define AXLOE_IP()	XOE_ip();	//run risk that AHL isn't O/P because AXL was made O/P instead
-#define AXLOE_OP()	XOE_op();	//sofware AXL/AHL clock covers this case though.
-#define EXPFF_OP()	XOE_lo();
-#define EXPFF_FLT()	XOE_hi();
+#define _AXLOE_IP()	_XOE_ip();	//run risk that AHL isn't O/P because AXL was made O/P instead
+#define _AXLOE_OP()	_XOE_op();	//sofware AXL/AHL clock covers this case though.
+#define _EXPFF_OP()	_XOE_lo();
+#define _EXPFF_FLT()	_XOE_hi();
 #endif
