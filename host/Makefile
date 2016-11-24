@@ -37,4 +37,5 @@ shared:
 #clean on unix and windows(.exe)
 clean:
 	rm -f $(TARGET) $(TARGET).exe $(OBJECTS)
+	rm -f source/shared_*
 

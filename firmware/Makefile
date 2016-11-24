@@ -35,7 +35,7 @@ program_unix: main.hex
 
 # rule for deleting dependent files (those which can be built by Make):
 clean:
-	rm -f main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf $(OBJECTS) main.s usbdrv/oddebug.s usbdrv/usbdrv.s
+	rm -f main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf $(OBJECTS) main.s usbdrv/oddebug.s usbdrv/usbdrv.s source/shared_*
 
 # Generic rule for compiling C files:
 .c.o:
