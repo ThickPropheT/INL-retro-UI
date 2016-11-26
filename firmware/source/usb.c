@@ -139,11 +139,11 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
  * In order to get usbFunctionRead() called, define USB_CFG_IMPLEMENT_FN_READ
  * to 1 in usbconfig.h and return 0xff in usbFunctionSetup()..
  */
-USB_PUBLIC uchar usbFunctionRead(uchar *data, uchar len) {
-	//this function should only get called if usbFunctionSetup returns USB_NO_MSG
-//	data[0] = 0xAA;
-	return len;
-}
+//USB_PUBLIC uchar usbFunctionRead(uchar *data, uchar len) {
+//	//this function should only get called if usbFunctionSetup returns USB_NO_MSG
+////	data[0] = 0xAA;
+//	return len;
+//}
 
 
 //USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len);
