@@ -205,61 +205,77 @@ void close_usb(libusb_context *context, libusb_device_handle *handle)
 	return;
 }
 
-	//int libusb_control_transfer (libusb_device_handle *dev_handle, uint8_t bmRequestType, uint8_t bRequest, uint16_t wValue, uint16_t wIndex, unsigned char *data, uint16_t wLength, unsigned int timeout)
-	//
-	//SETUP PACKET FIELDS:
-	//bmRequestType: ORing of req type (STD/VENDOR), recipient (think we only care about DEVICE), endpoint direction IN-dev->host OUT-host->dev
-	//bRequest: single byte that can signify any 'command' or 'request' we setup.
-	//The wValue and wIndex fields allow parameters to be passed with the request.  Think we can do whatever we want with these
-	//wLength is used the specify the number of bytes to be transferred should there be a data phase. 
-	//wLength the length field for the setup packet. The data buffer should be at least this size. 
-	//	USB 1.1 low speed standard limits to 8 bytes
-	//	V-USB seems to break this limit with max of 254 bytes (255 designates "USB_NO_MSG"
-	//	V-USB allows "LONG TRANSFERS" utilizing full 16bit wLength for upto 16384 bytes = exactly 16KBytes
-	//	although considering sram on AVR doesn't explode with long transfers and read/write functions are in 8byte chunks,
-	//		I think it really is limited to 8bytes
-	//	One idea to squeeze more data is have a request type defined that utilizes wValue and wIndex to gain 4bytes + 8buffer = 12bytes 50% gain
-	//		Not sure how to gain access to wValue/wIndex with vusb drivers...
-	//		answer: usbFunctionSetup will get called for every setup packet and pass all 8 bytes of setup packet
-	//	Can ultimately answer this question by counting how many startup packets are recieved by usbFunciton setup for transfers >8 bytes
-	//	If when sending >8 byte control transfers, a setup packet only comes once, then there is nothing to abuse
-	//		however if the same setup packet gets sent for every 8 bytes, it would be better to only perform 8byte transfers and stuff
-	//		4 more bytes in wValue and wIndex fields to increase throughput by ~50%!!!
-	//	Testing shows that usbFunctionSetup only gets called once for transfers of 254 bytes
-	//		So there is only one setup packet for multiple data packets of 8bytes each
-	//
-	//Still not sure increasing transfer length doesn't simply break up into bunch of small 8byte transfers although it doesn't sound like it.
-	//245byte limit is kind of a pain..  but wValue/wIndex fields could be abused to send 256 bytes
-	//Long transfers apparently max out speed @ 24KBps with 300 bytes: https://forums.obdev.at/viewtopic.php?t=3059
-	//
-	//PAYLOAD:
-	//data: a suitably-sized data buffer for either input or output (depending on direction bits within bmRequestType) 
-	//
-	//TIMEOUT:
-	//timeout: (in millseconds) that this function should wait before giving up due to no response being received. 
-	//	For an unlimited timeout, use value 0
-	//	USB nutshell: A compliant host requires control transfer response within 5sec
-	//
-	//RETURN:
-	//	Returns on success, the number of bytes actually transferred 
-	//	LIBUSB_ERROR_TIMEOUT if the transfer timed out 
-	//	LIBUSB_ERROR_PIPE if the control request was not supported by the device 
-	//	LIBUSB_ERROR_NO_DEVICE if the device has been disconnected 
-	//	another LIBUSB_ERROR code on other failures 
-int usb_write_to_device( libusb_device_handle *handle, int command, unsigned char *data, uint16_t len ) 
+
+/*	USB transfer 
+ *Desc:	primary means of sending and recieving commands and data to retro programmer
+ *	makes calls to libusb drivers to send/recieve control transfer setup, data, and status packets
+ *	See USBtransfer struct explaination in usb_operations.h for more details
+ *Pre:	libusb must be initialized
+ *	USBtransfer struct must be initialized as follows:
+ *	-handle must point to open usb device
+ *	-endpoint "direction" must be defined 
+ *	-request must be a valid and defined in a command dictionary
+ *	-wValue and wIndex must be valid as defined by request dictionary
+ *	-WLength must equal number of bytes to be transferred with max of 254
+ *	-data points to buffer of raw data to send for reads or dump into for reads
+ *		if wLength is zero, data can be NULL
+ *Post: USB control transfer complete (setup, data, and status packets)
+ *	data buffer pointed by USBtransfer struct filled with read data for USB_IN requests.
+ *	USBtransfer struct is unmodified can be reused for identical transfers with different payload	
+ *	libusb is still initialized and open
+ *Rtn:	Number of bytes transferred on success (positive)
+ *	ERROR if unable to transfer USBtransfer's wLength number of bytes
+ *	prints libusb_error if there was usb problem
+ */
+int usb_transfer( USBtransfer *transfer )
 {
-	//TODO translate command into request, value, index, etc
-	uint8_t request = command;
-	uint16_t wValue = 0;		//setup packet wValue field
-	uint16_t wIndex = 0;		//setup packet wIndex field
+	check( transfer->wLength <= MAX_VUSB, "Can't transfer more than %d bytes!", MAX_VUSB);
 
-	int xfr_cnt = libusb_control_transfer( handle, 
+	if ( transfer->wLength != 0) {
+		check( transfer->data != NULL, "data buffer isn't initialized it's: %s", transfer->data);
+	} else {
+		debug("USB transfer with no data payload.");
+	}
+	//TODO create a check to verify dictionary is defined, and opcode/operands are valid
+	//TODO also check to ensure opcode supports endpoint direction
+	//many operations could be performed with IN/OUT and no data packet
+	//but all avr operations should have a return value success/error code
+	//one way to control whether those retrun values are read back is endpoint direction
+
+	uint16_t wValue = transfer->wValueMSB;
+	wValue = wValue << 8;
+	wValue |= transfer->wValueLSB;
+
+	uint16_t wIndex = transfer->wIndexMSB;
+	wIndex = wIndex << 8;
+	wIndex |= transfer->wIndexLSB;
+
+	debug("request   h: %x d: %d", transfer->request, transfer->request);
+	debug("wValueMSB h: %x d: %d", transfer->wValueMSB, transfer->wValueMSB);
+	debug("wValueLSB h: %x d: %d", transfer->wValueLSB, transfer->wValueLSB);
+	debug("wValue    h: %x", wValue); 
+	debug("wValue    d: %d", wValue);
+	debug("wIndexMSB h: %x d: %d", transfer->wIndexMSB, transfer->wIndexMSB);
+	debug("wIndexLSB h: %x d: %d", transfer->wIndexLSB, transfer->wIndexLSB);
+	debug("wIndex    h: %x", wIndex);
+	debug("wIndex    d: %d", wIndex);
+
+	int xfr_cnt = libusb_control_transfer( 
+			transfer->handle, 
 			//Request type: vendor (as we define),  recip: device, out: host->device
-			LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_OUT, 
-			request, wValue, wIndex, data, len, SEC_5);
+			//LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_OUT, 
+			LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | transfer->endpoint, 
+			//request, wValue, wIndex, data, len, SEC_5);
+			transfer->request, 
+			wValue, wIndex,
+			transfer->data, 
+			transfer->wLength, 
+			TIMEOUT_1_SEC);
 
+	debug("%d bytes transfered", xfr_cnt);
 	check( xfr_cnt >=0, "Write xfr failed with libusb error: %s", libusb_strerror(xfr_cnt));
-	check( xfr_cnt == len, "Write transfer failed only %dB sent when expecting %dB", xfr_cnt, len);
+	check( xfr_cnt == transfer->wLength, "Write transfer failed only %d Bytes sent expected %dBytes", 
+				xfr_cnt, transfer->wLength);
 
 	return xfr_cnt;
 

@@ -3,6 +3,8 @@
 
 #include <avr/io.h>
 #include "logic.h"
+#include "shared_errors.h"
+#include "shared_dict_pinport.h"
 
 uint8_t pinport_opcode_only( uint8_t opcode );
 uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand );

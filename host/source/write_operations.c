@@ -9,7 +9,7 @@ int write_file( libusb_device_handle *usbhandle, char *filename, char *ines_mapp
 	int rv = 0;
 	int index = 0;
 	FILE *fileptr = NULL;
-	uint8_t data[128];
+//warn	uint8_t data[128];
 
 	//first open file
 	fileptr = fopen( filename, "rb");
@@ -35,11 +35,11 @@ int write_file( libusb_device_handle *usbhandle, char *filename, char *ines_mapp
 	//9: Flags 9
 	//10: Flags 10 (unofficial)
 	//11-15: Zero filled
-	uint8_t num_prg_banks = header[4];
-	uint8_t num_chr_banks = header[5];
-
-	int prg_size = num_prg_banks * SIZE_PRG_BANK;
-	int chr_size = num_chr_banks * SIZE_CHR_BANK;
+//warn	uint8_t num_prg_banks = header[4];
+//warn	uint8_t num_chr_banks = header[5];
+//warn
+//warn	int prg_size = num_prg_banks * SIZE_PRG_BANK;
+//warn	int chr_size = num_chr_banks * SIZE_CHR_BANK;
 	
 	//next check board inserted
 	

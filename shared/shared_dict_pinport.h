@@ -1,5 +1,17 @@
-#ifndef _shared_pinport_h
-#define _shared_pinport_h
+#ifndef _shared_dict_pinport_h
+#define _shared_dict_pinport_h
+
+//define dictionary's reference number in the shared_dictionaries.h file
+//then include this dictionary file in shared_dictionaries.h
+//The dictionary number is literally used as usb transfer request field
+//the opcodes and operands in this dictionary are fed directly into usb setup packet's wValue wIndex fields
+
+
+//=============================================================================================
+//=============================================================================================
+// PINPORT DICTIONARY
+//=============================================================================================
+//=============================================================================================
 
 //This file was created based on firmware version of pinport.h and pinport.c
 //the close relationship between these two files must be kept in mind when making changes.
@@ -8,6 +20,7 @@
 //Don't recommend changing opcodes or anything here, change them in fw first then apply here.
 //making this a shared file helps cut room for error as changing opcode numbers here will
 //inherently get forwarded to both firmware and app at same time.
+
 
 
 
@@ -21,6 +34,10 @@
 //
 //	Current limit for these types of opcodes is 0-127
 //	This allows for the MSB to be used for decoding pinport opcode to this type
+//
+//	Detect this opcode/operand setup with opcode between the following defines:
+#define PP_OPCODE_ONLY_MIN	0x00
+#define PP_OPCODE_ONLY_MAX	0x7F
 //
 //=============================================================================================
 //=============================================================================================
@@ -230,13 +247,21 @@
 //=============================================================================================
 //	OPCODES WITH OPERAND and no return value besides SUCCESS/ERROR_CODE
 //=============================================================================================
+//
+#define PP_OPCODE_8BOP_MIN	0x80
+#define PP_OPCODE_8BOP_MAX	0x9F
 //	0x80-0x9F: opcodes with 8bit operand
 //		0x80-8A are only ones currently in use
+//
+#define PP_OPCODE_16BOP_MIN	0xA0
+#define PP_OPCODE_16BOP_MAX	0xAF
 //	0xA0-0xAF: opcodes with 16bit operand
 //		0xA0-A2 are only ones currently in use
+//
+#define PP_OPCODE_24BOP_MIN	0xB0
+#define PP_OPCODE_24BOP_MAX	0xBF
 //	0xB0-0xBF: opcodes with 24bit operand
 //		0xA0 is currently only one in use
-//
 //
 //	Current limit for these types of opcodes is 128-191 (0x80-0xBF)
 //	This allows for the MSBs' to be used for decoding pinport opcode to this type
@@ -286,9 +311,6 @@
 #define aux_ddr_set	0x88
 #define ctl_port_set	0x89
 #define aux_port_set	0x8A
-
-//TODO consider listing AVR internal registers here..?
-//could be useful when utilizing SPI/I2C communications etc
 
 
 
@@ -340,6 +362,9 @@
 //=============================================================================================
 //	OPCODES with NO OPERAND but have RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================
+//
+#define PP_OPCODE_8BRV_MIN	0xC0
+#define PP_OPCODE_8BRV_MAX	0xFF
 //	0xC0-0xFF: opcodes with 8bit return value (plus SuCCESS/ERROR)
 //		0xC0-CB are only ones currently in use
 //
@@ -348,6 +373,9 @@
 //
 //	Current limit for these types of opcodes is 192-255 (0xC0-0xFF)
 //	This allows for the MSBs' to be used for decoding pinport opcode to this type
+//	Detect this opcode/operand setup with opcode between the following defines:
+//
+//	Detect this opcode/operand setup with opcode between the following defines:
 //
 //=============================================================================================
 //=============================================================================================
@@ -392,11 +420,6 @@
 #define CTL_DDR_RD	0xCA
 //AUX DDRD
 #define AUX_DDR_RD	0xCB
-
-
-
-//TODO consider listing AVR internal registers here..?
-//could be useful when utilizing SPI/I2C communications etc
 
 
 

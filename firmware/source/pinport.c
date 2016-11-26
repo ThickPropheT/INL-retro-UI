@@ -1,7 +1,4 @@
-#include <avr/io.h>
-#include "logic.h"
 #include "pinport.h"
-#include "shared_pinport.h"
 
 //This file was created based on pinport.h
 //the close relationship between these two files must be kept in mind when making changes.

@@ -9,7 +9,6 @@
 #include <libusb.h>
 
 #include "usb_operations.h"
-#include "shared_usb_commands.h"
 
 //uncomment to DEBUG this file alone
 #define DEBUG

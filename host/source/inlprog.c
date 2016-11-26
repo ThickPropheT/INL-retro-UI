@@ -14,9 +14,7 @@
 
 #include "usb_operations.h"
 #include "write_operations.h"
-
-//TODO remove once commands removed from main
-#include "shared_usb_commands.h"
+#include "shared_dictionaries.h"
 
 
 int main(int argc, char *argv[]) 
@@ -84,35 +82,72 @@ int main(int argc, char *argv[])
 
 	//context set to NULL since only acting as single user of libusb
 	libusb_context *context = NULL;
-	//create usb device handle pointer to interact with retro-prog
-	libusb_device_handle *rprog_handle = NULL;
 
-	rprog_handle = open_usb_device( context );
-	check( rprog_handle != NULL, "Unable to open INL retro-prog usb device handle.");
+
+	//create USBtransfer struct to hold all transfer info
+	USBtransfer *transfer = malloc( sizeof(USBtransfer));	
+	check_mem(transfer);
+
+	//create usb device handle pointer to interact with retro-prog
+	//libusb_device_handle *rprog_handle = NULL;
+	transfer->handle = NULL;
+
+	
+	//open INL retro prog with firmware version 2.0 or greater
+	transfer->handle = open_usb_device( context );
+	check( transfer->handle != NULL, "Unable to open INL retro-prog usb device handle.");
 
 	int xfr_cnt = 0;
-    	//uint8_t buffer8[8];		//8 is max payload for low speed devices' data packet
-    	//uint8_t buffer128[128];	//128 largest power of 2 for non-LONG_TRANSFERS with V-USB
-    	uint8_t buffer254[254];		//254 is max for non-LONG_TRANSFERS with V-USB
-    	//uint8_t buffer16k[16384];	//16384 is max for LONG_TRANSFERS with V-USB
+	uint8_t rbuf[8];
 
-	if (o_flag) { //ON send REQ_LED_ON
-		xfr_cnt = usb_write_to_device( rprog_handle, 
-			REQ_LED_ON, (unsigned char *)buffer254, sizeof(buffer254) );
-		printf("total bytes xfrd: %d \n", xfr_cnt);
+	int i;
+	printf("before return buffer: ");
+	for (i = 0; i < 8; i++) {
+		rbuf[i] = 7;
+		printf("%x ", rbuf[i]);
 	}
-	if (f_flag) { //OFF send REQ_LED_OFF
-		xfr_cnt = usb_write_to_device( rprog_handle, 
-			REQ_LED_OFF, (unsigned char *)buffer254, sizeof(buffer254) );
-		printf("total bytes xfrd: %d \n", xfr_cnt);
-	}
-	if (w_value) { //OFF send REQ_LED_OFF
-		check( write_file( rprog_handle, w_value, i_value, b_value) == SUCCESS, 
-			"Failed to write file: %s", w_value); 
+	printf("\n");
+
+	//handle simple LED ON/OFF within main for now
+	if (o_flag | f_flag) {
+		transfer->endpoint = USB_IN;
+		transfer->request = PINPORT;
+		if (o_flag) transfer->wValueLSB = LED_ON;
+		if (f_flag) transfer->wValueLSB = LED_OFF;
+		transfer->data = rbuf;
+		transfer->wLength = 1;
+
+		//send command
+		xfr_cnt = usb_transfer( transfer );
 	}
 
+	printf("total bytes xfrd: %d \n", xfr_cnt);
+	printf("after buffer: ");
+	for (i = 0; i < 8; i++) {
+		printf("%x ", rbuf[i]);
+	}
+	printf("\n");
 
-	close_usb( context, rprog_handle);	
+
+	//if (o_flag) { //ON send REQ_LED_ON
+	//	xfr_cnt = usb_transfer( transfer.handle, 
+	//		REQ_LED_ON, 
+	//		(unsigned char *)buffer254, sizeof(buffer254) );
+	//	printf("total bytes xfrd: %d \n", xfr_cnt);
+	//}
+	//if (f_flag) { //OFF send REQ_LED_OFF
+	//	xfr_cnt = usb_write_to_device( transfer.handle, 
+	//		REQ_LED_OFF, (unsigned char *)buffer254, sizeof(buffer254) );
+	//	printf("total bytes xfrd: %d \n", xfr_cnt);
+	//}
+
+	//if (w_value) { //OFF send REQ_LED_OFF
+	//	check( write_file( transfer.handle, w_value, i_value, b_value) == SUCCESS, 
+	//		"Failed to write file: %s", w_value); 
+	//}
+
+
+	close_usb( context, transfer->handle);	
 	
 	return 0;
 
