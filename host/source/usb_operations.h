@@ -12,7 +12,7 @@
 #include "shared_dictionaries.h"
 
 //uncomment to DEBUG this file alone
-#define DEBUG
+//#define DEBUG
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 

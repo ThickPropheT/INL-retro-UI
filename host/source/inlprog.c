@@ -14,6 +14,7 @@
 
 #include "usb_operations.h"
 #include "write_operations.h"
+#include "erase.h"
 #include "shared_dictionaries.h"
 
 
@@ -101,15 +102,17 @@ int main(int argc, char *argv[])
 	uint8_t rbuf[8];
 
 	int i;
-	printf("before return buffer: ");
-	for (i = 0; i < 8; i++) {
-		rbuf[i] = 7;
-		printf("%x ", rbuf[i]);
-	}
-	printf("\n");
+
+	if (e_flag) erase_nes( transfer );
 
 	//handle simple LED ON/OFF within main for now
 	if (o_flag | f_flag) {
+		printf("before return buffer: ");
+		for (i = 0; i < 8; i++) {
+			rbuf[i] = 7;
+			printf("%x ", rbuf[i]);
+		}
+		printf("\n");
 		transfer->endpoint = USB_IN;
 		transfer->request = PINPORT;
 		if (o_flag) transfer->wValueLSB = LED_ON;
@@ -119,14 +122,15 @@ int main(int argc, char *argv[])
 
 		//send command
 		xfr_cnt = usb_transfer( transfer );
+
+		printf("total bytes xfrd: %d \n", xfr_cnt);
+		printf("after buffer: ");
+		for (i = 0; i < 8; i++) {
+			printf("%x ", rbuf[i]);
+		}
+		printf("\n");
 	}
 
-	printf("total bytes xfrd: %d \n", xfr_cnt);
-	printf("after buffer: ");
-	for (i = 0; i < 8; i++) {
-		printf("%x ", rbuf[i]);
-	}
-	printf("\n");
 
 
 	//if (o_flag) { //ON send REQ_LED_ON

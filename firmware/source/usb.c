@@ -84,29 +84,28 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
 	switch(spacket->bRequest) {
 		case PINPORT:
-			if((spacket->opcode > PP_OPCODE_ONLY_MIN) 
-			 & (spacket->opcode < PP_OPCODE_ONLY_MAX)) {
-				rv[0] = pinport_opcode_only( spacket->opcode );	
-
-			} else if ((spacket->opcode > PP_OPCODE_8BOP_MIN) 
-				 & (spacket->opcode < PP_OPCODE_8BOP_MAX)) {
-				rv[0] = pinport_opcode_8b_operand( spacket->opcode, spacket->wIndexLSB );	
-
-			} else if ((spacket->opcode > PP_OPCODE_16BOP_MIN) 
-				 & (spacket->opcode < PP_OPCODE_16BOP_MAX)) {
-				rv[0] = pinport_opcode_16b_operand( spacket->opcode,
-							spacket->wIndexMSB, spacket->wIndexLSB );	
-
-			} else if ((spacket->opcode > PP_OPCODE_24BOP_MIN) 
-				 & (spacket->opcode < PP_OPCODE_24BOP_MAX)) {
-				rv[0] = pinport_opcode_24b_operand( spacket->opcode,
+			switch (spacket->opcode) {
+				case PP_OPCODE_ONLY_MIN ... PP_OPCODE_ONLY_MAX:
+					rv[0] = pinport_opcode_only( spacket->opcode );	
+					break;
+				case PP_OPCODE_8BOP_MIN ... PP_OPCODE_8BOP_MAX:
+					rv[0] = pinport_opcode_8b_operand( 
+					spacket->opcode, spacket->wIndexLSB );	
+					break;
+				case PP_OPCODE_16BOP_MIN ... PP_OPCODE_16BOP_MAX:
+					rv[0] = pinport_opcode_16b_operand( 
+					spacket->opcode, spacket->wIndexMSB, spacket->wIndexLSB );	
+					break;
+				case PP_OPCODE_24BOP_MIN ... PP_OPCODE_24BOP_MAX:
+					rv[0] = pinport_opcode_24b_operand( spacket->opcode,
 					spacket->wValueMSB, spacket->wIndexMSB, spacket->wIndexLSB );	
-
-			} else if ((spacket->opcode > PP_OPCODE_8BRV_MIN) 
-				 & (spacket->opcode < PP_OPCODE_8BRV_MAX)) {
-				rv[0] = pinport_opcode_8b_return( spacket->opcode, &rv[1]);
-				//return error code plus opcode return value
-				rlen ++;
+					break;
+				case PP_OPCODE_8BRV_MIN ... PP_OPCODE_8BRV_MAX:
+					rv[0] = pinport_opcode_8b_return( spacket->opcode, &rv[1]);
+					rlen ++;
+					break;
+				default:	//pinport opcode min/max definition error 
+					rv[0] = ERR_BAD_PP_OP_MINMAX;
 			}
 			break; //end of PINPORT
 		default:
