@@ -383,7 +383,15 @@ void software_AXL_CLK();
 #define _BL_LO()	AUX_OUT &= ~(1<<BL)
 #define _BL_HI()	AUX_OUT |=  (1<<BL)
 
-#ifndef pg_XOE	//FINAL_DESIGN
+
+//purple and green versions
+#if ( (defined(PURPLE_KAZZO)) || (defined(GREEN_KAZZO)) )
+#define	_XOE_ip()	AUX_DDR	&= ~(1<<pg_XOE)	//don't use these, use software tied together AXLOE instead
+#define	_XOE_op()	AUX_DDR	|=  (1<<pg_XOE)
+#define _XOE_lo()	AUX_OUT &= ~(1<<pg_XOE)	//FF /OE pin low->enable o/p
+#define _XOE_hi()	AUX_OUT |=  (1<<pg_XOE)	//FF /OE pin high->disable o/p
+
+#else	//FINAL_DESIGN
 #define	_AXLOE_IP()	AUX_DDR	&= ~(1<<AXLOE)
 #define	_AXLOE_OP()	AUX_DDR	|=  (1<<AXLOE)
 #define _EXPFF_OP()	AUX_OUT &= ~(1<<AXLOE)	//FF /OE pin low->enable o/p
@@ -392,13 +400,9 @@ void software_AXL_CLK();
 //	Think of it like you must enable the output before you can clock it.
 //	Floating EXPFF also happens to clock it.  Think of it like it looses it's value if disabled.
 #define _AXL_CLK()	_EXPFF_FLT(); _EXPFF_OP(); //same name and convention as purple
-#else	//purple and green versions
-#define	_XOE_ip()	AUX_DDR	&= ~(1<<pg_XOE)	//don't use these, use software tied together AXLOE instead
-#define	_XOE_op()	AUX_DDR	|=  (1<<pg_XOE)
-#define _XOE_lo()	AUX_OUT &= ~(1<<pg_XOE)	//FF /OE pin low->enable o/p
-#define _XOE_hi()	AUX_OUT |=  (1<<pg_XOE)	//FF /OE pin high->disable o/p
-//Final version ties XOEn and AXL to same pin, we can do this in software to make other ver behave similarly
 #endif
+
+//Final version ties XOEn and AXL to same pin, we can do this in software to make other ver behave similarly
 #ifdef PURPLE_KAZZO
 #define _AXLOE_IP()	_XOE_ip(); _p_AXL_ip();
 #define _AXLOE_OP()	_XOE_op(); _p_AXL_op();
@@ -411,6 +415,7 @@ void software_AXL_CLK();
 #define _EXPFF_OP()	_XOE_lo();
 #define _EXPFF_FLT()	_XOE_hi();
 #endif
+
 
 //clocks must be initialized, Data bus clear
 #define _ADDRH_SET(oper) _DATA_OP(); DATA_OUT = oper; _AHL_CLK(); _DATA_IP();

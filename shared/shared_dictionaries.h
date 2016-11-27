@@ -19,6 +19,10 @@
 //step in having scripting support on host side.  The thought above just expands it one
 //step further making the dictionaries themselves operate as run time 'scripts'.
 
+
+//Notes:
+//	each unique read/write function in avr takes about 50 bytes...
+
 //don't define dictionary #0 as it is common to forget to define 
 
 //=============================================================================================
@@ -89,6 +93,17 @@
 //nes dictionary contains commands 
 //These commands rely on io initialization from io dictionary prior to calling
 //This library is intended to contain all NES related opcodes/commands
+//=============================================================================================
+//=============================================================================================
+
+
+//=============================================================================================
+//=============================================================================================
+#define SNES 4
+#include "shared_dict_snes.h"
+//snes dictionary contains commands 
+//These commands rely on io initialization from io dictionary prior to calling
+//This library is intended to contain all SNES related opcodes/commands
 //=============================================================================================
 //=============================================================================================
 

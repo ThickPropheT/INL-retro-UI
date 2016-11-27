@@ -8,4 +8,7 @@
 #define IP 0x00
 #define OP 0xFF
 
+#define TRUE 0x00
+//false is anything besides TRUE
+
 #endif

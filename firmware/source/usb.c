@@ -134,6 +134,22 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			}
 			break; //end of NES
 
+		case SNES:
+			switch (spacket->opcode) {
+				case SNES_OPCODE_24BOP_MIN ... SNES_OPCODE_24BOP_MAX:
+					rv[0] = snes_opcode_24b_operand( spacket->opcode, 
+					spacket->operandMSB, spacket->operandLSB, spacket->miscdata );
+					break;
+				case SNES_OPCODE_24BOP_8BRV_MIN ... SNES_OPCODE_24BOP_8BRV_MAX:
+					rv[0] = snes_opcode_24b_operand_8b_return( spacket->opcode,
+					spacket->miscdata, spacket->operandMSB, spacket->operandLSB, &rv[1]);
+					rlen++;
+					break;
+				default:	//snes opcode min/max definition error 
+					rv[0] = ERR_BAD_SNES_OP_MINMAX;
+			}
+			break; //end of SNES
+
 		default:
 			//request (aka dictionary) is unknown
 			rv[0] = ERR_UNKN_DICTIONARY;

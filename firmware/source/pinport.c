@@ -153,7 +153,7 @@ uint8_t pinport_opcode_only( uint8_t opcode )
 		//Caution AXL_CLK() relies on EXPFF_OP() to be called beforehand
 		//	Think of it like you must enable the output before you can clock it.
 		//	Floating EXPFF also happens to clock it.  Think of it like it looses it's value if disabled.
-		#if defined(PURPLE_KAZZO) || defined(GREEN_KAZZO) //purple and green versions
+		#if ( (defined(PURPLE_KAZZO)) || (defined(GREEN_KAZZO)) )//purple and green versions
 		case XOE_ip: _XOE_ip();		break;	//Don't call these, use AXLOE instead	
 		case XOE_op: _XOE_op();		break;	
 		case XOE_lo: _XOE_lo();		break;	
@@ -429,7 +429,7 @@ uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t 
 			if (operandMSB < 0x20) { // below PPU $2000, A13 clear, SET PPU /A13
 				_ADDRH_SET(operandMSB & PPU_A13N);
 			} else { // above PPU $1FFF, A13 set, PPU /A13 already clear in operandMSB
-			_ADDRH_SET(operandMSB); 
+				_ADDRH_SET(operandMSB); 
 			}
 			break;
 

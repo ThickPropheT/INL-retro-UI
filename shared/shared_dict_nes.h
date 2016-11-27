@@ -48,6 +48,11 @@
 //wIndex: address
 #define DISCRETE_EXP0_PRGROM_WR		0x00
 
+#define NES_PPU_WR			0x01
+
+//generic CPU write with M2 toggle as expected with NES CPU
+// A15 decoded to enable /ROMSEL as it should
+#define NES_CPU_WR			0x02
 
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE
@@ -65,5 +70,10 @@
 //read from cartridge just as NES's CPU would
 //nice and slow trying to be more like the NES
 #define EMULATE_NES_CPU_RD		0x80
+
+//like the one above but not so slow..
+#define NES_CPU_RD			0x81
+
+#define NES_PPU_RD			0x82
 
 #endif

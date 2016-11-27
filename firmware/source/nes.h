@@ -11,5 +11,9 @@ uint8_t nes_opcode_24b_operand( uint8_t opcode, uint8_t addrH, uint8_t addrL, ui
 uint8_t nes_opcode_16b_operand_8b_return( uint8_t opcode, uint8_t addrH, uint8_t addrL, uint8_t *data );
 void	discrete_exp0_prgrom_wr( uint8_t addrH, uint8_t addrL, uint8_t data );
 uint8_t	emulate_nes_cpu_rd( uint8_t addrH, uint8_t addrL );
+uint8_t	nes_cpu_rd( uint8_t addrH, uint8_t addrL );
+void	nes_cpu_wr( uint8_t addrH, uint8_t addrL, uint8_t data );
+uint8_t	nes_ppu_rd( uint8_t addrH, uint8_t addrL );
+uint8_t	nes_ppu_wr( uint8_t addrH, uint8_t addrL, uint8_t data );
 
 #endif

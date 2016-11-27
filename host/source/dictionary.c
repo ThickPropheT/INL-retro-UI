@@ -92,6 +92,21 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 			}
 			break; //end of NES
 
+		case SNES: debug("dict: SNES");
+			transfer->wLength = 1;
+			switch (opcode) {
+				case SNES_OPCODE_24BOP_MIN ... SNES_OPCODE_24BOP_MAX:
+					debug("SNES_OPCODE_24BOP");
+					break;
+				case SNES_OPCODE_24BOP_8BRV_MIN ... SNES_OPCODE_24BOP_8BRV_MAX:
+					debug("SNES_OPCODE_24BOP_8BRV");
+					transfer->wLength = 2;
+					break;
+				default:	//snes opcode min/max definition error 
+					sentinel("bad SNES opcode min/max err:%d",ERR_BAD_SNES_OP_MINMAX);
+			}
+			break; //end of SNES
+
 		default:
 			//request (aka dictionary) is unknown
 			sentinel("unknown DICT err:%d",ERR_UNKN_DICTIONARY);
