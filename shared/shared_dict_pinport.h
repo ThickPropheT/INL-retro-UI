@@ -144,10 +144,16 @@
 #define 	EXP0_op  59
 #define 	EXP0_lo  60	//Don't call this assuming EXP0 DDR is set to o/p
 #define 	EXP0_hi  61	//Don't call this unless you're certain pin is 5v tolerant
+//SNES versions uppercase as assuming 5v tolerance without NES cart
+#define 	SRST_IP  58
+#define 	SRST_OP  59
+#define 	SRST_LO  60
+#define 	SRST_HI  61
 //User options pull up, force low, and float
 #define 	EXP0_LO  62	//Sets low then DDR to o/p
 #define 	EXP0_PU  63	//maybe add some NOP(); to allow time for pull up
 #define 	EXP0_FLT 64	//Set to i/p w/o pullup
+
 		
 #define		LED_IP	65
 #define		LED_OP	66

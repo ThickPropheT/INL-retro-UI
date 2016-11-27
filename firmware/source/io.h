@@ -3,7 +3,12 @@
 
 #include <avr/io.h>
 #include "pinport.h"
+#include "shared_dictionaries.h"
+#include "shared_errors.h"
 
-void io_pullup();
+uint8_t io_opcode_only( uint8_t opcode );
+void io_reset();
+void nes_init();
+void snes_init();
 
 #endif

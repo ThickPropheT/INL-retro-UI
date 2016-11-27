@@ -2,14 +2,14 @@
 
 //This file was created based on pinport.h
 //the close relationship between these two files must be kept in mind when making changes.
-//This file is also very dependent on shared_pinport.h
-//the shared_pinport.h was generated from this file, so any changes here must be forwarded.
+//This file is also very dependent on shared_dict_pinport.h
+//the shared_dict_pinport.h was generated from this file, so any changes here must be forwarded.
 
 /* Desc:Function takes an opcode which was transmitted via USB
  * 	then decodes it to call designated macro.
- * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * 	shared_dict_pinport.h is used in both host and fw to ensure opcodes/names align
  * Pre: Macro must be defined in firmware pinport.h
- * 	opcode must be defined in shared_pinport.h
+ * 	opcode must be defined in shared_dict_pinport.h
  * Post:Macro call complete.
  * Rtn: SUCCESS if opcode found, ERR_UNKN_PP_OPCODE_ONLY if opcode not present.
  */
@@ -284,14 +284,14 @@ void software_AHL_CLK()
 
 /* Desc:Function takes an opcode and 8bit operand which was transmitted via USB
  * 	then decodes it to call designated macro/function.
- * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * 	shared_dict_pinport.h is used in both host and fw to ensure opcodes/names align
  * Pre: Macro must be defined in firmware pinport.h
- * 	opcode must be defined in shared_pinport.h
+ * 	opcode must be defined in shared_dict_pinport.h
  *	data bus must be free and clear
  *	control pins must be initialized
  *		-FF latch /OE pins set as outputs
  *		-FF CLK pins low ready for CLK
- *	See big CAUTION on shared_pinport.h for more details
+ *	See big CAUTION on shared_dict_pinport.h for more details
  *	ADDR_OP() expected to be set
  * Post:Macro/function called with operand
  *	data bus left free and clear when possible
@@ -370,16 +370,16 @@ uint8_t pinport_opcode_8b_operand( uint8_t opcode, uint8_t operand )
 /* Desc:Function takes an opcode and 16bit operand which was transmitted via USB
  * 	then decodes it to call designated macro/function.
  *	operandMSB is most significant byte, operandLSB is least significant
- * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * 	shared_dict_pinport.h is used in both host and fw to ensure opcodes/names align
  * Pre: Macros must be defined in firmware pinport.h
- * 	opcode must be defined in shared_pinport.h
+ * 	opcode must be defined in shared_dict_pinport.h
  *	data bus must be free and clear
  *	control pins must be initialized
  *		-FF latch /OE pins set as outputs
  *		-FF CLK pins low ready for CLK
  *	ADDR_OP() is expected to be set.
  *	/ROMSEL and M2 expected to be OP.
- *	See big CAUTION on shared_pinport.h for more details
+ *	See big CAUTION on shared_dict_pinport.h for more details
  * Post:Macro/function called with operand
  *	data bus left free and clear when possible
  *		-some opcodes diliberately drive the bus
@@ -444,15 +444,15 @@ uint8_t pinport_opcode_16b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t 
 /* Desc:Function takes an opcode and 24bit operand which was transmitted via USB
  * 	then decodes it to call designated macro/function.
  *	operandMSB is most signf byte, operandMID is center, operandLSB is least significant
- * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * 	shared_dict_pinport.h is used in both host and fw to ensure opcodes/names align
  * Pre: Macros must be defined in firmware pinport.h
- * 	opcode must be defined in shared_pinport.h
+ * 	opcode must be defined in shared_dict_pinport.h
  *	data bus must be free and clear
  *	control pins must be initialized
  *		-FF latch /OE pins set as outputs
  *		-FF CLK pins low ready for CLK
  *	ADDR_OP() is expected to be set.
- *	See big CAUTION on shared_pinport.h for more details
+ *	See big CAUTION on shared_dict_pinport.h for more details
  * Post:Macro/function called with operand
  *	data bus left free and clear when possible
  *		-some opcodes may diliberately drive the bus
@@ -488,10 +488,10 @@ uint8_t pinport_opcode_24b_operand( uint8_t opcode, uint8_t operandMSB, uint8_t 
 
 /* Desc:Function takes an opcode and pointer to return value byte
  * 	then decodes it to retreive value.
- * 	shared_pinport.h is used in both host and fw to ensure opcodes/names align
+ * 	shared_dict_pinport.h is used in both host and fw to ensure opcodes/names align
  * Pre: Macros must be defined in firmware pinport.h
- * 	opcode must be defined in shared_pinport.h
- *	See big CAUTION on shared_pinport.h for more details
+ * 	opcode must be defined in shared_dict_pinport.h
+ *	See big CAUTION on shared_dict_pinport.h for more details
  * Post:pointer updated to value designated by opcode.
  * Rtn: SUCCESS if opcode found, ERR_UNKN_PP_OPCODE_8BRV if opcode not present.
  */

@@ -33,6 +33,7 @@ libusb_device_handle * open_usb_device( libusb_context *context )
 	//returns 0 on success LIBUSB_ERROR code on failure
 	//int libusb_init ( libusb_context **  context) 
 	int usb_init = libusb_init(&context);
+	debug("Initalized libusb");
 	check( usb_init == LIBUSB_SUCCESS, "Failed to initialize libusb: %s", libusb_strerror(usb_init));
 
 	//void libusb_set_debug ( libusb_context *  ctx, int  level ) 
@@ -51,7 +52,9 @@ libusb_device_handle * open_usb_device( libusb_context *context )
 	// Returns a list of USB devices currently attached to the system.
 	// return value is number of devices plus one as list is null terminated, or LIBUSB_ERROR if negative.
 	// Must free device list after done with it
+	debug("getting device list");
 	ssize_t dev_count = libusb_get_device_list( context, &device_list);
+	debug("got device list");
 	check( dev_count >= 0, "libusb unable to find any devices: %s", libusb_strerror(dev_count));
 
 	ssize_t i = 0;

@@ -1,5 +1,5 @@
-#ifndef _erase_h
-#define _erase_h
+#ifndef _dictionary_h
+#define _dictionary_h
 
 #include <stdio.h>
 #include <string.h>
@@ -18,13 +18,12 @@
 #include "usb_operations.h"
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
-#include "dictionary.h"
 
 //uncomment to DEBUG this file alone
 #define DEBUG
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 
-int erase_nes( USBtransfer *transfer );
+int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata);
 
 #endif

@@ -1,7 +1,6 @@
 
 #include "usb.h"
 
-#include "pinport.h"
 
 //USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]);
 /* This function is called when the driver receives a SETUP transaction from
@@ -48,9 +47,9 @@ typedef struct setup_packet{
 	uint8_t		bmRequestType;	//contains endpoint
 	uint8_t		bRequest;	//designates dictionary of opcode
 	uint8_t		opcode;		//wValueLSB (little endian)
-	uint8_t		wValueMSB;	//expansion byte
-	uint8_t		wIndexLSB;	//operand LSB
-	uint8_t		wIndexMSB;	//operand MSB
+	uint8_t		miscdata;	//wValueMSB 
+	uint8_t		operandLSB;	//wIndexLSB
+	uint8_t		operandMSB;	//wIndexMSB
 	uint16_t	wLength;
 }setup_packet;
 
@@ -90,15 +89,15 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 					break;
 				case PP_OPCODE_8BOP_MIN ... PP_OPCODE_8BOP_MAX:
 					rv[0] = pinport_opcode_8b_operand( 
-					spacket->opcode, spacket->wIndexLSB );	
+					spacket->opcode, spacket->operandLSB );	
 					break;
 				case PP_OPCODE_16BOP_MIN ... PP_OPCODE_16BOP_MAX:
 					rv[0] = pinport_opcode_16b_operand( 
-					spacket->opcode, spacket->wIndexMSB, spacket->wIndexLSB );	
+					spacket->opcode, spacket->operandMSB, spacket->operandLSB );	
 					break;
 				case PP_OPCODE_24BOP_MIN ... PP_OPCODE_24BOP_MAX:
 					rv[0] = pinport_opcode_24b_operand( spacket->opcode,
-					spacket->wValueMSB, spacket->wIndexMSB, spacket->wIndexLSB );	
+					spacket->miscdata, spacket->operandMSB, spacket->operandLSB );	
 					break;
 				case PP_OPCODE_8BRV_MIN ... PP_OPCODE_8BRV_MAX:
 					rv[0] = pinport_opcode_8b_return( spacket->opcode, &rv[1]);
@@ -108,6 +107,33 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 					rv[0] = ERR_BAD_PP_OP_MINMAX;
 			}
 			break; //end of PINPORT
+
+		case IO:
+			switch (spacket->opcode) {
+				case IO_OPCODE_ONLY_MIN ... IO_OPCODE_ONLY_MAX:
+					rv[0] = io_opcode_only( spacket->opcode );	
+					break;
+				default:	//io opcode min/max definition error 
+					rv[0] = ERR_BAD_IO_OP_MINMAX;
+			}
+			break; //end of IO
+
+		case NES:
+			switch (spacket->opcode) {
+				case NES_OPCODE_24BOP_MIN ... NES_OPCODE_24BOP_MAX:
+					rv[0] = nes_opcode_24b_operand( spacket->opcode,
+					spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+					break;
+				case NES_OPCODE_16BOP_8BRV_MIN ... NES_OPCODE_16BOP_8BRV_MAX:
+					rv[0] = nes_opcode_16b_operand_8b_return( spacket->opcode,
+					spacket->operandMSB, spacket->operandLSB, &rv[1]);	
+					rlen++;
+					break;
+				default:	//nes opcode min/max definition error 
+					rv[0] = ERR_BAD_NES_OP_MINMAX;
+			}
+			break; //end of NES
+
 		default:
 			//request (aka dictionary) is unknown
 			rv[0] = ERR_UNKN_DICTIONARY;

@@ -174,6 +174,8 @@ void software_AXL_CLK();
 //	Easier to add them than take them out maybe..?
 //Current rule is _ goes with () type macro
 
+// used for a very short delay
+#define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
 
 //============================
 //ADDR[7:0] PORTA
@@ -323,7 +325,7 @@ void software_AXL_CLK();
 #define EXP0	PD0	//NES EXP0 controls a number of varying flash cart features...
 #define FC_APU	PD0	//FC Audio in cart from 2A03 APU
 #define TDO	PD0	//CPLD JTAG on INL-ROM NES/FC boards released after ~Oct2016
-#define S_RST	PD0	//SNES /RESET pin used for CPLD prgm/play mode and SRAM CE
+#define SRST	PD0	//SNES /RESET pin used for CPLD prgm/play mode and SRAM CE
 
 #define LED	PD1	//LED on INL retro prog-dumper
 #define EXP9	PD1	//NES dual purposed pin
@@ -354,6 +356,11 @@ void software_AXL_CLK();
 #define _EXP0_LO()	_EXP0_lo(); _EXP0_op();	//Sets low then DDR to o/p
 #define _EXP0_PU()	_EXP0_ip(); _EXP0_hi();	//maybe add some NOP() to allow time for pull up
 #define _EXP0_FLT()	_EXP0_ip(); _EXP0_lo();	//Set to i/p w/o pullup
+//SNES /RESET versions, more permissible for driving EXP0 to 5v as NES cart shouldn't be inserted
+#define _SRST_IP()	_EXP0_ip()
+#define _SRST_OP()	_EXP0_op()
+#define _SRST_LO()	_EXP0_lo()
+#define _SRST_HI()	_EXP0_hi()
 
 
 #define	_LED_IP()	AUX_DDR	&= ~(1<<LED)

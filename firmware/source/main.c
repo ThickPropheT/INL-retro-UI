@@ -37,13 +37,8 @@ int __attribute__((noreturn)) main(void)
 	//reconnect to host
 	usbDeviceConnect();
 
-	//intialize i/o to pullup state
-	io_pullup();
-
-	//configure LED PORT/DDR
-	_LED_OP();
-	//boot with LED on to differentiate bettwen BL/RUN
-	_LED_ON();
+	//intialize i/o and LED to pullup state
+	io_reset();
 
 	//enable interrupts
 	sei();
