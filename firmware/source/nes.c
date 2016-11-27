@@ -302,7 +302,7 @@ uint8_t	nes_ppu_rd( uint8_t addrH, uint8_t addrL )
  * 	data bus left clear
  * Rtn:	None
  */
-uint8_t	nes_ppu_wr( uint8_t addrH, uint8_t addrL, uint8_t data )
+void	nes_ppu_wr( uint8_t addrH, uint8_t addrL, uint8_t data )
 {
 	//will need output whole function
 	_DATA_OP();

@@ -72,6 +72,10 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 				case IO_OPCODE_ONLY_MIN ... IO_OPCODE_ONLY_MAX:
 					debug("IO_OPCODE_ONLY");
 					break;
+				case IO_OPCODE_RTN_MIN ... IO_OPCODE_RTN_MAX:
+					debug("IO_OPCODE_RTN");
+					transfer->wLength = 8;
+					break;
 				default:	//io opcode min/max definition error 
 					sentinel("bad IO opcode min/max err:%d",ERR_BAD_IO_OP_MINMAX);
 			}

@@ -14,6 +14,6 @@ uint8_t	emulate_nes_cpu_rd( uint8_t addrH, uint8_t addrL );
 uint8_t	nes_cpu_rd( uint8_t addrH, uint8_t addrL );
 void	nes_cpu_wr( uint8_t addrH, uint8_t addrL, uint8_t data );
 uint8_t	nes_ppu_rd( uint8_t addrH, uint8_t addrL );
-uint8_t	nes_ppu_wr( uint8_t addrH, uint8_t addrL, uint8_t data );
+void	nes_ppu_wr( uint8_t addrH, uint8_t addrL, uint8_t data );
 
 #endif

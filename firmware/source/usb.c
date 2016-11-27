@@ -113,6 +113,11 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 				case IO_OPCODE_ONLY_MIN ... IO_OPCODE_ONLY_MAX:
 					rv[0] = io_opcode_only( spacket->opcode );	
 					break;
+				case IO_OPCODE_RTN_MIN ... IO_OPCODE_RTN_MAX:
+					rv[0] = io_opcode_return( 
+					spacket->opcode, &rv[1] );	
+					rlen = 8;
+					break;
 				default:	//io opcode min/max definition error 
 					rv[0] = ERR_BAD_IO_OP_MINMAX;
 			}

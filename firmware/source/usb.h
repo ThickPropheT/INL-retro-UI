@@ -10,6 +10,7 @@
 #include "pinport.h"
 #include "io.h"
 #include "nes.h"
+#include "snes.h"
 
 
 #endif
