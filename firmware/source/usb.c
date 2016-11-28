@@ -155,6 +155,47 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			}
 			break; //end of SNES
 
+		case BUFFER:
+			switch (spacket->opcode) {
+				case BUFF_OPCODE_NRV_MIN ... BUFF_OPCODE_NRV_MAX:
+					rv[0] = buffer_opcode_no_return( spacket->opcode, NULL,
+					spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+					break;
+				case BUFF_OPCODE_BUFn_NRV_MIN ... BUFF_OPCODE_BUFn_NRV_MAX:
+					switch ( (spacket->opcode) & 0x07) {
+						case 0:
+							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff0,
+							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+						case 1:
+							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff1,
+							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+						case 2:
+							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff2,
+							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+						case 3:
+							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff3,
+							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+						case 4:
+							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff4,
+							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+						case 5:
+							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff5,
+							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+						case 6:
+							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff6,
+							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+						case 7:
+							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff7,
+							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
+						default:	//nes opcode min/max definition error 
+							rv[0] = ERR_BAD_BUFF_OP_MINMAX;
+					}
+					break;
+				default:	//nes opcode min/max definition error 
+					rv[0] = ERR_BAD_BUFF_OP_MINMAX;
+			}
+			break; //end of BUFFER
+		
 		default:
 			//request (aka dictionary) is unknown
 			rv[0] = ERR_UNKN_DICTIONARY;

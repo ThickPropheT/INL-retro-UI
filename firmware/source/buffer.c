@@ -1,103 +1,168 @@
 #include "buffer.h"
 
-//buffer struct
-//designed to have multiple buffers instantiated at a time
-//buffers are effectively objects who get instructed by host
-//commands include things like reading from cartridge rom/ram
-//getting filled by usb writes, programming 'themselves' to
-//where they belong on the cartridge.  They know how to get
-//on/off the cart and have a current status that the host can
-//query.  Host then decides when to refill/dump data from
-//buffer over usb.  Host also can query buffer to get error
-//codes back and and attempt to resolve issues.  Buffers can
-//also be instructed to verify themselves with a checksum
-//They can verify themselves against cart rom/ram as well.
+//typedef struct buffer{
+//	uint8_t 	*data;		//pointer to base buffer's allocated sram
+//	uint8_t 	size;		//size of buffer in bytes (max 256 bytes)
+//	uint8_t		status;		//current status of buffer USB load/unload, flashing, waiting, erase
+//	uint8_t 	cur_byte;	//byte currently being loaded/unloaded/flashed/read
+//	uint8_t		reload;		//add this number to page_num for next loading
+//	uint8_t 	buff_num;	//address bits between buffer size and page number
+//					//ie need 2x128 byte buffers making buff_num = A7
+//					//ie need 4x64 byte buffers making buff_num = A7:6
+//					//ie need 8x32 byte buffers making buff_num = A7:5
+//	uint16_t 	page_num;	//address bits beyond buffer's size and buff_num A23-A8
+//					//MSB A23-16, LSB A15-8
+//	uint8_t		mem_type;	//SNES ROM, SNES RAM, PRG ROM, PRG RAM, CHR ROM, CHR RAM, CPLD, SPI
+//	uint8_t		part_num;	//used to define unlock commands, sector erase, etc
+//	uint8_t		multiple;	//number of times to program this page
+//	uint8_t		add_mult;	//add this number to page_num for multiple programs
+//					//CHR shift LSb to A13 (max 2MByte)
+//					//PRG shift LSb to A14 (max 4MByte)
+//					//SNES add to MSB of page_num (max 16MByte)
+//	uint8_t		mapper;		//mapper number of board
+//	uint8_t		mapvar;		//mapper variant 
+//	uint8_t		function;	//function "pointer" for flash/dump operation control
+//}buffer;
 
-//atmega164 has 1KByte of SRAM
-//VUSB has max of 254 + wValue/wIndex = max 256 bytes without long transfers
-//Expecting two 128 byte buffers will be faster than a single 256byte buffer
-//That way one buffer could be flashing onto the cart while the other is 
-//getting filled 8bytes at a time from USB.  this would proide some double
-//buffering speed ups, but not sure how fast that'll be.  Having buffers
-//as small as 32bytes might be faster for 4-8MB flash memories as they
-//have ability to flash 32Bytes at once.  Could perhaps fill multiple
-//32B buffers with one larger 128/256B transfer.  Increasing transfer size
-//does speed up overall due to fewer setup and status USB packets.
+//max raw buffer size is 256 bytes must create multiple raw buffers for more
+//or handle 16bit values for page size
 
-//USB control transfer:
-//	SETUP/DATA STAGES:
-//	Token packet- sync, pid, addr, enp, crc5, eop = 35bits
-//	Data/setup packet
-//	sync, pid, crc16, eop = 67bits
-//	setup/payload packet data = 64bits
-//	handsk (sync, pid, eop) = 19bit
-//	total = 185bits with 64bit payload = 34.6% data utilization per data packet
-//	STATUS STAGE:
-//	same as above, but zero lenght data packet.
-//	total 121bits
+//raw buffer memory to which smaller buffers will be created from
+//set pointers and lengths to prevent buffer conflicts
+//static uint8_t raw_buffer[NUM_RAW_BANKS * RAW_BANK_SIZE];	//8 banks of 32bytes each 256Bytes total
+static uint8_t raw_buffer[256];	//8 banks of 32bytes each 256Bytes total
 
-//	8byte total payload
-//	185 setup + 185 data + 121 status = 491 bits transferred for 64bit payload = 13.03% bus utilization
-
-//	32byte total payload
-//	185 setup + 4*185 data + 121 status = 1046 bits xfrd for 4*64=256 payld = 24.47% bus util
-
-//	64byte total payload
-//	185 setup + 8*185 data + 121 status = 1786 bits xfrd for 8*64=512 payld = 28.67% bus util
-
-//	128byte total payload
-//	185 setup + 16*185 data + 121 status = 3266 bits xfrd for 16*64=1024 payld = 31.35% bus util
-
-//	254byte total payload
-//	185 setup + 32*185-16 data + 121 status = 6210 bits xfrd for 31.8*64=2032 payld = 32.72% bus util
-//	4.4% speedup than 128
-
-//	256bytes in 254byte xfr 
-//	185 setup + 32*185-16 data + 121 status = 6210 bits xfrd for 32*64=2048 payld = 32.98% bus util
-//	0.79% speedup than 254 in 254
-
-//	256byte total payload
-//	185 setup + 32*185 data + 121 status = 6226 bits xfrd for 32*64=2048 payld = 32.89% bus util
-
-//	512byte total payload
-//	185 setup + 64*185 data + 121 status = 12146 bits xfrd for 64*64=4096 payld = 33.72% bus util
-//	1% greater bus util compared to 254byte xfr
-//	2.2% speedup compared to 256 in 254
+//buffer status stores allocation status of each raw buffer 32Byte bank
+//static uint8_t raw_bank_status[NUM_RAW_BANKS]; 
+static uint8_t raw_bank_status[8]; 
 
 
-//	Probably decent overall speedup by eliminating multiple status packets.  Not sure how many
-//	NAK's the old firmware was sending while the device programmed the entire 256byte buffer.
-//	but one NAK is more than should be necessary.
-//
-//	Plan is to support max of 254 byte transfers with 2 bytes stuffed in setup packet
-//	Want to compare to 512B long transfers for speed comparison
-//	
-//	Either way, I can setup the buffers in smaller sizes than the transfers.  Then a buffer could
-//	start programming mid usb transfer once it's full.  Want to make effor to hide flash programming
-//	wait time behind usb transfer time.
+/* Desc:Function takes an opcode which was transmitted via USB
+ * 	then decodes it to call designated function.
+ * 	shared_dict_buffer.h is used in both host and fw to ensure opcodes/names align
+ * Pre: Macros must be defined in firmware pinport.h
+ * 	opcode must be defined in shared_dict_buffer.h
+ * Post:function call complete.
+ * Rtn: SUCCESS if opcode found, ERR_UNKN_BUFF_OPCODE_NRV if opcode not present.
+ */
+uint8_t buffer_opcode_no_return( uint8_t opcode, buffer *buff, uint8_t oper1, uint8_t oper2, uint8_t oper3 )
+{
+	switch (opcode) { 
+		case RAW_BUFFER_RESET:	
+			raw_buffer_reset();	
+			break;
+		case ALLOCATE_BUFFER0 ... ALLOCATE_BUFFER7:	
+			allocate_buffer( &(*buff), oper1, oper2, oper3 );
+			break;
+		default:
+			 //opcode doesn't exist
+			 return ERR_UNKN_BUFF_OPCODE_NRV;
+	}
+	
+	return SUCCESS;
 
-//~16 bytes per buffer...
-typedef struct buffer{
-	uint8_t 	*data;		//pointer to base buffer's allocated sram
-	uint8_t 	size;		//size of buffer in bytes (max 256 bytes)
-	uint8_t		status;		//current status of buffer USB load/unload, flashing, waiting, erase
-	uint8_t 	cur_byte;	//byte currently being loaded/unloaded/flashed/read
-	uint8_t		reload;		//add this number to page_num for next loading
-	uint8_t 	buff_num;	//address bits between buffer size and page number
-					//ie need 2x128 byte buffers making buff_num = A7
-					//ie need 4x64 byte buffers making buff_num = A7:6
-					//ie need 8x32 byte buffers making buff_num = A7:5
-	uint16_t 	page_num;	//address bits beyond buffer's size and buff_num A23-A8
-					//MSB A23-16, LSB A15-8
-	uint8_t		mem_type;	//SNES ROM, SNES RAM, PRG ROM, PRG RAM, CHR ROM, CHR RAM, CPLD, SPI
-	uint8_t		part_num;	//used to define unlock commands, sector erase, etc
-	uint8_t		multiple;	//number of times to program this page
-	uint8_t		add_mult;	//add this number to page_num for multiple programs
-					//CHR shift LSb to A13 (max 2MByte)
-					//PRG shift LSb to A14 (max 4MByte)
-					//SNES add to MSB of page_num (max 16MByte)
-	uint8_t		mapper;		//mapper number of board
-	uint8_t		mapvar;		//mapper variant 
-	uint8_t		function;	//function "pointer" for flash/dump operation control
-}buffer;
+}
+
+/* Desc:Blindly resets all buffer allocation and values
+ * 	Host instructs this to be called.
+ * Pre: static instantitions of raw_buffer, raw_bank_status, and buff0-7 above
+ * Post:all raw buffer ram unallocated
+ * 	buffer status updated to UNALLOC
+ * Rtn:	None
+ */
+void raw_buffer_reset( )
+{
+	uint8_t i;
+
+	//unallocate raw buffer space
+	for( i=0; i<NUM_RAW_BANKS; i++) {
+		raw_bank_status[i] = UNALLOC;
+	}
+
+	//unallocate all buffer objects
+	buff0.status = UNALLOC;
+	buff1.status = UNALLOC;
+	buff2.status = UNALLOC;
+	buff3.status = UNALLOC;
+	buff4.status = UNALLOC;
+	buff5.status = UNALLOC;
+	buff6.status = UNALLOC;
+	buff7.status = UNALLOC;
+	//set buffer id to UNALLOC
+	buff0.id = UNALLOC;
+	buff1.id = UNALLOC;
+	buff2.id = UNALLOC;
+	buff3.id = UNALLOC;
+	buff4.id = UNALLOC;
+	buff5.id = UNALLOC;
+	buff6.id = UNALLOC;
+	buff7.id = UNALLOC;
+
+}
+
+/* Desc:Embeded subtitute for malloc of a buffer object
+ * 	Host instructs this to be called so the host
+ * 	is in charge of what buffers are for what
+ * 	and how things are used.  This function does
+ * 	keep track of each bank of the raw buffer.
+ * 	It will not allocate buffer space and return error
+ * 	if host is trying to allocate buffer on top of 
+ * 	another buffer or bank already allocated.
+ * 	pass in pointer to buffer object to be allocated
+ * 	pass base bank number and number of banks in buffer
+ * Pre: static instantitions of raw_buffer raw_bank_status,
+ * 	and buff0-7 above.
+ * 	Buffer must be unallocated.
+ * 	new id cannot be 0xFF/255 "UNALLOC"
+ * 	bank allocation request can't go beyond raw ram space
+ * Post:section of raw buffer allocated for host use
+ * 	status of raw buffer updated to prevent future collisions
+ * 	bank status byte contains buffer's id
+ * 	buffer status updated from UNALLOC to EMPTY
+ * 	all other buffer values cleared to zero
+ * Rtn:	SUCCESS or ERROR code if unable to allocate
+ */
+//uint8_t allocate_buffer( struct buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_t num_banks )
+uint8_t allocate_buffer( buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_t num_banks )
+{
+	uint8_t i;
+
+	//check incoming args
+	if ( (base_bank+num_banks) > NUM_RAW_BANKS ) {
+		//trying to allocate SRAM past end of raw_buffer
+		return ERR_BUFF_ALLOC_RANGE;
+	}
+
+	//check that buffer isn't already allocated
+	if ( buff->status != UNALLOC) {
+		return ERR_BUFF_STATUS_ALREADY_ALLOC;
+	}
+	if ( buff->id != UNALLOC) {
+		return ERR_BUFF_ID_ALREADY_ALLOC;
+	}
+
+	//check that raw banks aren't allocated
+	for ( i=0; i<num_banks; i++) {
+		if ( raw_bank_status[base_bank+i] != UNALLOC ) {
+			return ERR_BUFF_RAW_ALREADY_ALLOC;
+		}
+	}
+
+	//seems that buffer and raw are free allocate them as requested
+	buff->id = new_id;
+	buff->status = EMPTY;
+	buff->data = &raw_buffer[base_bank];
+
+	//set bank status to bank's id
+	for ( i=0; i<num_banks; i++) {
+		raw_bank_status[base_bank+i] = new_id;
+	}
+
+	return SUCCESS;	
+
+}
+
+
+
+
 

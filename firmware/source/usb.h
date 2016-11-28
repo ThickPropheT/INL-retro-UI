@@ -11,6 +11,7 @@
 #include "io.h"
 #include "nes.h"
 #include "snes.h"
+#include "buffer.h"
 
 
 #endif
