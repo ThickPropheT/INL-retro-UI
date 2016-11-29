@@ -179,6 +179,8 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	//will detect when return length differs from requested
 	return rlen;
 
+	//need to return USB_NO_MSG for OUT transfers to make usbFunctionWrite called
+
 	//return USB_NO_MSG;	//if want usbFunctionRead called during IN token data packets
 	//Don't have a use for usbFunctionRead yet..  Not expecting to anytime soon
 	//probably easier and perhaps faster to send cart dump commands and store rom image
@@ -220,6 +222,33 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
  * to 1 in usbconfig.h and return 0xff in usbFunctionSetup()..
  */
 USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
-	return 1;	//"don't know how much data coming
+	//extern *buffer cur_usb_load_buff;
+	//buffer.c controls what buffer gets filled with extern ptr cur_usb_load_buf
+	//buffer.c also sets incoming_bytes_remain during setup packet
+
+	uint8_t data_cur = 0;	//current incoming byte to copy
+	uint8_t buf_cur = cur_usb_load_buff->cur_byte;	//current buffer byte
+	uint8_t *buf_data = cur_usb_load_buff->data;	//current buffer data array
+	
+	//copy 1-8bytes of payload into buffer
+	while ( data_cur < len ) {
+		buf_data[ buf_cur ] = data[data_cur];
+		buf_cur++;
+		data_cur++;
+	}
+
+	cur_usb_load_buff->cur_byte += len;
+	incoming_bytes_remain -= len;
+
+	//return 0xFF (-1) "STALL" if error
+	//return 1 if entire payload received successfully
+	//return 0 if more data expected to complete transfer
+	if ( incoming_bytes_remain == 0 ) { //done with OUT transfer
+		return 1;
+		cur_usb_load_buff->status = USB_FULL;
+	} else {	//more data packets remain to complete OUT transfer	
+		return 0;
+	}
+
 }
 

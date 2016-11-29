@@ -26,8 +26,9 @@
 //which limits to 256 bytes per buffer currently
 //having 16bit value support would expand this, or somehow shifting current byte
 //to account for multiple bytes could expand further
-#define NUM_RAW_BANKS   8	// 8*32 = 256 bytes of buffer
-//#define NUM_RAW_BANKS   16	//16*32 = 512 bytes of buffer
+//#define NUM_RAW_BANKS   8	// 8*32 = 256 bytes of buffer
+#define NUM_RAW_BANKS   16	//16*32 = 512 bytes of buffer
+
 #define RAW_BANK_SIZE   32      //bank size in bytes
 
 //number of buffer objects
@@ -48,8 +49,10 @@
 #define PROBLEM		0x10
 #define USB_UNLOADING	0x80
 #define USB_LOADING	0x90
+#define USB_FULL	0x98
 #define CHECKING	0xC0
 #define DUMPING		0xD0
+#define DUMP_FULL	0xD8
 #define ERASING		0xE0
 #define FLASHING	0xF0
 #define FLASH_WAIT	0xF8
@@ -92,7 +95,10 @@
 #define BUFF_OPCODE_BUFN_NRV_MAX	0xBF
 //
 #define BUFF_OPCODE_BUFN_RV_MIN		0xC0
-#define BUFF_OPCODE_BUFN_RV_MAX		0xFF
+#define BUFF_OPCODE_BUFN_RV_MAX		0xEF
+//
+#define BUFF_OPCODE_PAYLOAD_MIN		0xF0
+#define BUFF_OPCODE_PAYLOAD_MAX		0xFF
 //=============================================================================================
 //=============================================================================================
 //allocate firmware sram to a buffer
@@ -109,6 +115,18 @@
 #define	ALLOCATE_BUFFER5	0x85
 #define	ALLOCATE_BUFFER6	0x86
 #define	ALLOCATE_BUFFER7	0x87
+
+
+//designate what buffer to fill with opcode
+//endpoint direction determines if read/write
+#define BUFF_PAYLOAD0		0xF0
+#define BUFF_PAYLOAD1		0xF1
+#define BUFF_PAYLOAD2		0xF2
+#define BUFF_PAYLOAD3		0xF3
+#define BUFF_PAYLOAD4		0xF4
+#define BUFF_PAYLOAD5		0xF5
+#define BUFF_PAYLOAD6		0xF6
+#define BUFF_PAYLOAD7		0xF7
 
 
 

@@ -17,5 +17,11 @@ void raw_buffer_reset( );
 uint8_t allocate_buffer( buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_t num_banks );
 
 
+//used to communicate to usbFunctionWrite which buffer object
+//it should be filling
+static buffer *cur_usb_load_buff;
+//used to determine number of bytes left to finish current
+//OUT transfer utilized by usbFunctionWrite
+static uint16_t	incoming_bytes_remain;
 
 #endif

@@ -41,6 +41,7 @@ uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint16_t *rlen)
 	buffer *called_buff = &buff0; //used to point to buffer that was called based on opcode
 	uint8_t *rptr = rv; //used for return pointer set to small rv buffer by default
 
+
 	switch (spacket->opcode) {
 
 		//opcodes which don't address a specific buffer object
@@ -89,6 +90,27 @@ uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint16_t *rlen)
 					//spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
 					//return pointer to buffer's data
 					rptr = called_buff->data;
+					*rlen = (spacket->wLength);
+				break;
+				case BUFF_PAYLOAD0 ... BUFF_PAYLOAD7:
+					//for now just read write from designated buffer
+					//TODO make some checks that buffer is allocated/not busy etc
+					//determine endpoint IN/OUT
+					if ((spacket->bmRequestType & ENDPOINT_BIT) & ENDPOINT_IN) {
+						//read/dump from device to host
+						rptr = called_buff->data;
+						*rlen = (spacket->wLength); 
+						called_buff->cur_byte = 0;
+						called_buff->status = USB_UNLOADING;
+					} else { //write to device from host
+						cur_usb_load_buff = called_buff;
+						incoming_bytes_remain = (spacket->wLength); 
+						called_buff->cur_byte = 0;
+						called_buff->status = USB_LOADING;
+						//return USB_NO_MSG to get usbFunctionWrite
+						//called on incoming packets
+						*rlen = USB_NO_MSG;
+					}
 				break;
 			}
 			break;
@@ -237,6 +259,7 @@ void raw_buffer_reset( )
  * 	status of raw buffer updated to prevent future collisions
  * 	bank status byte contains buffer's id
  * 	buffer status updated from UNALLOC to EMPTY
+ *	buffer size set according to allocation
  * 	all other buffer values cleared to zero
  * Rtn:	SUCCESS or ERROR code if unable to allocate
  */
@@ -272,6 +295,18 @@ uint8_t allocate_buffer( buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_
 	//seems that buffer and raw are free allocate them as requested
 	buff->id = new_id;
 	buff->status = EMPTY;
+	buff->size = num_banks * RAW_BANK_SIZE;
+
+	//zero out other elements
+	buff->cur_byte = 0;
+	buff->reload = 0;
+	buff->page_num = 0;
+	buff->mem_type = 0;
+	buff->part_num = 0;
+	buff->multiple = 0;
+	buff->add_mult = 0;
+	buff->mapper = 0;
+	buff->function = 0;
 
 	//set buffer data pointer to base ram address
 	buff->data = &raw_buffer[base_bank*RAW_BANK_SIZE];
