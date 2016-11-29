@@ -6,7 +6,7 @@
 #include "io.h"
 #include "pinport.h"
 
-int __attribute__((noreturn)) main(void)
+int main(void)
 {
 
 	//set watch dog timer with 1 second timer
