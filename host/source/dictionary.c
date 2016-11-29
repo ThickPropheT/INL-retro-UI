@@ -40,7 +40,7 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 	transfer->data = rbuf;
 
 	
-	debug("dictionary call dict:%d opcode:%d/%x addr:%x data:%x", dictionary, opcode, opcode, addr, miscdata);
+	debug("\ndictionary call dict:%d opcode:%d/%x addr:%x data:%x", dictionary, opcode, opcode, addr, miscdata);
 	switch (dictionary) {
 		case PINPORT: debug("dict: PINPORT");
 			transfer->wLength = 1;
@@ -111,6 +111,28 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 			}
 			break; //end of SNES
 
+		case BUFFER: debug("dict: BUFFER");
+			transfer->wLength = 1;
+			switch (opcode) {
+				case BUFF_OPCODE_NRV_MIN ... BUFF_OPCODE_NRV_MAX:
+					debug("BUFF_OPCODE_NRV");
+					break;
+				case BUFF_OPCODE_RV_MIN ... BUFF_OPCODE_RV_MAX:
+					debug("BUFF_OPCODE_RV");
+					transfer->wLength = 2;
+					break;
+				case BUFF_OPCODE_BUFN_NRV_MIN ... BUFF_OPCODE_BUFN_NRV_MAX:
+					debug("BUFF_OPCODE_NRV");
+					break;
+				case BUFF_OPCODE_BUFN_RV_MIN ... BUFF_OPCODE_BUFN_RV_MAX:
+					debug("BUFF_OPCODE_RV");
+					//TODO
+					break;
+				default:	//snes opcode min/max definition error 
+					sentinel("bad BUFFER opcode min/max err:%d",ERR_BAD_BUFF_OP_MINMAX);
+			}
+			break; //end of BUFF
+
 		default:
 			//request (aka dictionary) is unknown
 			sentinel("unknown DICT err:%d",ERR_UNKN_DICTIONARY);
@@ -120,7 +142,12 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 	int xfr_cnt;
 
 	xfr_cnt = usb_transfer( transfer );
-	debug("xf: %d   er: %d rv: %x, %x, %x, %x, %x, %x, %x",xfr_cnt, rbuf[0], rbuf[1], rbuf[2], rbuf[3], rbuf[4], rbuf[5], rbuf[6], rbuf[7]);
+	printf("						xf: %d   er: %d rv:",xfr_cnt, rbuf[0]);
+	int i ;
+	for (i=1; i<xfr_cnt; i++){
+		printf(" %x,", rbuf[i]);
+	}
+	printf("\n"); 
 	check(rbuf[0] == SUCCESS, "retro programmer had error: %d, dict:%d, opcode:%d/%x, addr:%x, data:%x",rbuf[0], dictionary, opcode, opcode, addr, miscdata)
 	//send command
 

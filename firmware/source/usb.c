@@ -38,20 +38,7 @@
 	//	usbWord_t   wLength;
 	//}usbRequest_t;
 
-#define ENDPOINT_BIT   0x80    //Bit 7 of bmRequest type determines endpoint
-#define ENDPOINT_IN    0x80    //In: device-to-host.
-#define ENDPOINT_OUT   0x00    //Out: host-to-device. 
 
-
-typedef struct setup_packet{
-	uint8_t		bmRequestType;	//contains endpoint
-	uint8_t		bRequest;	//designates dictionary of opcode
-	uint8_t		opcode;		//wValueLSB (little endian)
-	uint8_t		miscdata;	//wValueMSB 
-	uint8_t		operandLSB;	//wIndexLSB
-	uint8_t		operandMSB;	//wIndexMSB
-	uint16_t	wLength;
-}setup_packet;
 
 USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
@@ -59,13 +46,35 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	setup_packet *spacket = (void *)data;
 
 	//8 Byte buffer to be used for returning error code and return values
-	//must be static so driver can still access after function return
-	static uchar rv[8];
-	//rv[0] contains opcode success/error code
+	//must be static so V-USB driver can still access after function return
+	static uint8_t rv[RETURN_BUFF_SIZE];
+	//rv[RV_ERR_IDX] contains opcode success/error code
 	//rv[1-7] available for return data, start with index 1
+	//rv[RETURN_BUFF_FIRST_IDX-RETURN_BUFFER_LAST_IDX]
 
-	//number of bytes to return to host
-	uint8_t rlen = 0;
+	/* (1) Set the global pointer 'usbMsgPtr' to the base of the static RAM data
+	 * block and return the length of the data in 'usbFunctionSetup()'. The driver
+	 * will handle the rest. Or (2) return USB_NO_MSG in 'usbFunctionSetup()'. The
+	 * driver will then call 'usbFunctionRead()' when data is needed. See the
+	 */
+	//by default want to return some portion of the 8 byte rv "return value" 
+	//buffer. If no return data requested from host rlen = 0, so this wouldn't matter
+	//Some dictionaries/opcodes that want to return larger buffers though
+	//this function will set usbMsgPtr to point to that larger buffer when supported
+	//avr-gcc doesn't like this and gives warning
+	//source/usb.c:64: warning: assignment makes integer from pointer without a cast
+	//tried casting it to usbMsgPtr
+	usbMsgPtr = (usbMsgPtr_t)rv;
+
+//#if USB_CFG_LONG_TRANSFERS
+//	//number of bytes to return to host
+//	//16bit meets max possible 16KBytes with V-USB long transfers enabled
+	uint16_t rlen = 0;	//just go ahead and set to 16bit to be safe
+				//prob not worth saving a measly byte..
+//#else
+//	//8bit is enough for 254 bit non-long xfrs
+//	uint8_t rlen = 0;
+//#endif
 
 	//determine endpoint IN/OUT
 	if ( (spacket->bmRequestType & ENDPOINT_BIT) == ENDPOINT_IN ) {
@@ -85,131 +94,92 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 		case PINPORT:
 			switch (spacket->opcode) {
 				case PP_OPCODE_ONLY_MIN ... PP_OPCODE_ONLY_MAX:
-					rv[0] = pinport_opcode_only( spacket->opcode );	
+					rv[RV_ERR_IDX] = pinport_opcode_only( spacket->opcode );	
 					break;
 				case PP_OPCODE_8BOP_MIN ... PP_OPCODE_8BOP_MAX:
-					rv[0] = pinport_opcode_8b_operand( 
+					rv[RV_ERR_IDX] = pinport_opcode_8b_operand( 
 					spacket->opcode, spacket->operandLSB );	
 					break;
 				case PP_OPCODE_16BOP_MIN ... PP_OPCODE_16BOP_MAX:
-					rv[0] = pinport_opcode_16b_operand( 
+					rv[RV_ERR_IDX] = pinport_opcode_16b_operand( 
 					spacket->opcode, spacket->operandMSB, spacket->operandLSB );	
 					break;
 				case PP_OPCODE_24BOP_MIN ... PP_OPCODE_24BOP_MAX:
-					rv[0] = pinport_opcode_24b_operand( spacket->opcode,
+					rv[RV_ERR_IDX] = pinport_opcode_24b_operand( spacket->opcode,
 					spacket->miscdata, spacket->operandMSB, spacket->operandLSB );	
 					break;
 				case PP_OPCODE_8BRV_MIN ... PP_OPCODE_8BRV_MAX:
-					rv[0] = pinport_opcode_8b_return( spacket->opcode, &rv[1]);
+					rv[RV_ERR_IDX] = pinport_opcode_8b_return( spacket->opcode, &rv[RV_DATA0_IDX]);
 					rlen ++;
 					break;
 				default:	//pinport opcode min/max definition error 
-					rv[0] = ERR_BAD_PP_OP_MINMAX;
+					rv[RV_ERR_IDX] = ERR_BAD_PP_OP_MINMAX;
 			}
 			break; //end of PINPORT
 
 		case IO:
 			switch (spacket->opcode) {
 				case IO_OPCODE_ONLY_MIN ... IO_OPCODE_ONLY_MAX:
-					rv[0] = io_opcode_only( spacket->opcode );	
+					rv[RV_ERR_IDX] = io_opcode_only( spacket->opcode );	
 					break;
 				case IO_OPCODE_RTN_MIN ... IO_OPCODE_RTN_MAX:
-					rv[0] = io_opcode_return( 
-					spacket->opcode, &rv[1] );	
+					rv[RV_ERR_IDX] = io_opcode_return( 
+					spacket->opcode, &rv[RV_DATA0_IDX] );	
 					rlen = 8;
 					break;
 				default:	//io opcode min/max definition error 
-					rv[0] = ERR_BAD_IO_OP_MINMAX;
+					rv[RV_ERR_IDX] = ERR_BAD_IO_OP_MINMAX;
 			}
 			break; //end of IO
 
 		case NES:
 			switch (spacket->opcode) {
 				case NES_OPCODE_24BOP_MIN ... NES_OPCODE_24BOP_MAX:
-					rv[0] = nes_opcode_24b_operand( spacket->opcode,
+					rv[RV_ERR_IDX] = nes_opcode_24b_operand( spacket->opcode,
 					spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
 					break;
 				case NES_OPCODE_16BOP_8BRV_MIN ... NES_OPCODE_16BOP_8BRV_MAX:
-					rv[0] = nes_opcode_16b_operand_8b_return( spacket->opcode,
-					spacket->operandMSB, spacket->operandLSB, &rv[1]);	
+					rv[RV_ERR_IDX] = nes_opcode_16b_operand_8b_return( spacket->opcode,
+					spacket->operandMSB, spacket->operandLSB, &rv[RV_DATA0_IDX]);	
 					rlen++;
 					break;
 				default:	//nes opcode min/max definition error 
-					rv[0] = ERR_BAD_NES_OP_MINMAX;
+					rv[RV_ERR_IDX] = ERR_BAD_NES_OP_MINMAX;
 			}
 			break; //end of NES
 
 		case SNES:
 			switch (spacket->opcode) {
 				case SNES_OPCODE_24BOP_MIN ... SNES_OPCODE_24BOP_MAX:
-					rv[0] = snes_opcode_24b_operand( spacket->opcode, 
+					rv[RV_ERR_IDX] = snes_opcode_24b_operand( spacket->opcode, 
 					spacket->operandMSB, spacket->operandLSB, spacket->miscdata );
 					break;
 				case SNES_OPCODE_24BOP_8BRV_MIN ... SNES_OPCODE_24BOP_8BRV_MAX:
-					rv[0] = snes_opcode_24b_operand_8b_return( spacket->opcode,
-					spacket->miscdata, spacket->operandMSB, spacket->operandLSB, &rv[1]);
+					rv[RV_ERR_IDX] = snes_opcode_24b_operand_8b_return( spacket->opcode,
+					spacket->miscdata, spacket->operandMSB, spacket->operandLSB, &rv[RV_DATA0_IDX]);
 					rlen++;
 					break;
 				default:	//snes opcode min/max definition error 
-					rv[0] = ERR_BAD_SNES_OP_MINMAX;
+					rv[RV_ERR_IDX] = ERR_BAD_SNES_OP_MINMAX;
 			}
 			break; //end of SNES
 
 		case BUFFER:
-			switch (spacket->opcode) {
-				case BUFF_OPCODE_NRV_MIN ... BUFF_OPCODE_NRV_MAX:
-					rv[0] = buffer_opcode_no_return( spacket->opcode, NULL,
-					spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-					break;
-				case BUFF_OPCODE_BUFn_NRV_MIN ... BUFF_OPCODE_BUFn_NRV_MAX:
-					switch ( (spacket->opcode) & 0x07) {
-						case 0:
-							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff0,
-							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-						case 1:
-							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff1,
-							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-						case 2:
-							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff2,
-							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-						case 3:
-							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff3,
-							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-						case 4:
-							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff4,
-							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-						case 5:
-							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff5,
-							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-						case 6:
-							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff6,
-							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-						case 7:
-							rv[0] = buffer_opcode_no_return( spacket->opcode, &buff7,
-							spacket->operandMSB, spacket->operandLSB, spacket->miscdata );	
-						default:	//nes opcode min/max definition error 
-							rv[0] = ERR_BAD_BUFF_OP_MINMAX;
-					}
-					break;
-				default:	//nes opcode min/max definition error 
-					rv[0] = ERR_BAD_BUFF_OP_MINMAX;
-			}
+			//just give buffer.c the setup packet and let it figure things out for itself
+			usbMsgPtr = (usbMsgPtr_t)buffer_usb_call( spacket, rv, &rlen );
 			break; //end of BUFFER
 		
 		default:
 			//request (aka dictionary) is unknown
-			rv[0] = ERR_UNKN_DICTIONARY;
+			rv[RV_ERR_IDX] = ERR_UNKN_DICTIONARY;
 	}
 
-	/* (1) Set the global pointer 'usbMsgPtr' to the base of the static RAM data
-	 * block and return the length of the data in 'usbFunctionSetup()'. The driver
-	 * will handle the rest. Or (2) return USB_NO_MSG in 'usbFunctionSetup()'. The
-	 * driver will then call 'usbFunctionRead()' when data is needed. See the
-	 */
-	usbMsgPtr = rv;
+	//TODO add check that verifies rlen == setup packet return lenght request
+	//current state has error checking somewhat embeded in the fact the host
+	//will detect when return length differs from requested
 	return rlen;
 
-	//return USB_NO_MSG;
+	//return USB_NO_MSG;	//if want usbFunctionRead called during IN token data packets
 	//Don't have a use for usbFunctionRead yet..  Not expecting to anytime soon
 	//probably easier and perhaps faster to send cart dump commands and store rom image
 	//in a buffer to be returned here.

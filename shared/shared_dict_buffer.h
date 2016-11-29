@@ -15,21 +15,44 @@
 //
 //=============================================================================================
 //=============================================================================================
+
+
 //raw buffer banks & size
-#define NUM_RAW_BANKS   8
-#define RAW_BANK_SIZE   32      //in bytes
+//This determines the raw buffer sram space on avr at firmware compile time
+//one byte per bank is instantiated to keep track of that banks' allocation status
+//a buffer must be as large as one bank, but a buffer can consume multiple banks
+//only limit to buffer size is the buffer structure
+//current buffer structure utilizes a single byte for current byte counter
+//which limits to 256 bytes per buffer currently
+//having 16bit value support would expand this, or somehow shifting current byte
+//to account for multiple bytes could expand further
+#define NUM_RAW_BANKS   8	// 8*32 = 256 bytes of buffer
+//#define NUM_RAW_BANKS   16	//16*32 = 512 bytes of buffer
+#define RAW_BANK_SIZE   32      //bank size in bytes
+
+//number of buffer objects
+//This controls number of static buffer objects instantiated in firmware at compile time
+//note this also controls opcodes created/supported by firmware
+//reducing number of buffers frees firmware sram by ~16bytes per buffer object
+//not much reason to have less than 2 atleast allow double buffering
+//so one can be getting loaded/unloaded by USB while other is dumping/flashing
+//current max is 8, but only really limited by opcode definitions to address all buffers
+//makes #ifdef code simpler to only allow buffer numbers that are power of 2
+//#define NUM_BUFFERS_2	2
+//#define NUM_BUFFERS_4	4
+#define NUM_BUFFERS_8	8
 
 //defined here so identical to host and firmware
 //status values
 #define EMPTY 		0x00
-//#define ERROR		0x10
-//#define USB_UNLOADING	0x80
-//#define USB_LOADING	0x90
-//#define CHECKING	0xC0
-//#define DUMPING		0xD0
-//#define ERASING		0xE0
-//#define FLASHING	0xF0
-//#define FLASH_WAIT	0xF8
+#define PROBLEM		0x10
+#define USB_UNLOADING	0x80
+#define USB_LOADING	0x90
+#define CHECKING	0xC0
+#define DUMPING		0xD0
+#define ERASING		0xE0
+#define FLASHING	0xF0
+#define FLASH_WAIT	0xF8
 #define UNALLOC 	0xFF
 
 
@@ -40,8 +63,10 @@
 //=============================================================================================
 //	Detect this opcode/operand setup with opcode between the following defines:
 #define BUFF_OPCODE_NRV_MIN	0x00
-#define BUFF_OPCODE_NRV_MAX	0x7F
+#define BUFF_OPCODE_NRV_MAX	0x3F
 //
+#define BUFF_OPCODE_RV_MIN	0x40
+#define BUFF_OPCODE_RV_MAX	0x7F
 //=============================================================================================
 //=============================================================================================
 
@@ -49,15 +74,25 @@
 //reset all buffers to unallocated
 #define	RAW_BUFFER_RESET	0x00
 
+//send bank number and read back it's status
+//0xFF-UNALLOC
+//gets assigned buffer ID number when allocated
+#define RAW_BANK_STATUS		0x40
 
 //=============================================================================================
 //	OPCODES with up to 24bit operand and no return value besides SUCCESS/ERROR_CODE
 //	BUFFER NUMBER denoted in lower nibble of opcode
 //=============================================================================================
-//	Detect this opcode/operand setup with opcode between the following defines:
-#define BUFF_OPCODE_BUFn_NRV_MIN	0x80
-#define BUFF_OPCODE_BUFn_NRV_MAX	0xFF
+//	Detect this opcode group which uses 3 LSbits to determine which buffer to call
+#define BUFF_OPCODE_BUFN_MIN	0x80
+#define BUFF_OPCODE_BUFN_MAX	0xFF
 //
+//	Detect this opcode/operand setup with opcode between the following defines:
+#define BUFF_OPCODE_BUFN_NRV_MIN	0x80
+#define BUFF_OPCODE_BUFN_NRV_MAX	0xBF
+//
+#define BUFF_OPCODE_BUFN_RV_MIN		0xC0
+#define BUFF_OPCODE_BUFN_RV_MAX		0xFF
 //=============================================================================================
 //=============================================================================================
 //allocate firmware sram to a buffer
