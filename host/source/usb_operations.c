@@ -253,6 +253,7 @@ int usb_transfer( USBtransfer *transfer )
 	wIndex = wIndex << 8;
 	wIndex |= transfer->wIndexLSB;
 
+	debug("reqtype   h: %x \n", ( LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | transfer->endpoint));
 	debug("request   h: %x d: %d", transfer->request, transfer->request);
 	debug("wValueMSB h: %x d: %d", transfer->wValueMSB, transfer->wValueMSB);
 	debug("wValueLSB h: %x d: %d", transfer->wValueLSB, transfer->wValueLSB);

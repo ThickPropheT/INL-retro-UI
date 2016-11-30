@@ -1,12 +1,5 @@
 #include "buffer.h"
 
-//max raw buffer size is only limited based on buffer struct
-//raw buffer memory to which smaller buffers will be created from
-//set pointers and lengths to prevent buffer conflicts
-static uint8_t raw_buffer[NUM_RAW_BANKS * RAW_BANK_SIZE];	//8 banks of 32bytes each 256Bytes total
-
-//buffer status stores allocation status of each raw buffer 32Byte bank
-static uint8_t raw_bank_status[NUM_RAW_BANKS]; 
 
 //min define of two buffers
 static buffer buff0;
@@ -21,6 +14,15 @@ static buffer buff5;
 static buffer buff6;
 static buffer buff7;
 #endif
+
+//max raw buffer size is only limited based on buffer struct
+//raw buffer memory to which smaller buffers will be created from
+//set pointers and lengths to prevent buffer conflicts
+static uint8_t raw_buffer[NUM_RAW_BANKS * RAW_BANK_SIZE];	//8 banks of 32bytes each 256Bytes total
+
+//buffer status stores allocation status of each raw buffer 32Byte bank
+static uint8_t raw_bank_status[NUM_RAW_BANKS]; 
+
 
 
 /* Desc:Bridge between usb.c and buffer.c functions

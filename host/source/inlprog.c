@@ -15,6 +15,7 @@
 #include "usb_operations.h"
 #include "write_operations.h"
 #include "erase.h"
+#include "test.h"
 #include "shared_dictionaries.h"
 
 
@@ -26,6 +27,7 @@ int main(int argc, char *argv[])
 	int f_flag = 0;	//LED OFF
 	int e_flag = 0; //ERASE
 	int m_flag = 0; //MIRROR
+	int t_flag = 0; //TEST
 	char *w_value = NULL; //WRITE FILE
 	char *d_value = NULL; //DUMP FILE
 	char *s_value = NULL; //SAVE FILE
@@ -39,13 +41,14 @@ int main(int argc, char *argv[])
 	//getopt returns args till done then returns -1
 	//string of possible args : denotes 1 required additional arg
 	//:: denotes optional additional arg follows	
-	while( (rv = getopt( argc, argv, "ofemw:d:s:i:b:")) != -1) {
+	while( (rv = getopt( argc, argv, "ofemtw:d:s:i:b:")) != -1) {
 		
 		switch(rv) {
 			case 'o': o_flag = 1; break;
 			case 'f': f_flag = 1; break;
 			case 'e': e_flag = 1; break;
 			case 'm': m_flag = 1; break;
+			case 't': t_flag = 1; break;
 			case 'w': w_value = optarg; break;
 			case 'd': d_value = optarg; break;
 			case 's': s_value = optarg; break;
@@ -74,7 +77,7 @@ int main(int argc, char *argv[])
 		}
 	
 	}
-	debug("flags= o:%d f:%d e:%d m:%d", o_flag, f_flag, e_flag, m_flag); 
+	debug("flags= o:%d f:%d e:%d m:%d t:%d", o_flag, f_flag, e_flag, m_flag, t_flag); 
 	debug("args= w:%s d:%s s:%s i:%s b:%s", w_value, d_value, s_value, i_value, b_value); 
 	for( index = optind; index < argc; index++) {
 		log_err("Non-option arguement: %s \n", argv[index]);
@@ -104,6 +107,7 @@ int main(int argc, char *argv[])
 	int i;
 
 	if (e_flag) erase_nes( transfer );
+	if (t_flag) test_function( transfer );
 
 	//handle simple LED ON/OFF within main for now
 	if (o_flag | f_flag) {

@@ -229,7 +229,7 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 	uint8_t data_cur = 0;	//current incoming byte to copy
 	uint8_t buf_cur = cur_usb_load_buff->cur_byte;	//current buffer byte
 	uint8_t *buf_data = cur_usb_load_buff->data;	//current buffer data array
-	
+
 	//copy 1-8bytes of payload into buffer
 	while ( data_cur < len ) {
 		buf_data[ buf_cur ] = data[data_cur];

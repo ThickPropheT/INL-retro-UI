@@ -6,6 +6,7 @@
  * provide opcode from the dictionary (wValueLSB)
  * provide 16bit addr used for usb transfer index (optional, can also send 8bits applied to wIndexLSB)
  * provide miscdata optional to be used for wValueMSB
+ * provide data buffer pointer and length
  *
  * makes call to usb_transfer after determining:
  * endpoint direction
@@ -14,7 +15,7 @@
  * debug print of call and return values
  */
 
-int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata)
+int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length)
 {
 	transfer->request   = dictionary;	
 	transfer->wValueMSB = miscdata;
@@ -23,7 +24,7 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 	transfer->wIndexLSB = addr;
 
 	//default IN for now reading back error codes from short commands
-	transfer->endpoint = USB_IN;
+	transfer->endpoint = endpoint;
 	//default length of zero
 	transfer->wLength = 0;
 
@@ -126,7 +127,11 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 					break;
 				case BUFF_OPCODE_BUFN_RV_MIN ... BUFF_OPCODE_BUFN_RV_MAX:
 					debug("BUFF_OPCODE_RV");
-					//TODO
+					break;
+				case BUFF_OPCODE_PAYLOAD_MIN ... BUFF_OPCODE_PAYLOAD_MAX:
+					debug("BUFF_OPCODE_PAYLOAD");
+					transfer->data = (unsigned char *)buffer;
+					transfer->wLength = length;
 					break;
 				default:	//snes opcode min/max definition error 
 					sentinel("bad BUFFER opcode min/max err:%d",ERR_BAD_BUFF_OP_MINMAX);
@@ -142,6 +147,9 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 	int xfr_cnt;
 
 	xfr_cnt = usb_transfer( transfer );
+
+	//print transfer details if small xfr
+	if (xfr_cnt <= 8) {
 	printf("						xf: %d   er: %d rv:",xfr_cnt, rbuf[0]);
 	int i ;
 	for (i=1; i<xfr_cnt; i++){
@@ -149,7 +157,11 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 	}
 	printf("\n"); 
 	check(rbuf[0] == SUCCESS, "retro programmer had error: %d, dict:%d, opcode:%d/%x, addr:%x, data:%x",rbuf[0], dictionary, opcode, opcode, addr, miscdata)
-	//send command
+	} else {
+	//just print xfr cnt
+	printf("						xf: %d\n",xfr_cnt); 
+
+	}
 
 	return 0;
 
