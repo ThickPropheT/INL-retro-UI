@@ -43,7 +43,7 @@
 #define TIMEOUT_5_SEC 5000
 
 //Max transfer length
-#define MAX_VUSB 245		//Max VUSB transfers without long transfers enabled
+#define MAX_VUSB 254		//Max VUSB transfers without long transfers enabled
 #define	USB_NO_MSG 255		//designates transfer with no message
 #define MAX_VUSB_LONGXFR 16384	//16KByte biggest value 16bit wLength can hold
 

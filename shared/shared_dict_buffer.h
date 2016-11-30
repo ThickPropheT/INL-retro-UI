@@ -233,6 +233,23 @@
 //	start programming mid usb transfer once it's full.  Want to make effor to hide flash programming
 //	wait time behind usb transfer time.
 
+//	some speed testing:
+//	128Byte OUT (write) transfers with long transfers DISABLED: 20.04sec/512KByte = 25.55KBps
+//	128Byte OUT (write) transfers with long transfers ENABLED:  20.7 sec/512KByte = 24.7 KBps
+//	256Byte OUT (write) transfers with long transfers ENABLED:  18.56sec/512KByte = 27.6 KBps
+//	254Byte OUT (write) transfers with long transfers DISABLED: 17.9 sec/512KByte = 28.6 KBps (assuming 2 bytes stuffed in setup packet)
+//	254Byte  IN (read)  with long xfr DISABLED, w/o usbFuncRd:  30.9 sec/512KByte = 16.5 KBps
+//	254Byte  IN (read)  with long xfr DISABLED,   w/usbFuncRd:  34.9 sec/512KByte = 14.7 KBps
+//	
+//	These tests did nothing with payload once it arrived, so these are practical maximums of V-usb.
+//	Conclusion: 
+//		-enabling long transfers slows writes (and probably reads)
+//		-reads are much slower than writes.
+//		-enabling usbFunctionRead is slower compared to using usbFunctionSetup alone.
+//		-using 254B xfrs with 2 bytes stuffed in setup packet gives decent boost.
+//			this is primarily due to speed up of not having long transfers enabled.
+//		-not actually certain enabling long transfers will slow down reads, but it certainly does for writes.
+//
 
 
 #endif

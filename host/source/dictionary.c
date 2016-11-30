@@ -159,7 +159,7 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 	check(rbuf[0] == SUCCESS, "retro programmer had error: %d, dict:%d, opcode:%d/%x, addr:%x, data:%x",rbuf[0], dictionary, opcode, opcode, addr, miscdata)
 	} else {
 	//just print xfr cnt
-	printf("						xf: %d\n",xfr_cnt); 
+	//printf("						xf: %d\n",xfr_cnt); 
 
 	}
 

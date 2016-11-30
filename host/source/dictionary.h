@@ -11,7 +11,7 @@
 //include prior to other file includes
 //that way DEBUG can be turned on/off for this file alone
 //uncomment to DEBUG this file alone
-#define DEBUG
+//#define DEBUG
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 
@@ -19,10 +19,6 @@
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 
-//uncomment to DEBUG this file alone
-#define DEBUG
-//"make debug" to get DEBUG msgs on entire program
-#include "dbg.h"
 
 int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length);
 

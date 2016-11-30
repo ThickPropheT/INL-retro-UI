@@ -8,70 +8,71 @@ int test_function( USBtransfer *transfer )
 	debug("reset butters");
 	dictionary_call( transfer,	BUFFER,	RAW_BUFFER_RESET,		0,		0,		USB_IN,		NULL,		0);
 	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0,		USB_IN,		NULL,		0);
-	debug("allocate buff0 128B");						//id:basebank  num32B banks
+	debug("allocate buff0 256B");						//id:basebank  num32B banks
 	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER0,		0x1000,		4,		USB_IN,		NULL,		0);
-	debug("allocate buff1 128B");						//id:basebank  num32B banks
+	debug("allocate buff1 256B");						//id:basebank  num32B banks
 	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER1,		0x2004,		4,		USB_IN,		NULL,		0);
 	debug("status");						//id:basebank  num32B banks
 	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0,		USB_IN,		NULL,		0);
 	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		4,		0,		USB_IN,		NULL,		0);
 
-	uint8_t load_in[128];
-	uint8_t load_out[128];
+	uint8_t load_in[256];
+	uint8_t load_out[256];
 	int i = 0;
 
 	load_in[0] = 0xEE;
 	//print load
 	printf("load_in data:");
-	for (i=0; i<128; i++) {
+	for (i=0; i<256; i++) {
 		printf(" %x",load_in[i]);
 	}
 	printf("\n");
 
 	debug("read payload0 uninitialized");
-	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		128);
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		254);
 
 	//print load
 	printf("load_in data:");
-	for (i=0; i<128; i++) {
+	for (i=0; i<256; i++) {
 		printf(" %x",load_in[i]);
 	}
 	printf("\n");
 
 	//fill load with 0-127
-	for (i=0; i<128; i++) {
+	for (i=0; i<256; i++) {
 		load_out[i] = i;
 	}
 
 	//print contents before sending
 	printf("load_out with data:");
-	for (i=0; i<128; i++) {
+	for (i=0; i<256; i++) {
 		printf(" %x",load_out[i]);
 	}
 	printf("\n");
 
 	debug("send payload0");
-	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_OUT,	load_out,		128);
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_OUT,	load_out,		254);
 
 	debug("read payload0");
-	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		128);
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		254);
 
 	//print load
 	printf("load_in data:");
-	for (i=0; i<128; i++) {
+	for (i=0; i<256; i++) {
 		printf(" %x",load_in[i]);
 	}
 	printf("\n");
 
 	clock_t tstart, tstop;
 	tstart = clock();
-	for ( i = (1024 * 4); i>0; i--) {
-	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_OUT,	load_out,		128);
+	//for ( i = (1024 * 2); i>0; i--) {
+	for ( i = (1033 * 2); i>0; i--) {
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_out,		254);
 	}
 	tstop = clock();
 	float timediff = ( (float)(tstop-tstart) / CLOCKS_PER_SEC);
 	printf("total time: %fsec, speed: %fKBps", timediff, (512/timediff));
-	//128byte transfers currently clocking in around 21KBps
+	//256byte transfers currently clocking in around 21KBps
 
 
 //	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER2,		0x3508,		4);

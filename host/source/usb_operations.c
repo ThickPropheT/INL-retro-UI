@@ -233,6 +233,7 @@ void close_usb(libusb_context *context, libusb_device_handle *handle)
 int usb_transfer( USBtransfer *transfer )
 {
 	check( transfer->wLength <= MAX_VUSB, "Can't transfer more than %d bytes!", MAX_VUSB);
+	//check( transfer->wLength <= MAX_VUSB_LONGXFR, "Can't transfer more than %d bytes!", MAX_VUSB_LONGXFR);
 
 	if ( transfer->wLength != 0) {
 		check( transfer->data != NULL, "data buffer isn't initialized it's: %s", transfer->data);
