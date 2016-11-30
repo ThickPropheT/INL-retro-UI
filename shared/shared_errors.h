@@ -38,6 +38,9 @@
 #define ERR_BUFF_RAW_ALREADY_ALLOC	193
 #define ERR_BUFF_ALLOC_SIZE_ZERO	194
 
+#define ERR_OUT_CURLDBUF_STATUS		200
+#define ERR_OUT_CURLDBUF_TO_SMALL	201
+
 //max error number			255
 
 #endif

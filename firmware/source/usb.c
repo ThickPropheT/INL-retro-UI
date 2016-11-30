@@ -1,6 +1,8 @@
 
 #include "usb.h"
 
+//used to store success/error code of last transfer for debugging
+static uint8_t usbWrite_status;
 
 //USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]);
 /* This function is called when the driver receives a SETUP transaction from
@@ -168,6 +170,14 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			//just give buffer.c the setup packet and let it figure things out for itself
 			usbMsgPtr = (usbMsgPtr_t)buffer_usb_call( spacket, rv, &rlen );
 			break; //end of BUFFER
+
+		case USB:
+			//currently just a simple way to read back usbFunctionWrite status SUCCESS/ERROR
+			//if there are future status' to read back may have to create some functions
+			rv[RV_ERR_IDX] = SUCCESS;
+			rv[RV_DATA0_IDX] = usbWrite_status;
+			rlen = 2;
+			break; //end of USB
 		
 		default:
 			//request (aka dictionary) is unknown
@@ -200,11 +210,11 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
  */
 //USB_PUBLIC uchar usbFunctionRead(uchar *data, uchar len) {
 //	//this function should only get called if usbFunctionSetup returns USB_NO_MSG
-////	data[0] = 0xAA;
 //	return len;
 //}
 
 
+// V-USB description of this function:
 //USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len);
 /* This function is called by the driver to provide a control transfer's
  * payload data (control-out). It is called in chunks of up to 8 bytes. The
@@ -221,33 +231,71 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
  * In order to get usbFunctionWrite() called, define USB_CFG_IMPLEMENT_FN_WRITE
  * to 1 in usbconfig.h and return 0xff in usbFunctionSetup()..
  */
-USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
-	//extern *buffer cur_usb_load_buff;
-	//buffer.c controls what buffer gets filled with extern ptr cur_usb_load_buf
-	//buffer.c also sets incoming_bytes_remain during setup packet
 
+/* Desc:USB Write routine for OUT transfers
+ *	the V-USB drivers call this function on OUT tokens
+ *	and provide upto 8 byte data packet's payload
+ *	for payloads longer than 8Bytes this gets called multiple times
+ *	until all bytes have been transferred.  Real thing to understand
+ *	is that this function gets called once per data packet (max 8bytes)
+ *	based on USB 1.1 low speed standard.
+ *	buffer.c is the govnerning module for what buffer gets filled
+ * Pre:	buffer.c must have set current usb loading buffer with global var
+ *	the current buffer must have enough room for incoming data
+ *	possible to use mutliple buffers for a single transfer, but
+ *	buffer.c must orchestrate the swap to new buffer object.	
+ *	buffer.c sets global incoming bytes remain so it can keep
+ *	track of this function's progress
+ *	buffer object must be initialized, allocated, and status USB_LOADING
+ * Post:usbWrite_status updated with SUCCESS/ERROR number
+ *	incoming data packet copied to cur_usb_load_buff
+ *	global incoming_bytes_remain updated
+ *	cur_usb_load_buff cur_byte updated based on data length
+ *	cur_usb_load_buff status updated when it's full
+ * Rtn: message to V-USB driver so it can respond to host
+ */
+
+
+USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
+	
 	uint8_t data_cur = 0;	//current incoming byte to copy
 	uint8_t buf_cur = cur_usb_load_buff->cur_byte;	//current buffer byte
 	uint8_t *buf_data = cur_usb_load_buff->data;	//current buffer data array
 
+	//check that current buffer's status is USB_LOADING
+	if (cur_usb_load_buff->status != USB_LOADING) {
+		usbWrite_status = ERR_OUT_CURLDBUF_STATUS;
+		return STALL;
+	}
+	//check that current buffer's has enough room
+	if ( ((cur_usb_load_buff->size) - buf_cur) <  len ) {
+		usbWrite_status = ERR_OUT_CURLDBUF_TO_SMALL;
+		return STALL;
+	}
+
 	//copy 1-8bytes of payload into buffer
 	while ( data_cur < len ) {
-		buf_data[ buf_cur ] = data[data_cur];
+		buf_data[buf_cur] = data[data_cur];
 		buf_cur++;
 		data_cur++;
 	}
 
+	//update counters and status
 	cur_usb_load_buff->cur_byte += len;
 	incoming_bytes_remain -= len;
+	usbWrite_status = SUCCESS;
 
-	//return 0xFF (-1) "STALL" if error
-	//return 1 if entire payload received successfully
-	//return 0 if more data expected to complete transfer
-	if ( incoming_bytes_remain == 0 ) { //done with OUT transfer
-		return 1;
+	//check if buffer is full and update status accordingly
+	if ( (cur_usb_load_buff->size) == buf_cur) {
+		//this signals to buffer.c so it can update cur_usb_load_buf
+		//and start tasking this buffer to programming
 		cur_usb_load_buff->status = USB_FULL;
+	}
+
+	if ( incoming_bytes_remain == 0 ) { //done with OUT transfer
+		return PAYLD_DONE;
 	} else {	//more data packets remain to complete OUT transfer	
-		return 0;
+		return NOT_DONE;
 	}
 
 }

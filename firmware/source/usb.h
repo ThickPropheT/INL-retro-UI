@@ -18,6 +18,13 @@
 #define ENDPOINT_IN    0x80    //In: device-to-host.
 #define ENDPOINT_OUT   0x00    //Out: host-to-device. 
 
+//usbFunctionWrite return values
+//return 0xFF (-1) "STALL" if error
+//return 1 if entire payload received successfully
+//return 0 if more data expected to complete transfer
+#define STALL 		0xFF
+#define PAYLD_DONE	1
+#define NOT_DONE	0
 
 //TODO these should probably be in shared so host code and utilize them on the other side
 #define RETURN_BUFF_SIZE	8	//number of bytes in generic return buffer
