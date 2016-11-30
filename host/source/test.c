@@ -9,9 +9,9 @@ int test_function( USBtransfer *transfer )
 	dictionary_call( transfer,	BUFFER,	RAW_BUFFER_RESET,		0,		0,		USB_IN,		NULL,		0);
 	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0,		USB_IN,		NULL,		0);
 	debug("allocate buff0 256B");						//id:basebank  num32B banks
-	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER0,		0x1000,		4,		USB_IN,		NULL,		0);
+	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER0,		0x1000,		8,		USB_IN,		NULL,		0);
 	debug("allocate buff1 256B");						//id:basebank  num32B banks
-	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER1,		0x2004,		4,		USB_IN,		NULL,		0);
+	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER1,		0x2008,		8,		USB_IN,		NULL,		0);
 	debug("status");						//id:basebank  num32B banks
 	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0,		USB_IN,		NULL,		0);
 	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		4,		0,		USB_IN,		NULL,		0);
@@ -65,9 +65,9 @@ int test_function( USBtransfer *transfer )
 
 	clock_t tstart, tstop;
 	tstart = clock();
-	//for ( i = (1024 * 2); i>0; i--) {
-	for ( i = (1033 * 2); i>0; i--) {
-	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_out,		254);
+	for ( i = (1024 * 2); i>0; i--) {
+	//for ( i = (1033 * 2); i>0; i--) {
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_OUT,		load_out,		254);
 	}
 	tstop = clock();
 	float timediff = ( (float)(tstop-tstart) / CLOCKS_PER_SEC);

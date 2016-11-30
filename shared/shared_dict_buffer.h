@@ -40,8 +40,8 @@
 //current max is 8, but only really limited by opcode definitions to address all buffers
 //makes #ifdef code simpler to only allow buffer numbers that are power of 2
 //#define NUM_BUFFERS_2	2
-//#define NUM_BUFFERS_4	4
-#define NUM_BUFFERS_8	8
+#define NUM_BUFFERS_4	4
+//#define NUM_BUFFERS_8	8
 
 //defined here so identical to host and firmware
 //status values
@@ -68,6 +68,9 @@
 #define BUFF_OPCODE_NRV_MIN	0x00
 #define BUFF_OPCODE_NRV_MAX	0x3F
 //
+#define BUFFN_INMISC_MIN	0x30	//overlaps above
+#define BUFFN_INMISC_MAX	0x4F	//overlaps below
+//
 #define BUFF_OPCODE_RV_MIN	0x40
 #define BUFF_OPCODE_RV_MAX	0x7F
 //=============================================================================================
@@ -75,12 +78,72 @@
 
 //blindly clear all allocation of raw buffer space
 //reset all buffers to unallocated
+//no operands no return value
 #define	RAW_BUFFER_RESET	0x00
+
+
+
+//SET BUFFER ELEMENTS
+
+//memory type and part number
+//miscdata: buffer number
+//operMSB: memory type
+//operLSB: part number
+#define SET_MEM_N_PART		0x30
+
+//set multiple and add multiple
+//miscdata: buffer number
+//operMSB: multiple
+//operLSB: add multiple
+#define SET_MULT_N_ADDMULT	0x31
+
+//set mapper and mapper variant
+//miscdata: buffer number
+//operMSB: mapper
+//operLSB: mapper variant
+#define SET_MAP_N_MAPVAR	0x32
+
+//set function
+//miscdata: buffer number
+//operMSB: (might be needed if this is a ponter..?)  or might need more than one function def..
+//operLSB: function
+#define SET_FUNCTION		0x33
+
+
+
+
+//return buffer elements
+//misc/data: buffer number
+//rv0: success/error code
+//rv1: size
+//rv2: status
+//rv3: cur_byte
+//rv4: reload
+//rv5: id
+//rv76: page_num
+#define GET_PRI_ELEMENTS	0x40
+
+//return buffer elements
+//misc/data: buffer number
+//rv0: success/error code
+//rv1: mem_type
+//rv2: part_num
+//rv3: multiple
+//rv4: add_multiple
+//rv5: mapper
+//rv6: mapvar
+//rv7: function
+#define GET_SEC_ELEMENTS	0x41
+
+
 
 //send bank number and read back it's status
 //0xFF-UNALLOC
 //gets assigned buffer ID number when allocated
-#define RAW_BANK_STATUS		0x40
+//operandMSB/miscdata: unused
+//operandLSB: raw bank number to retrieve status of
+//return value status of that raw bank (set to bank id if allocated)
+#define RAW_BANK_STATUS		0x50
 
 //=============================================================================================
 //	OPCODES with up to 24bit operand and no return value besides SUCCESS/ERROR_CODE
@@ -107,6 +170,10 @@
 //base address 0-255 (in 32byte chunks)
 //returns SUCCESS if able to allocate
 //returns error code if unable to allocate
+//operMSB: id to give to new buffer 
+//	(upper id bits used to set any address bits not covered by page and buff size if needed)
+//operLSB: base bank number
+//misc/data: size (number of banks to allocate to buffer)
 #define	ALLOCATE_BUFFER0	0x80
 #define	ALLOCATE_BUFFER1	0x81
 #define	ALLOCATE_BUFFER2	0x82
@@ -117,8 +184,24 @@
 #define	ALLOCATE_BUFFER7	0x87
 
 
+//SET BUFFER ELEMENTS
+
+//set reload and page_num
+//misc/data reload
+//operMSB:LSB page_num (16 bit)
+#define SET_RELOAD_PAGENUM0	0x90
+#define SET_RELOAD_PAGENUM1	0x91
+#define SET_RELOAD_PAGENUM2	0x92
+#define SET_RELOAD_PAGENUM3	0x93
+#define SET_RELOAD_PAGENUM4	0x94
+#define SET_RELOAD_PAGENUM5	0x95
+#define SET_RELOAD_PAGENUM6	0x96
+#define SET_RELOAD_PAGENUM7	0x97
+
+
 //designate what buffer to fill with opcode
 //endpoint direction determines if read/write
+//no operands no return value aside from payload for transfer IN
 #define BUFF_PAYLOAD0		0xF0
 #define BUFF_PAYLOAD1		0xF1
 #define BUFF_PAYLOAD2		0xF2

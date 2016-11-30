@@ -1,7 +1,7 @@
 #ifndef _logic_h
 #define _logic_h
 
-#define NULL 0x00
+#define NILL 0x00
 #define LO 0x00
 #define HI 0xFF
 
