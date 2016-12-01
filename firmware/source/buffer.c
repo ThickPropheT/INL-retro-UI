@@ -492,10 +492,6 @@ void update_buffers()
 		//now it can be read back in next IN transfer
 	}
 
-	//lets ignore flashing for now, prob best to dump first so can check results when trying to flash..
-	return;
-
-
 	//for now lets use one buffer to flash a cartridge
 	//later try a second one to double buffer, might not actually matter much..
 //	buffer *buff = &buff0;
@@ -509,7 +505,7 @@ void update_buffers()
 	//enough for usbFunction write to not notice
 	} else {
 		//if there are no full buffers yet simply exit
-		return;
+		//return;
 	}
 	
 	//found a buffer that's full and ready to flash onto cart
@@ -520,7 +516,19 @@ void update_buffers()
 	//update any other necessary elements
 	
 	//send it off to it's flashing routine
-	result = flash_page( buff );
+	if ( buff->function == FLASHING ) {
+
+
+		buff->cur_byte = 0;
+		//to start lets just dump the first page of PRG-ROM
+		result = flash_page( buff );
+
+		if (result == SUCCESS) {
+			buff->status = DUMPED;
+		}
+	
+		//now it can be read back in next IN transfer
+	}
 	
 	//now that it's flashed perform verifications if needed
 	

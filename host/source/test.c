@@ -85,7 +85,7 @@ int test_function( USBtransfer *transfer )
 	dictionary_call( transfer,	USB,	0,			0,		0,		USB_IN,		NULL,		3);
 
 	debug("send payload0");
-	dictionary_call( transfer,	BUFFER,	 BUFF_OUT_PAYLOAD_2B_INSP,		0xA5C3,		0,		USB_OUT,	&load_out[2],		254);
+	dictionary_call( transfer,	BUFFER,	 BUFF_OUT_PAYLOAD_2B_INSP,		0xa5c3,		0,		USB_OUT,	&load_out[2],		254);
 
 	debug("read payload0");
 	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		254);
@@ -117,6 +117,46 @@ int test_function( USBtransfer *transfer )
 	//256byte transfers currently clocking in around 21KBps
 	
 					//dict	opcode	 		   addr/index  		miscdata	endpoint	*buffer 	length
+	debug("set func");						
+	dictionary_call( transfer,	BUFFER,	SET_FUNCTION,			DUMPING,	0,		USB_IN,		NULL,		1);
+	debug("get sec");				
+	dictionary_call( transfer,	BUFFER,	GET_SEC_ELEMENTS,		0,		0,		USB_IN,		NULL,		8);
+	dictionary_call( transfer,	BUFFER,	GET_SEC_ELEMENTS,		0,		1,		USB_IN,		NULL,		8);
+
+	debug("read payload0");
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		254);
+
+	dictionary_call( transfer,	BUFFER,	SET_FUNCTION,			0,	0,		USB_IN,		NULL,		1);
+	printf("load_in data:");
+	for (i=0; i<254; i++) {
+		printf(" %x",load_in[i]);
+	}
+	printf("\n");
+
+	printf("load_out with data:");
+	for (i=0; i<256; i++) {
+		printf(" %x",load_out[i]);
+	}
+	printf("\n");
+
+	debug("send payload0");
+	dictionary_call( transfer,	BUFFER,	 BUFF_OUT_PAYLOAD_2B_INSP,		0xa5c3,		0,		USB_OUT,	&load_out[2],		254);
+
+
+	debug("set func");						
+	dictionary_call( transfer,	BUFFER,	SET_FUNCTION,			FLASHING,	0,		USB_IN,		NULL,		1);
+	debug("get sec");				
+	dictionary_call( transfer,	BUFFER,	GET_SEC_ELEMENTS,		0,		0,		USB_IN,		NULL,		8);
+	dictionary_call( transfer,	BUFFER,	GET_SEC_ELEMENTS,		0,		1,		USB_IN,		NULL,		8);
+
+	debug("read payload0");
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		254);
+
+	printf("load_in data:");
+	for (i=0; i<254; i++) {
+		printf(" %x",load_in[i]);
+	}
+	printf("\n");
 	debug("set func");						
 	dictionary_call( transfer,	BUFFER,	SET_FUNCTION,			DUMPING,	0,		USB_IN,		NULL,		1);
 	debug("get sec");				

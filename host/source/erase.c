@@ -5,7 +5,37 @@ int erase_nes( USBtransfer *transfer )
 	
 	debug("erasing");
 
+	dictionary_call( transfer,	IO,	IO_RESET,	0,	0,	USB_IN,	NULL,	1);
+	dictionary_call( transfer,	IO,	NES_INIT,	0,	0,	USB_IN,	NULL,	1);
+	dictionary_call( transfer,	IO,	EXP0_PULLUP_TEST,0,	0,	USB_IN,	NULL,	1);
 	
+	dictionary_call( transfer,   NES,   DISCRETE_EXP0_PRGROM_WR,   	0x5555,   0xAA,	USB_IN, NULL, 1);
+	dictionary_call( transfer,   NES,   DISCRETE_EXP0_PRGROM_WR,   	0x2AAA,   0x55,	USB_IN, NULL, 1);
+	dictionary_call( transfer,   NES,   DISCRETE_EXP0_PRGROM_WR,   	0x5555,   0x80,	USB_IN, NULL, 1);
+	dictionary_call( transfer,   NES,   DISCRETE_EXP0_PRGROM_WR,   	0x5555,   0xAA,	USB_IN, NULL, 1);
+	dictionary_call( transfer,   NES,   DISCRETE_EXP0_PRGROM_WR,   	0x2AAA,   0x55,	USB_IN, NULL, 1);
+	dictionary_call( transfer,   NES,   DISCRETE_EXP0_PRGROM_WR,   	0x5555,   0x10,	USB_IN, NULL, 1);
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+	dictionary_call( transfer,   NES,   NES_CPU_RD,		   	0x8000,   0,	USB_IN, NULL, 2); 
+
 	//dictionary_call( transfer,	IO,	IO_RESET,			0,		0);
 	//dictionary_call( transfer,	IO,	NES_INIT,			0,		0);
 	//dictionary_call( transfer,	IO,	EXP0_PULLUP_TEST,		0,		0);
