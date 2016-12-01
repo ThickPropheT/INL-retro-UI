@@ -4,17 +4,36 @@ int test_function( USBtransfer *transfer )
 {
 	
 	debug("testing");
+	dictionary_call( transfer,	IO,	IO_RESET,			0,		0,		USB_IN,		NULL,		1);
+	dictionary_call( transfer,	IO,	NES_INIT,			0,		0,		USB_IN,		NULL,		1);
+	dictionary_call( transfer,	IO,	EXP0_PULLUP_TEST,		0,		0,		USB_IN,		NULL,		8);
 					//dict	opcode	 		   addr/index  		miscdata	endpoint	*buffer 	length
 	debug("reset butters");
-	dictionary_call( transfer,	BUFFER,	RAW_BUFFER_RESET,		0,		0,		USB_IN,		NULL,		0);
-	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0,		USB_IN,		NULL,		0);
+	dictionary_call( transfer,	BUFFER,	RAW_BUFFER_RESET,		0,		0,		USB_IN,		NULL,		1);
+	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0,		USB_IN,		NULL,		2);
+	debug("get pri");						//id:basebank  num32B banks
+	dictionary_call( transfer,	BUFFER,	GET_PRI_ELEMENTS,		0,		0,		USB_IN,		NULL,		8);
+	dictionary_call( transfer,	BUFFER,	GET_PRI_ELEMENTS,		0,		1,		USB_IN,		NULL,		8);
+//	debug("get nonexistent 7");						//id:basebank  num32B banks
+//	dictionary_call( transfer,	BUFFER,	GET_PRI_ELEMENTS,		0,		7,		USB_IN,		NULL,		8);
+//	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER7,		0x7008,		8,		USB_IN,		NULL,		1);
+//	debug("get nonexistent 8");						//id:basebank  num32B banks
+//	dictionary_call( transfer,	BUFFER,	GET_PRI_ELEMENTS,		0,		8,		USB_IN,		NULL,		8);
 	debug("allocate buff0 256B");						//id:basebank  num32B banks
-	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER0,		0x1000,		8,		USB_IN,		NULL,		0);
+	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER0,		0x1000,		8,		USB_IN,		NULL,		1);
+	debug("allocate buff2 0B");						//id:basebank  num32B banks
+	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER1,		0x2008,		0,		USB_IN,		NULL,		1);
 	debug("allocate buff1 256B");						//id:basebank  num32B banks
-	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER1,		0x2008,		8,		USB_IN,		NULL,		0);
+	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER1,		0x2008,		8,		USB_IN,		NULL,		1);
 	debug("status");						//id:basebank  num32B banks
-	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0,		USB_IN,		NULL,		0);
-	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		4,		0,		USB_IN,		NULL,		0);
+	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0,		USB_IN,		NULL,		2);
+	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		8,		0,		USB_IN,		NULL,		2);
+	debug("get pri");						//id:basebank  num32B banks
+	dictionary_call( transfer,	BUFFER,	GET_PRI_ELEMENTS,		0,		0,		USB_IN,		NULL,		8);
+	dictionary_call( transfer,	BUFFER,	GET_PRI_ELEMENTS,		0,		1,		USB_IN,		NULL,		8);
+	debug("get sec");						//id:basebank  num32B banks
+	dictionary_call( transfer,	BUFFER,	GET_SEC_ELEMENTS,		0,		0,		USB_IN,		NULL,		8);
+	dictionary_call( transfer,	BUFFER,	GET_SEC_ELEMENTS,		0,		1,		USB_IN,		NULL,		8);
 
 	uint8_t load_in[256];
 	uint8_t load_out[256];
@@ -33,13 +52,13 @@ int test_function( USBtransfer *transfer )
 
 	//print load
 	printf("load_in data:");
-	for (i=0; i<256; i++) {
+	for (i=0; i<254; i++) {
 		printf(" %x",load_in[i]);
 	}
 	printf("\n");
 
 	//fill load with 0-127
-	for (i=0; i<256; i++) {
+	for (i=0; i<254; i++) {
 		load_out[i] = i;
 	}
 
@@ -58,22 +77,62 @@ int test_function( USBtransfer *transfer )
 
 	//print load
 	printf("load_in data:");
-	for (i=0; i<256; i++) {
+	for (i=0; i<254; i++) {
 		printf(" %x",load_in[i]);
 	}
 	printf("\n");
 
-	clock_t tstart, tstop;
-	tstart = clock();
-	for ( i = (1024 * 2); i>0; i--) {
-	//for ( i = (1033 * 2); i>0; i--) {
-	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_OUT,		load_out,		254);
-	}
-	tstop = clock();
-	float timediff = ( (float)(tstop-tstart) / CLOCKS_PER_SEC);
-	printf("total time: %fsec, speed: %fKBps", timediff, (512/timediff));
-	//256byte transfers currently clocking in around 21KBps
+	dictionary_call( transfer,	USB,	0,			0,		0,		USB_IN,		NULL,		3);
 
+	debug("send payload0");
+	dictionary_call( transfer,	BUFFER,	 BUFF_OUT_PAYLOAD_2B_INSP,		0xA5C3,		0,		USB_OUT,	&load_out[2],		254);
+
+	debug("read payload0");
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		254);
+
+	printf("load_in data:");
+	for (i=0; i<254; i++) {
+		printf(" %x",load_in[i]);
+	}
+	printf("\n");
+
+	//clock_t tstart, tstop;
+	//printf("load_in data:");
+	//for (i=0; i<254; i++) {
+	//	printf(" %x",load_in[i]);
+	//}
+	//printf("\n");
+	//tstart = clock();
+	//for ( i = (1024 * 2); i>0; i--) {
+	//dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_OUT,		load_out,		254);
+	////for ( i = (1033 * 2); i>0; i--) {
+	////dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		254);
+	////for ( i = (1024 * 4); i>0; i--) {
+	////dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		128);
+	//}
+	//tstop = clock();
+	//float timediff = ( (float)(tstop-tstart) / CLOCKS_PER_SEC);
+	//printf("total time: %fsec, speed: %fKBps", timediff, (512/timediff));
+	
+	//256byte transfers currently clocking in around 21KBps
+	
+					//dict	opcode	 		   addr/index  		miscdata	endpoint	*buffer 	length
+	debug("set func");						
+	dictionary_call( transfer,	BUFFER,	SET_FUNCTION,			DUMPING,	0,		USB_IN,		NULL,		1);
+	debug("get sec");				
+	dictionary_call( transfer,	BUFFER,	GET_SEC_ELEMENTS,		0,		0,		USB_IN,		NULL,		8);
+	dictionary_call( transfer,	BUFFER,	GET_SEC_ELEMENTS,		0,		1,		USB_IN,		NULL,		8);
+
+	debug("read payload0");
+	dictionary_call( transfer,	BUFFER,	BUFF_PAYLOAD0,			0,		0,		USB_IN,		load_in,		254);
+
+	printf("load_in data:");
+	for (i=0; i<254; i++) {
+		printf(" %x",load_in[i]);
+	}
+	printf("\n");
+
+	dictionary_call( transfer,	IO,	IO_RESET,			0,		0,		USB_IN,		NULL,		1);
 
 //	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER2,		0x3508,		4);
 //	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER3,		0x4A0C,		4);

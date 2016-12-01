@@ -5,17 +5,21 @@
 #include "types.h"
 #include "logic.h"
 #include "usb.h"
+#include "flash.h"
+#include "dump.h"
 #include "shared_dictionaries.h"
 #include "shared_errors.h"
 
 
-uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint16_t *rlen);
+//uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint16_t *rlen);
+uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen);
 uint8_t buffer_opcode_no_return( uint8_t opcode, buffer *buff, 
 				uint8_t operMSB, uint8_t operLSB, uint8_t miscdata );
 
 uint8_t buffer_opcode_return( uint8_t opcode, buffer *buff, 
 				uint8_t operMSB, uint8_t operLSB, uint8_t miscdata, 
-				uint8_t *rvalue, uint16_t *rlength );
+				//uint8_t *rvalue, uint16_t *rlength );
+				uint8_t *rvalue, uint8_t *rlength );
 
 uint8_t buffer_opcode_buffnum_no_return( uint8_t opcode, buffer *buff, 
 					uint8_t operMSB, uint8_t operLSB, uint8_t miscdata );
@@ -23,12 +27,16 @@ uint8_t buffer_opcode_buffnum_no_return( uint8_t opcode, buffer *buff,
 void raw_buffer_reset( );
 uint8_t allocate_buffer( buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_t num_banks );
 
+uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbuff, uint8_t *rlength );
+
+void update_buffers();
 
 //used to communicate to usbFunctionWrite which buffer object
 //it should be filling
 buffer *cur_usb_load_buff;
 //used to determine number of bytes left to finish current
 //OUT transfer utilized by usbFunctionWrite
-uint16_t incoming_bytes_remain;
+//uint16_t incoming_bytes_remain;
+uint8_t incoming_bytes_remain;
 
 #endif

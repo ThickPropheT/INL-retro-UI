@@ -5,6 +5,7 @@
 #include "usbdrv.h"
 #include "io.h"
 #include "pinport.h"
+#include "buffer.h"
 
 int main(void)
 {
@@ -54,5 +55,18 @@ int main(void)
 		//must call at regular intervals no longer than 50msec
 		//checks for setup packets from what I understand
 		usbPoll();	
+
+		//check buffer status' and instruct them to 
+		//flash/dump as needed to keep data moving
+		//currently assuming this operation doesn't take longer
+		//than 50msec to meet usbPoll's req't
+		//considering using a timer counter interupt to call
+		//usbPoll more often but going to see how speed is 
+		//impacted first..
+		//256Bytes * 20usec Tbp = 5.12msec programming time 
+		//+ cpu operations that can't be hid behind flash wait time
+		//another thought would be to call usbPoll mid programming
+		//a few times to prevent incoming data from being delayed too long
+		update_buffers();
 	}
 }

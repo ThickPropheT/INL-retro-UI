@@ -71,11 +71,11 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 //#if USB_CFG_LONG_TRANSFERS
 //	//number of bytes to return to host
 //	//16bit meets max possible 16KBytes with V-USB long transfers enabled
-	uint16_t rlen = 0;	//just go ahead and set to 16bit to be safe
-				//prob not worth saving a measly byte..
+	//uint16_t rlen = 0;	//the speed loss doesn't make long transfers worth it for now
 //#else
 //	//8bit is enough for 254 bit non-long xfrs
-//	uint8_t rlen = 0;
+//	//also gives ~0.7KBps speed up compared to 16bit rlen
+	uint8_t rlen = 0;
 //#endif
 
 	//determine endpoint IN/OUT
@@ -176,7 +176,8 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			//if there are future status' to read back may have to create some functions
 			rv[RV_ERR_IDX] = SUCCESS;
 			rv[RV_DATA0_IDX] = usbWrite_status;
-			rlen = 2;
+			rv[RV_DATA0_IDX+1] = cur_usb_load_buff->last_idx;
+			rlen = 3;
 			break; //end of USB
 		
 		default:
@@ -255,6 +256,14 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
  * Rtn: message to V-USB driver so it can respond to host
  */
 
+//removing checks from this function speeds up transfers by ~1KBps
+//this data is based on doing nothing with data once it arrives
+//long transfers disabled, and using 254 byte transfers with 2 bytes stuffed in setup packet
+// with checks: 512KByte = 18.7sec = 27.4KBps
+// w/o  checks: 512KByte = 17.9sec = 28.5KBps
+// w/o  checks: using 8bit rlen = 17.5sec = 29.2KBps
+// with checks: using 8bit rlen = 18sec   = 28.3KBps
+//#define MAKECHECKS	0
 
 USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 	
@@ -262,16 +271,18 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 	uint8_t buf_cur = cur_usb_load_buff->cur_byte;	//current buffer byte
 	uint8_t *buf_data = cur_usb_load_buff->data;	//current buffer data array
 
+#ifdef MAKECHECKS
 	//check that current buffer's status is USB_LOADING
 	if (cur_usb_load_buff->status != USB_LOADING) {
 		usbWrite_status = ERR_OUT_CURLDBUF_STATUS;
 		return STALL;
 	}
 	//check that current buffer's has enough room
-	if ( ((cur_usb_load_buff->size) - buf_cur) <  len ) {
+	if ( ((cur_usb_load_buff->last_idx) + 1 - buf_cur) <  len ) {
 		usbWrite_status = ERR_OUT_CURLDBUF_TO_SMALL;
 		return STALL;
 	}
+#endif
 
 	//copy 1-8bytes of payload into buffer
 	while ( data_cur < len ) {
@@ -285,8 +296,10 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 	incoming_bytes_remain -= len;
 	usbWrite_status = SUCCESS;
 
-	//check if buffer is full and update status accordingly
-	if ( (cur_usb_load_buff->size) == buf_cur) {
+	//want this function to be as fast as possible, so buffer.c checks if
+	//the buffer is full 'behind the scenes' outside of this function.
+	
+	if ( (cur_usb_load_buff->last_idx) == buf_cur) {
 		//this signals to buffer.c so it can update cur_usb_load_buf
 		//and start tasking this buffer to programming
 		cur_usb_load_buff->status = USB_FULL;

@@ -113,30 +113,15 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 			break; //end of SNES
 
 		case BUFFER: debug("dict: BUFFER");
-			transfer->wLength = 1;
-			switch (opcode) {
-				case BUFF_OPCODE_NRV_MIN ... BUFF_OPCODE_NRV_MAX:
-					debug("BUFF_OPCODE_NRV");
-					break;
-				case BUFF_OPCODE_RV_MIN ... BUFF_OPCODE_RV_MAX:
-					debug("BUFF_OPCODE_RV");
-					transfer->wLength = 2;
-					break;
-				case BUFF_OPCODE_BUFN_NRV_MIN ... BUFF_OPCODE_BUFN_NRV_MAX:
-					debug("BUFF_OPCODE_NRV");
-					break;
-				case BUFF_OPCODE_BUFN_RV_MIN ... BUFF_OPCODE_BUFN_RV_MAX:
-					debug("BUFF_OPCODE_RV");
-					break;
-				case BUFF_OPCODE_PAYLOAD_MIN ... BUFF_OPCODE_PAYLOAD_MAX:
-					debug("BUFF_OPCODE_PAYLOAD");
-					transfer->data = (unsigned char *)buffer;
-					transfer->wLength = length;
-					break;
-				default:	//snes opcode min/max definition error 
-					sentinel("bad BUFFER opcode min/max err:%d",ERR_BAD_BUFF_OP_MINMAX);
+			transfer->wLength = length;
+			if (buffer != NULL) {
+				transfer->data = (unsigned char *)buffer;
 			}
 			break; //end of BUFF
+
+		case USB: debug("dict: USB");
+			transfer->wLength = length;
+			break;
 
 		default:
 			//request (aka dictionary) is unknown

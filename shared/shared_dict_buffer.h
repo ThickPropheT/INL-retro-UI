@@ -28,6 +28,7 @@
 //to account for multiple bytes could expand further
 //#define NUM_RAW_BANKS   8	// 8*32 = 256 bytes of buffer
 #define NUM_RAW_BANKS   16	//16*32 = 512 bytes of buffer
+//#define NUM_RAW_BANKS   24	//24*32 = 768 DAMN THE TORPEDOS FULL SPEED AHEAD!!!
 
 #define RAW_BANK_SIZE   32      //bank size in bytes
 
@@ -52,7 +53,7 @@
 #define USB_FULL	0x98
 #define CHECKING	0xC0
 #define DUMPING		0xD0
-#define DUMP_FULL	0xD8
+#define DUMPED		0xD8
 #define ERASING		0xE0
 #define FLASHING	0xF0
 #define FLASH_WAIT	0xF8
@@ -62,19 +63,41 @@
 
 
 //=============================================================================================
-//	OPCODES with up to 24bit operand and no return value besides SUCCESS/ERROR_CODE
+//	OPCODES with up to 24bit operand and optional return value  besides SUCCESS/ERROR_CODE
+//	PAYLOAD options listed as well
 //=============================================================================================
 //	Detect this opcode/operand setup with opcode between the following defines:
+//
+//------------------------------------
 #define BUFF_OPCODE_NRV_MIN	0x00
+//opcodes in this range have NO RETURN besides error code and DON'T contain buff# in miscdata byte
+//			----------------------------
+#define					 BUFFN_INMISC_MIN	0x30	//NOTE OVERLAP!!
+//opcodes in this range have NO RETURN besides error code and DO contain buff# in miscdata byte
 #define BUFF_OPCODE_NRV_MAX	0x3F
-//
-#define BUFFN_INMISC_MIN	0x30	//overlaps above
-#define BUFFN_INMISC_MAX	0x4F	//overlaps below
-//
-#define BUFF_OPCODE_RV_MIN	0x40
-#define BUFF_OPCODE_RV_MAX	0x7F
+//------------------------------------
+#define BUFF_PAYLOADN_MIN	0x40
+//opcodes in this range are PAYLOADS and DO contain buff# in miscdata byte
+#define BUFF_PAYLOADN_MAX	0x4F
+//------------------------------------
+#define BUFF_OPCODE_RV_MIN	0x50
+//opcodes in this range HAVE RETURN besides error code and DO contain buff# in miscdata byte
+#define 				BUFFN_INMISC_MAX	0x5F	//NOTE OVERLAP!!
+//			----------------------------
+//opcodes in this range HAVE RETURN value plus error code and DON'T contain buff# in miscdata byte
+#define BUFF_OPCODE_RV_MAX	0x6F
+//------------------------------------
+#define BUFF_PAYLOAD_MIN	0x70
+//opcodes in this range are PAYLOADS and DO NOT contain buff# in miscdata byte
+#define BUFF_PAYLOAD_MAX	0x7F
 //=============================================================================================
 //=============================================================================================
+
+
+//------------------------------------------------------------------------------------------------
+//opcodes in this range have NO RETURN besides error code and DON'T contain buff# in miscdata byte
+//#define BUFF_OPCODE_NRV_MIN	0x00-2F
+//------------------------------------------------------------------------------------------------
 
 //blindly clear all allocation of raw buffer space
 //reset all buffers to unallocated
@@ -83,6 +106,10 @@
 
 
 
+//------------------------------------------------------------------------------------------------
+//opcodes in this range have NO RETURN besides error code and DO contain buff# in miscdata byte
+//#define BUFFN_INMISC_MIN	0x30-3F	//NOTE OVERLAP!!
+//------------------------------------------------------------------------------------------------
 //SET BUFFER ELEMENTS
 
 //memory type and part number
@@ -110,18 +137,39 @@
 #define SET_FUNCTION		0x33
 
 
+//#define BUFF_OPCODE_NRV_MAX	0x3F
+//------------------------------------------------------------------------------------------------
+//opcodes in this range are PAYLOADS and DO contain buff# in miscdata byte
+//#define BUFF_PAYLOADN_MIN	0x40-4F
+//------------------------------------------------------------------------------------------------
 
+//designate what buffer to fill with miscdata byte
+//no return value as it's write OUT only
+//operandMSB:LSB actually contains first 2 bytes
+#define BUFF_OUT_PAYLOADN_2B_INSP	0x40
+
+//designate what buffer to fill with miscdata byte
+//no return value as it's write OUT only
+//operandMSB:LSB actually contains first 2 bytes
+#define BUFF_NODESG_PAYLOAD		0x41
+
+
+//#define BUFF_PAYLOADN_MAX	0x4F
+//------------------------------------------------------------------------------------------------
+//opcodes in this range HAVE RETURN besides error code and DO contain buff# in miscdata byte
+//#define BUFF_OPCODE_RV_MIN	0x50-5F
+//------------------------------------------------------------------------------------------------
 
 //return buffer elements
 //misc/data: buffer number
 //rv0: success/error code
-//rv1: size
+//rv1: last_idx
 //rv2: status
 //rv3: cur_byte
 //rv4: reload
 //rv5: id
 //rv76: page_num
-#define GET_PRI_ELEMENTS	0x40
+#define GET_PRI_ELEMENTS	0x50
 
 //return buffer elements
 //misc/data: buffer number
@@ -133,9 +181,14 @@
 //rv5: mapper
 //rv6: mapvar
 //rv7: function
-#define GET_SEC_ELEMENTS	0x41
+#define GET_SEC_ELEMENTS	0x51
 
 
+//#define BUFFN_INMISC_MAX	0x5F	//NOTE OVERLAP!!
+//------------------------------------------------------------------------------------------------
+//opcodes in this range HAVE RETURN value plus error code and DON'T contain buff# in miscdata byte
+//				0x60-6F
+//------------------------------------------------------------------------------------------------
 
 //send bank number and read back it's status
 //0xFF-UNALLOC
@@ -143,7 +196,32 @@
 //operandMSB/miscdata: unused
 //operandLSB: raw bank number to retrieve status of
 //return value status of that raw bank (set to bank id if allocated)
-#define RAW_BANK_STATUS		0x50
+#define RAW_BANK_STATUS		0x60
+
+
+
+//#define BUFF_OPCODE_RV_MAX	0x6F
+//------------------------------------------------------------------------------------------------
+//opcodes in this range are PAYLOADS and DO NOT contain buff# in miscdata byte
+//#define BUFF_PAYLOAD_MIN	0x70-7F
+//------------------------------------------------------------------------------------------------
+
+
+//does NOT designate what buffer to fill with opcode
+//endpoint direction determines if read/write
+//no operands no return value aside from payload for transfer IN
+//max size for these transfers is 254Bytes for IN and OUT
+#define BUFF_PAYLOAD				0x70
+
+//does NOT designate what buffer to fill with opcode
+//no return value as it's write OUT only
+//operandMSB:LSB actually contains first 2 bytes
+#define BUFF_OUT_PAYLOAD_2B_INSP		0x71
+
+
+//#define BUFF_PAYLOAD_MAX	0x7F
+
+
 
 //=============================================================================================
 //	OPCODES with up to 24bit operand and no return value besides SUCCESS/ERROR_CODE
@@ -152,6 +230,7 @@
 //	Detect this opcode group which uses 3 LSbits to determine which buffer to call
 #define BUFF_OPCODE_BUFN_MIN	0x80
 #define BUFF_OPCODE_BUFN_MAX	0xFF
+//
 //
 //	Detect this opcode/operand setup with opcode between the following defines:
 #define BUFF_OPCODE_BUFN_NRV_MIN	0x80
@@ -164,6 +243,8 @@
 #define BUFF_OPCODE_PAYLOAD_MAX		0xFF
 //=============================================================================================
 //=============================================================================================
+
+
 //allocate firmware sram to a buffer
 //send a buffer number
 //buffer size
@@ -174,6 +255,7 @@
 //	(upper id bits used to set any address bits not covered by page and buff size if needed)
 //operLSB: base bank number
 //misc/data: size (number of banks to allocate to buffer)
+//	-size doesn't get stored in buffer, the last_idx does
 #define	ALLOCATE_BUFFER0	0x80
 #define	ALLOCATE_BUFFER1	0x81
 #define	ALLOCATE_BUFFER2	0x82
@@ -202,6 +284,7 @@
 //designate what buffer to fill with opcode
 //endpoint direction determines if read/write
 //no operands no return value aside from payload for transfer IN
+//DOES NOT STUFF extra bytes in setup packet for write/OUT transfers
 #define BUFF_PAYLOAD0		0xF0
 #define BUFF_PAYLOAD1		0xF1
 #define BUFF_PAYLOAD2		0xF2
@@ -217,7 +300,7 @@
 //as initially defined in firmware
 //typedef struct buffer{
 //	uint8_t 	*data;		//pointer to base buffer's allocated sram
-//	uint8_t 	size;		//size of buffer in bytes (max 256 bytes)
+//      uint8_t         last_idx;       //index of last byte in buffer used to determine when at end of buffer
 //	uint8_t		status;		//current status of buffer USB load/unload, flashing, waiting, erase
 //	uint8_t 	cur_byte;	//byte currently being loaded/unloaded/flashed/read
 //	uint8_t		reload;		//add this number to page_num for next loading
@@ -321,18 +404,24 @@
 //	128Byte OUT (write) transfers with long transfers ENABLED:  20.7 sec/512KByte = 24.7 KBps
 //	256Byte OUT (write) transfers with long transfers ENABLED:  18.56sec/512KByte = 27.6 KBps
 //	254Byte OUT (write) transfers with long transfers DISABLED: 17.9 sec/512KByte = 28.6 KBps (assuming 2 bytes stuffed in setup packet)
-//	254Byte  IN (read)  with long xfr DISABLED, w/o usbFuncRd:  30.9 sec/512KByte = 16.5 KBps
-//	254Byte  IN (read)  with long xfr DISABLED,   w/usbFuncRd:  34.9 sec/512KByte = 14.7 KBps
+//	128Byte  IN (read)  with long xfr DISABLED, w/o usbFuncRd:  30.5 sec/512KByte = 16.8 KBps
+//	128Byte  IN (read)  with long xfr DISABLED,   w/usbFuncRd:  34.9 sec/512KByte = 14.7 KBps
+//	1033*254Byte  IN (read)  long xfr DISABLED, w/o usbFuncRd:  28.35sec/512KByte = 18.1 KBps
 //	
 //	These tests did nothing with payload once it arrived, so these are practical maximums of V-usb.
 //	Conclusion: 
 //		-enabling long transfers slows writes (and probably reads)
 //		-reads are much slower than writes.
 //		-enabling usbFunctionRead is slower compared to using usbFunctionSetup alone.
-//		-using 254B xfrs with 2 bytes stuffed in setup packet gives decent boost.
+//		-using 254B xfrs with 2 bytes stuffed in setup packet gives decent boost for writes.
 //			this is primarily due to speed up of not having long transfers enabled.
 //		-not actually certain enabling long transfers will slow down reads, but it certainly does for writes.
-//
+//		-reads can't stuff 2 bytes in setup packet because data is going opposite direction as setup packet.
+//		-reads do have decent speed boost of ~1.3KBps using 254B * 1033xfrs over 128*2048xfrs
+//			for reads to get this speed boost the missing 2 bytes would have to be accumulated in
+//			separate buffer and sent separately once full.
+//			Only other way without complicating dump algo would be to implement usbFuncRd
+//			but that would slow things down and negate the speed boost..
 
 
 #endif

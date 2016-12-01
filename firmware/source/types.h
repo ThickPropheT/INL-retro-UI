@@ -14,7 +14,8 @@ typedef struct setup_packet{
 //~16 bytes per buffer...
 typedef struct buffer {
 	uint8_t 	*data;		//pointer to base buffer's allocated sram
-	uint8_t 	size;		//size of buffer in bytes (max 256 bytes)
+	//uint8_t 	size;		//size of buffer in bytes (max 256 bytes) THIS DOESN'T work 256B = 9bit value
+	uint8_t 	last_idx;	//index of last byte in buffer used to determine when at end of buffer
 	uint8_t		status;		//current status of buffer USB load/unload, flashing, waiting, erase
 	uint8_t 	cur_byte;	//byte currently being loaded/unloaded/flashed/read
 	uint8_t		reload;		//add this number to page_num for next loading
