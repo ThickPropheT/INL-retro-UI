@@ -15,7 +15,19 @@
  * debug print of call and return values
  */
 
+//default call dictionary without print option
 int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length)
+{
+	return dictionary_call_print_option( ~TRUE, transfer, dictionary, opcode, addr, miscdata, endpoint, buffer, length);
+}
+
+//debug call dictionary without print option
+int dictionary_call_debug( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length)
+{
+	return dictionary_call_print_option( TRUE, transfer, dictionary, opcode, addr, miscdata, endpoint, buffer, length);
+}
+
+int dictionary_call_print_option( int print_debug; USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length)
 {
 	transfer->request   = dictionary;	
 	transfer->wValueMSB = miscdata;
@@ -133,22 +145,27 @@ int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, 
 
 	xfr_cnt = usb_transfer( transfer );
 
-	//print transfer details if small xfr
+	if (print_debug == TRUE) {
+		//print transfer details if small xfr
+		if (xfr_cnt <= 8) {
+		printf("						xf: %d   er: %d rv:",xfr_cnt, rbuf[0]);
+		int i ;
+		for (i=1; i<xfr_cnt; i++){
+			printf(" %x,", rbuf[i]);
+		}
+		printf("\n"); 
+		} else {
+		//just print xfr cnt
+		printf("						xf: %d\n",xfr_cnt); 
+
+		}
+	}
+
 	if (xfr_cnt <= 8) {
-	printf("						xf: %d   er: %d rv:",xfr_cnt, rbuf[0]);
-	int i ;
-	for (i=1; i<xfr_cnt; i++){
-		printf(" %x,", rbuf[i]);
-	}
-	printf("\n"); 
-	check(rbuf[0] == SUCCESS, "retro programmer had error: %d, dict:%d, opcode:%d/%x, addr:%x, data:%x",rbuf[0], dictionary, opcode, opcode, addr, miscdata)
-	} else {
-	//just print xfr cnt
-	//printf("						xf: %d\n",xfr_cnt); 
-
+		check(rbuf[0] == SUCCESS, "retro programmer had error: %d, dict:%d, opcode:%d/%x, addr:%x, data:%x",rbuf[0], dictionary, opcode, opcode, addr, miscdata)
 	}
 
-	return 0;
+	return SUCCESS;
 
 error:
 	printf("dictionary call went to error\n");
