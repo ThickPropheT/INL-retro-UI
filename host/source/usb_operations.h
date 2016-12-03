@@ -97,7 +97,7 @@ typedef struct USBtransfer {
 	unsigned char	*data;
 } USBtransfer;
 
-libusb_device_handle * open_usb_device( libusb_context *context );
+libusb_device_handle * open_usb_device( libusb_context *context, int log_level );
 
 void close_usb(libusb_context *context, libusb_device_handle *handle);
 

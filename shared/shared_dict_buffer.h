@@ -387,6 +387,11 @@
 //	1% greater bus util compared to 254byte xfr
 //	2.2% speedup compared to 256 in 254
 
+//	USB 1.1 Low speed 1.5Mbps
+//	maximum theoretical bus utiliation with transfers styles above 
+//	1.5Mbps * 33% utilization = 495Kbps = 61.8KBps
+//	Will never get to this maximum, as this assumes that bus is in use 100% of the time with no
+//	delays waiting for responses etc.  But gives sense of scale for what's possible
 
 //	Probably decent overall speedup by eliminating multiple status packets.  Not sure how many
 //	NAK's the old firmware was sending while the device programmed the entire 256byte buffer.
@@ -399,7 +404,7 @@
 //	start programming mid usb transfer once it's full.  Want to make effor to hide flash programming
 //	wait time behind usb transfer time.
 
-//	some speed testing:
+//	some speed testing with 16bit return length variable:
 //	128Byte OUT (write) transfers with long transfers DISABLED: 20.04sec/512KByte = 25.55KBps
 //	128Byte OUT (write) transfers with long transfers ENABLED:  20.7 sec/512KByte = 24.7 KBps
 //	256Byte OUT (write) transfers with long transfers ENABLED:  18.56sec/512KByte = 27.6 KBps
@@ -407,11 +412,24 @@
 //	128Byte  IN (read)  with long xfr DISABLED, w/o usbFuncRd:  30.5 sec/512KByte = 16.8 KBps
 //	128Byte  IN (read)  with long xfr DISABLED,   w/usbFuncRd:  34.9 sec/512KByte = 14.7 KBps
 //	1033*254Byte  IN (read)  long xfr DISABLED, w/o usbFuncRd:  28.35sec/512KByte = 18.1 KBps
-//	
+//
+//	after concluding that would not be using long transfers, the return length variable
+//	was reduced to 8bits (single byte unsigned int) and slight improvement was found:
+//	254Byte OUT (write) transfers with long transfers DISABLED: 17.5 sec/512KByte = 29.2 KBps (assuming 2 bytes stuffed in setup packet)
+//
+//	adding a few checks to usbFunctionWrite to ensure buffer is proper status and not won't be overflowed 
+//	presented small reduction in speed:
+//	254Byte OUT (write) transfers with long transfers DISABLED: 18.1 sec/512KByte = 28.4 KBps (assuming 2 bytes stuffed in setup packet)
+//
 //	These tests did nothing with payload once it arrived, so these are practical maximums of V-usb.
 //	Conclusion: 
 //		-enabling long transfers slows writes (and probably reads)
 //		-reads are much slower than writes.
+//			found a vusb forum thread quoting 22KBps reads at transfer size of 200bytes
+//			he was using atmega16 with 12Mhz clock, so doesn't look like we can 
+//			replicate this even with our 'better' conditions.  But our
+//			writes are exceeding his 24KBps transfer speeds so we'll take it..
+//			https://forums.obdev.at/viewtopic.php?t=3059
 //		-enabling usbFunctionRead is slower compared to using usbFunctionSetup alone.
 //		-using 254B xfrs with 2 bytes stuffed in setup packet gives decent boost for writes.
 //			this is primarily due to speed up of not having long transfers enabled.
@@ -422,6 +440,34 @@
 //			separate buffer and sent separately once full.
 //			Only other way without complicating dump algo would be to implement usbFuncRd
 //			but that would slow things down and negate the speed boost..
+//
+//	Speed testing with old firmware and app:
+//	fairly certain these were long transfers of 256 bytes each
+//	512KB write 30.2sec = 16.7KBps
+//	512KB read  34.2sec = 15.0KBps
+//
+//	Haven't tested for comparison's sake, but original anago/unagi firmware/app was even slower I believe
+//	Found quote of Memblers finding ~19sec for 128KB PRG-ROM = 6.7KBps for reads...
+//	So shouldn't be hard to beat those speeds
+//
+//	Checking SST 39SF040 datasheet, the byte program time is max 20usec * 256B page = 5.12usec per page
+//	We have some additional CPU execution time overhead above that 5.12usec per page
+//	but that shouldn't be significant in comparison, still lots of margin to meet 50usec usbPoll requirement
+//	if slow down is noticed during flashing/dumping may be helpful to call usbPoll mid page so
+//	the next data packet doesn't have to wait for the last page to complete before it can be accepted/sent
+//	to/from the driver.
+//
+//	Sector erases are maximum of 25usec however which should probably be avoided or used with caution
+//	between usbPoll.  However exiting back to main and continuing to poll USB and erasure should be fine
+//	as erasing doesn't have to be monitored.  
+//
+//	Chip erasure is max of 100usec which will most certainly violate 50usec usbPoll req't so make sure 
+//	we don't sit and spin waiting for chip to erase without calling usbPoll...
+//
+//	SNES 4-8MB chip erasure is on the order of 30sec so certainly need to be considerate of flash timing
+//	depending on the chip in use.  Avoiding SNES chip erasure when possible presents large chance for 
+//	speedup!
+//
 
 
 #endif
