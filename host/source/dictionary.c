@@ -16,21 +16,22 @@
  */
 
 //default call dictionary without print option
-int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, 
-								uint8_t endpoint, uint8_t *buffer, uint16_t length)
+int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, 
+			uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length)
 {
-	return dictionary_call_print_option( ~TRUE, transfer, dictionary, opcode, addr, miscdata, endpoint, buffer, length);
+	return dictionary_call_print_option( FALSE, transfer, dictionary, opcode, addr, miscdata, endpoint, buffer, length);
 }
 
 //debug call dictionary without print option
-int dictionary_call_debug( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, 
-								uint8_t endpoint, uint8_t *buffer, uint16_t length)
+int dictionary_call_debug( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, 
+			uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length)
 {
-	return dictionary_call_print_option( TRUE, transfer, dictionary, opcode, addr, miscdata, endpoint, buffer, length);
+	return dictionary_call_print_option( ~FALSE, transfer, dictionary, opcode, addr, miscdata, 
+						endpoint, buffer, length);
 }
 
-int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, 
-								uint8_t endpoint, uint8_t *buffer, uint16_t length)
+int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_t dictionary, uint8_t opcode,
+			 uint16_t addr, uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length)
 {
 	transfer->request   = dictionary;	
 	transfer->wValueMSB = miscdata;
@@ -48,21 +49,24 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 	uint8_t rbuf[8];
 
 	if ( buffer == NULL ) {
-		rbuf[0] = 0xA5;
-		rbuf[1] = 0xC3;
-		rbuf[2] = 0xA5;
-		rbuf[3] = 0xC3;
-		rbuf[4] = 0xA5;
-		rbuf[5] = 0xC3;
-		rbuf[6] = 0xA5;
-		rbuf[7] = 0xC3;
+		rbuf[0] = 0xee;
+		rbuf[1] = 0xee;
+		rbuf[2] = 0xee;
+		rbuf[3] = 0xee;
+		rbuf[4] = 0xee;
+		rbuf[5] = 0xee;
+		rbuf[6] = 0xee;
+		rbuf[7] = 0xee;
 		transfer->data = rbuf;
 	} else {
 		transfer->data = buffer;
 	}
 
 	
-	debug("\ndictionary call dict:%d opcode:%d/%x addr:%x data:%x", dictionary, opcode, opcode, addr, miscdata);
+	if (print_debug) {
+		printf("\ndictionary call dict:%d opcode:%dd/%xh addr:%x data:%x\n", 
+			dictionary, opcode, opcode, addr, miscdata);
+	}
 	switch (dictionary) {
 		case PINPORT: debug("dict: PINPORT");
 			//transfer->wLength = 1;
@@ -154,13 +158,13 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 
 	xfr_cnt = usb_transfer( transfer );
 
-	if (print_debug == TRUE) {
+	if (print_debug) {
 		//print transfer details if small xfr
 		if (xfr_cnt <= 8) {
-		printf("						xf: %d   er: %d rv:",xfr_cnt, rbuf[0]);
+		printf("	xf: %d   er: %d rv:",xfr_cnt, transfer->data[0]);
 		int i ;
 		for (i=1; i<xfr_cnt; i++){
-			printf(" %x,", rbuf[i]);
+			printf(" %x,", transfer->data[i]);
 		}
 		printf("\n"); 
 		} else {
@@ -171,7 +175,7 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 	}
 
 	if (xfr_cnt <= 8) {
-		check(rbuf[0] == SUCCESS, "retro programmer had error: %d, dict:%d, opcode:%d/%x, addr:%x, data:%x",rbuf[0], dictionary, opcode, opcode, addr, miscdata)
+		check(transfer->data[0] == SUCCESS, "retro programmer had error: %d, dict:%d, opcode:%d/%x, addr:%x, data:%x",transfer->data[0], dictionary, opcode, opcode, addr, miscdata)
 	}
 
 	return SUCCESS;

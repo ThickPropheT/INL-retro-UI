@@ -12,11 +12,12 @@
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 
+#include "shared_dictionaries.h"
 #include "usb_operations.h"
 #include "write_operations.h"
 #include "erase.h"
 #include "test.h"
-#include "shared_dictionaries.h"
+#include "cartridge.h"
 
 
 int main(int argc, char *argv[]) 
@@ -151,23 +152,30 @@ int main(int argc, char *argv[])
 	//libusb_device_handle *rprog_handle = NULL;
 	transfer->handle = NULL;
 
-	//open INL retro prog with firmware version 2.0 or greater
 	//command line arg L_value to set different LIBUSB debugging options
 	//any value > 0 also prints debug statements in open_usb_device function
 	int libusb_log = LIBUSB_LOG_LEVEL_NONE;	// 0: default no msgs ever printed
 	if (L_value != NULL) {
-		check( isdigit(L_value[0]), "Invalid LIBUSB_LOG_LEVEL: %s, only single digit allowed", L_value);
-		check( strlen(L_value) == 1, "Invalid LIBUSB_LOG_LEVEL: %s, only single digit allowed", L_value);
+		check( isdigit(L_value[0]), 
+			"Invalid LIBUSB_LOG_LEVEL: %s, only single digit allowed", L_value);
+		check( strlen(L_value) == 1, 
+			"Invalid LIBUSB_LOG_LEVEL: %s, only single digit allowed", L_value);
 		libusb_log = atoi(L_value);
 		check( ((libusb_log >= LIBUSB_LOG_LEVEL_NONE) && (libusb_log <=LIBUSB_LOG_LEVEL_DEBUG)), 
 		    "Invalid LIBUSB_LOG_LEVEL: %d, must be from 0 to 4", libusb_log );
 		printf("setting LIBUSB_LOG_LEVEL to: %d\n", libusb_log);
-		if (libusb_log == 0) { printf("\tNONE: default no messages ever printed by library\n"); }
-		if (libusb_log == 1) { printf("\tERROR: error messages are printed to stderr\n"); }
-		if (libusb_log == 2) { printf("\tWARNING: warning and error messages are printed to stderr\n"); }
-		if (libusb_log == 3) { printf("\tINFO: informational, warning, & error messages are printed to stdout\n"); }
-		if (libusb_log == 4) { printf("\tDEBUG: debug, info, warning, & error messages are printed to stdout\n"); }
+		if (libusb_log == 0) { 
+			printf("\tNONE: default no messages ever printed by library\n"); }
+		if (libusb_log == 1) { 
+			printf("\tERROR: error messages are printed to stderr\n"); }
+		if (libusb_log == 2) { 
+			printf("\tWARNING: warning and error messages are printed to stderr\n"); }
+		if (libusb_log == 3) { 
+			printf("\tINFO: informational, warning, & error messages are printed to stdout\n"); }
+		if (libusb_log == 4) { 
+			printf("\tDEBUG: debug, info, warning, & error messages are printed to stdout\n"); }
 	}
+	//open INL retro prog with firmware version 2.0 or greater
 	if (K_value != NULL) {
 		//TODO take K_value option to connect to different version kazzo
 	}
@@ -177,18 +185,44 @@ int main(int argc, char *argv[])
 	//report successful connection to INL retro-prog
 	printf("Successfully found and connected to INL retro-prog with firmware version 2.0\n");
 
+	//TEST flag for development use to provide means to only call test.c functions
+	if (T_flag) {
+		test_function( transfer );
+		goto close;
+	}
+
 	//create board object/struct 
+	cartridge *cart = malloc( sizeof(cartridge));	
+	check_mem(cart);
 
 	//attempt to detect board inserted in device
+	cart->console = UNKNOWN;
 	// -x flag turns off all autodection
 	if (!x_flag) {
 		printf("attempting to detect cartridge...\n");
+		detect_console( cart, transfer );	
+		switch (cart->console) {
+			case NES_CART: printf("NES cartridge detected!\n");	
+				break;
+			case FC_CART: printf("Famicom cartridge detected!\n");	
+				break;
+			case SNES_CART: printf("SNES cartridge detected!\n");	
+				break;
+			case BKWD_CART: log_err("CARTRIDGE INSERTED BACKWARDS!!!\n");	
+				break;
+			case UNKNOWN: printf("Unable to detect cartridge...\n");
+				break;
+			default:
+				sentinel("cartridge console element got set to something unsupported.");
+		}
 	} else {
 		printf("auto-detection turned off\n");
 	}
 
-	if (e_flag) erase_nes( transfer );
-	if (T_flag) test_function( transfer );
+	//forced to erase board regardless of current status
+	if (e_flag) {
+		erase_nes( transfer );
+	}
 
 
 	//handle simple LED ON/OFF within main for now
@@ -224,7 +258,7 @@ int main(int argc, char *argv[])
 	}
 
 
-
+close:
 	close_usb( context, transfer->handle);	
 	
 	return 0;

@@ -20,14 +20,15 @@
 #include "shared_dictionaries.h"
 
 //default call dictionary without print option
-int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, 
-								uint8_t endpoint, uint8_t *buffer, uint16_t length);
+int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, 
+			uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length);
 
 //debug call dictionary without print option
-int dictionary_call_debug( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, 
-								uint8_t endpoint, uint8_t *buffer, uint16_t length);
+int dictionary_call_debug( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, 
+			uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length);
 
-int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, uint8_t miscdata, 
-								uint8_t endpoint, uint8_t *buffer, uint16_t length);
+int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_t dictionary, 
+			uint8_t opcode, uint16_t addr, uint8_t miscdata, uint8_t endpoint, 
+			uint8_t *buffer, uint16_t length);
 
 #endif

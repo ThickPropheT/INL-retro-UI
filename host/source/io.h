@@ -1,5 +1,5 @@
-#ifndef _erase_h
-#define _erase_h
+#ifndef _io_h
+#define _io_h
 
 #include <stdio.h>
 #include <string.h>
@@ -15,12 +15,12 @@
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 
-#include "usb_operations.h"
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
 
-
-int erase_nes( USBtransfer *transfer );
+void io_reset( USBtransfer *transfer );
+void nes_init( USBtransfer *transfer );
+void snes_init( USBtransfer *transfer );
 
 #endif

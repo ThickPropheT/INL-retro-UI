@@ -21,13 +21,13 @@ uint8_t snes_opcode_24b_operand( uint8_t opcode, uint8_t addrH, uint8_t addrL, u
 {
 	switch (opcode) { 
 		case SNES_A15_A0_PRGM_WR:	
-			snes_a15_a0_wr( PRGM, TRUE, addrH, addrL, data );
+			snes_a15_a0_wr( PRGM, ~FALSE, addrH, addrL, data );
 			break;
 		case SNES_A15_A0_PLAY_WR:	
-			snes_a15_a0_wr( PLAY, TRUE, addrH, addrL, data );
+			snes_a15_a0_wr( PLAY, ~FALSE, addrH, addrL, data );
 			break;
 		case SNES_A15_A0_NO_ROMSEL_PLAY_WR:	
-			snes_a15_a0_wr( PLAY, ~TRUE, addrH, addrL, data );
+			snes_a15_a0_wr( PLAY, FALSE, addrH, addrL, data );
 			break;
 		default:
 			 //macro doesn't exist
@@ -52,13 +52,13 @@ uint8_t snes_opcode_24b_operand_8b_return(
 {
 	switch (opcode) { 
 		case SNES_PRGM_RD:
-			*data = snes_a15_a0_rd( PRGM, TRUE, addrX, addrH, addrL );
+			*data = snes_a15_a0_rd( PRGM, ~FALSE, addrX, addrH, addrL );
 			break;
 		case SNES_PLAY_RD:
-			*data = snes_a15_a0_rd( PLAY, TRUE, addrX, addrH, addrL );
+			*data = snes_a15_a0_rd( PLAY, ~FALSE, addrX, addrH, addrL );
 			break;
 		case SNES_NO_ROMSEL_PLAY_RD:
-			*data = snes_a15_a0_rd( PLAY, ~TRUE, addrX, addrH, addrL );
+			*data = snes_a15_a0_rd( PLAY, FALSE, addrX, addrH, addrL );
 			break;
 		default:
 			 //macro doesn't exist
@@ -115,7 +115,7 @@ void	snes_a15_a0_wr( uint8_t mode, uint8_t romsel, uint8_t addrH, uint8_t addrL,
 	DATA_OUT = data;
 
 	//let higher level function/caller decide if /ROMSEL is active
-	if ( romsel == TRUE ) {
+	if ( romsel == ~FALSE ) {
 		_ROMSEL_LO();
 	}
 
@@ -187,7 +187,7 @@ uint8_t	snes_a15_a0_rd( uint8_t mode, uint8_t romsel, uint8_t addrX, uint8_t add
 	_DATA_IP();	
 
 	//let higher level function/caller decide if /ROMSEL is active
-	if ( romsel == TRUE ) {
+	if ( romsel == ~FALSE ) {
 		_ROMSEL_LO();
 	}
 

@@ -26,11 +26,6 @@
 #define PAYLD_DONE	1
 #define NOT_DONE	0
 
-//TODO these should probably be in shared so host code and utilize them on the other side
-#define RETURN_BUFF_SIZE	8	//number of bytes in generic return buffer
-#define RV_ERR_IDX		0	//(first) index of buffer that contains SUCCESS/ERROR#
-#define RV_DATA0_IDX		RV_ERR_IDX + 1	//first index of return data
-#define RV_DATA_MAX_IDX		RETURN_BUFF_SIZE - 1	//last index available for return data
 
 
 #endif

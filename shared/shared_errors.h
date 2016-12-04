@@ -2,6 +2,7 @@
 #define _error_codes_h
 
 #define SUCCESS 			0
+#define FALSE				0
 
 //greater than 128 are possible avr return codes
 #define ERR_UNKN_DICTIONARY 		128

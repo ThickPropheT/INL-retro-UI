@@ -8,8 +8,8 @@
 #define IP 0x00
 #define OP 0xFF
 
-#define TRUE 0x00
-//false is anything besides TRUE
+#define FALSE 0x00
+//TRUE is any value besides zero
 
 //used to indicate when intentionally passing zero because option not used
 #define NILL 0x00

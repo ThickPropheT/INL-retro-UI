@@ -361,6 +361,8 @@
 //ADDR[23:0]	(ADDRX:ADDRH:ADDR) SNES full address bus
 //Sets SNES 24 bit address but to value of 24bit operand
 //No control signals are modified
+//wIndex contains lower 16bits
+//wValue upper (miscdata) contains upper 8bits
 #define	ADDR24_SET	0xB0
 
 

@@ -122,8 +122,10 @@
 //=============================================================================================
 //=============================================================================================
 #define USB 6
+#include "shared_dict_usb.h"
 //currently no actual dictionary as there are no opcodes.
 //just used to return status of usbfunctions in event of a transfer error. 
+//contains definitions of data transactions between host and firmware
 //=============================================================================================
 //=============================================================================================
 

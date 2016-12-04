@@ -81,7 +81,7 @@ uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 
 		case BUFF_PAYLOADN_MIN ... BUFF_PAYLOADN_MAX:
 		//designate what buffer to fill with miscdata byte
-			rptr = buffer_payload( spacket, called_buff, TRUE, rlen);
+			rptr = buffer_payload( spacket, called_buff, ~FALSE, rlen);
 		//TODO
 		break;
 
@@ -94,7 +94,7 @@ uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 
 		case BUFF_PAYLOAD_MIN ... BUFF_PAYLOAD_MAX:
 		//let buffer.c decide what buffer to fill
-			rptr = buffer_payload( spacket, called_buff, ~TRUE, rlen);
+			rptr = buffer_payload( spacket, called_buff, FALSE, rlen);
 		//TODO
 		break;
 
@@ -138,7 +138,7 @@ uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 					*rlen = (spacket->wLength);
 				break;
 				case BUFF_PAYLOAD0 ... BUFF_PAYLOAD7:
-					rptr = buffer_payload( spacket, called_buff, TRUE, rlen);
+					rptr = buffer_payload( spacket, called_buff, ~FALSE, rlen);
 				break;
 				default: 
 					rv[RV_ERR_IDX] = ERR_BAD_BUFF_OP_MINMAX;
@@ -296,7 +296,7 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 
 	//buffer in use depends on opcode which was decoded prior to calling into hostsetbuff
 	//if buffer number not designated by host buffer.c gets to decide
-	if ( hostsetbuff != TRUE ) {
+	if ( hostsetbuff != ~FALSE ) {
 		//buffer.c gets to decide buffer in use
 		//TODO implement some fancy double buffering code
 		//for now just designate buffer 0
