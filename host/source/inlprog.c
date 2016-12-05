@@ -18,6 +18,7 @@
 #include "erase.h"
 #include "test.h"
 #include "cartridge.h"
+#include "file.h"
 
 
 int main(int argc, char *argv[]) 
@@ -163,17 +164,6 @@ int main(int argc, char *argv[])
 		libusb_log = atoi(L_value);
 		check( ((libusb_log >= LIBUSB_LOG_LEVEL_NONE) && (libusb_log <=LIBUSB_LOG_LEVEL_DEBUG)), 
 		    "Invalid LIBUSB_LOG_LEVEL: %d, must be from 0 to 4", libusb_log );
-		printf("setting LIBUSB_LOG_LEVEL to: %d\n", libusb_log);
-		if (libusb_log == 0) { 
-			printf("\tNONE: default no messages ever printed by library\n"); }
-		if (libusb_log == 1) { 
-			printf("\tERROR: error messages are printed to stderr\n"); }
-		if (libusb_log == 2) { 
-			printf("\tWARNING: warning and error messages are printed to stderr\n"); }
-		if (libusb_log == 3) { 
-			printf("\tINFO: informational, warning, & error messages are printed to stdout\n"); }
-		if (libusb_log == 4) { 
-			printf("\tDEBUG: debug, info, warning, & error messages are printed to stdout\n"); }
 	}
 	//open INL retro prog with firmware version 2.0 or greater
 	if (K_value != NULL) {
@@ -182,9 +172,6 @@ int main(int argc, char *argv[])
 	transfer->handle = open_usb_device( context, libusb_log );
 	check( transfer->handle != NULL, "Unable to open INL retro-prog usb device handle.");
 	
-	//report successful connection to INL retro-prog
-	printf("Successfully found and connected to INL retro-prog with firmware version 2.0\n");
-
 	//TEST flag for development use to provide means to only call test.c functions
 	if (T_flag) {
 		test_function( transfer );
@@ -199,31 +186,52 @@ int main(int argc, char *argv[])
 	cart->console = UNKNOWN;
 	// -x flag turns off all autodection
 	if (!x_flag) {
-		printf("attempting to detect cartridge...\n");
-		detect_console( cart, transfer );	
-		switch (cart->console) {
-			case NES_CART: printf("NES cartridge detected!\n");	
-				break;
-			case FC_CART: printf("Famicom cartridge detected!\n");	
-				break;
-			case SNES_CART: printf("SNES cartridge detected!\n");	
-				break;
-			case BKWD_CART: log_err("CARTRIDGE INSERTED BACKWARDS!!!\n");	
-				break;
-			case UNKNOWN: printf("Unable to detect cartridge...\n");
-				break;
-			default:
-				sentinel("cartridge console element got set to something unsupported.");
-		}
+		check(!detect_console( cart, transfer ), "Problem detecting cartridge.");	
 	} else {
 		printf("auto-detection turned off\n");
 	}
+
+	//detect mapper as much as possible
+
+	//detect board manufacturer/flash memories as much as possible
+
+	//detect rom sizes as much as possible
+
+	//read in user files/args that glean info about expected board
+	//create file object/struct 
+	rom_image *rom_info = malloc( sizeof(rom_image));	
+	check_mem(rom_info);
+	//for now just assume user file/args are correct
+	if ( p_value != NULL ) {
+		//program file provided at commandline
+		detect_file( rom_info, p_value );
+	}
+
+	//compare detections to user args and get permission to continue if there are discrepencies
+
+	//if flashing, determine if erasures are necessary and where
+
+	//erase required sectors of flash
 
 	//forced to erase board regardless of current status
 	if (e_flag) {
 		erase_nes( transfer );
 	}
 
+	//if flashing determine auto-doubling for oversized flash
+
+	//determine if rom can be flashed in a manner to make board compatible with rom
+	//ie CNROM/colordreams can be over flashed to play NROM
+	//BNROM can be overflashed to simulate UNROM
+	//SUROM can be overflashed to run as SNROM
+
+	//determine if snes input rom needs deinterleaved
+
+	//dump or flash data based on user args
+
+	//find some fun trivia to present to user while waiting for flash operatoin..?
+
+	//perform CRC checking to check integrity of dump/flash operation
 
 	//handle simple LED ON/OFF within main for now
 	//TODO cut this newbie code out of here

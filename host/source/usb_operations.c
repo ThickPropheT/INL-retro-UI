@@ -37,6 +37,23 @@ libusb_device_handle * open_usb_device( libusb_context *context, int log_level )
 	if (log_level>0) printf("Successfully initalized libusb\n");
 
 	//void libusb_set_debug ( libusb_context *  ctx, int  level ) 
+	if ( log_level>0) {
+		printf("setting LIBUSB_LOG_LEVEL to: %d\n", log_level);
+		switch ( log_level) {
+			case 1:
+			printf("\tERROR: error messages are printed to stderr\n");
+			break;
+			case 2:
+			printf("\tWARNING: warning and error messages are printed to stderr\n");
+			break;
+			case 3:
+			printf("\tINFO: informational, warning, & error messages are printed to stdout\n");
+			break;
+			case 4:
+			printf("\tDEBUG: debug, info, warning, & error messages are printed to stdout\n");
+			break;
+		}
+	}
 	libusb_set_debug(context, log_level);
 
 	//discover all usb devices
@@ -155,6 +172,8 @@ libusb_device_handle * open_usb_device( libusb_context *context, int log_level )
 	//
 	//     As an implementation detail, libusb_open() actually adds a reference to the device in question. This is because the device remains available through the handle via libusb_get_device(). The reference is deleted during libusb_close(). 
 
+	//report successful connection to INL retro-prog
+	printf("Successfully found and connected to INL retro-prog with firmware version 2.0\n");
 
 	//free device list if it was left open
 	if (device_list) {

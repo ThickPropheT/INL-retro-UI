@@ -2,6 +2,7 @@
 
 int detect_console( cartridge *cart, USBtransfer *transfer ) 
 {
+	printf("attempting to detect cartridge...\n");
 	//always start with resetting i/o
 	io_reset( transfer );
 
@@ -58,11 +59,29 @@ int detect_console( cartridge *cart, USBtransfer *transfer )
 	//always end with resetting i/o
 	io_reset( transfer );
 
+	switch (cart->console) {
+		case NES_CART: printf("NES cartridge detected!\n");	
+			break;
+		case FC_CART: printf("Famicom cartridge detected!\n");	
+			break;
+		case SNES_CART: printf("SNES cartridge detected!\n");	
+			break;
+		case BKWD_CART: log_err("CARTRIDGE INSERTED BACKWARDS!!!\n");	
+			//TODO detection not yet implemented need to look over connector pinouts
+			break;
+		case UNKNOWN: printf("Unable to detect cartridge...\n");
+			//TODO error out properly
+			break;
+		default:
+			sentinel("cartridge console element got set to something unsupported.");
+	}
 
 	return SUCCESS;
 
-}
+error:
+	return -1;
 
+}
 
 	//Can detect INL discrete, XO, and possily others with pullup EXP0 test
 	//These carts have pullups on EXP0 so rising edge is faster
@@ -72,5 +91,4 @@ int detect_console( cartridge *cart, USBtransfer *transfer )
 	//SNES /RESET pin should control whether memory is enabled on original boards
 	//INL SNES boards memory mapping is controlled by /RESET pin
 	//roms are still visible when /RESET low, but SRAM isn't
-
 
