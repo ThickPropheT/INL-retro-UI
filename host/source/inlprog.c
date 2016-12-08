@@ -51,12 +51,12 @@ int main(int argc, char *argv[])
 	char *C_value = NULL; //program chr file
 	char *L_value = NULL; //LIBUSB debugging value
 	char *K_value = NULL; //connect to kazzo firmware version #
-	char *O_value = NULL; //start programming at offset base value
+	char *O_value = NULL; //start read/writing at offset base value
 	char *P_value = NULL; //program prg file
 	char *S_value = NULL; //program SNES binary file
 	char *W_value = NULL; //program WRAM/SRAM file
 
-
+	int operation = 0;	//used to denote the overall operation being requested flash/dump/verify etc
 	int index = 0;
 	int rv = 0;
 	opterr = 0;
@@ -139,8 +139,23 @@ int main(int argc, char *argv[])
 
 	//TODO display better help message 
 	if (h_flag) {
-		printf("you've asked for help but the help message still needs created...\n");
+		printf("You've asked for help but the help message still needs created...\n");
 		return 0;
+	}
+
+	//Determine overall operation being performed based on user args
+	//Also don't want to continue if conflicting args are being used
+
+	//flags about input files only used for writes
+	if ( p_flag || i_value || C_value || P_value || S_value || W_value ) {
+		check( d_value == NULL, "input args conflict can't program and dump in same operation.");
+		operation = WRITE;
+	}
+
+	//flags about output files used for reads
+	if ( d_value ) {
+		check( e_flag == 0, "input args conflict can't erase and dump in same operation.");
+		operation = READ;
 	}
 
 	//context set to NULL since only acting as single user of libusb
@@ -148,6 +163,7 @@ int main(int argc, char *argv[])
 
 	//create USBtransfer struct to hold all transfer info
 	USBtransfer *transfer = malloc( sizeof(USBtransfer));	
+
 	//create usb device handle pointer to interact with retro-prog
 	//libusb_device_handle *rprog_handle = NULL;
 	transfer->handle = NULL;
@@ -189,8 +205,9 @@ int main(int argc, char *argv[])
 	cartridge *cart = malloc( sizeof(cartridge));	
 	check_mem(cart);
 
-	//set all cart elements to UNKNOWN
+	//set all cart elements to UNKNOWN and allocate memory object within
 	init_cart_elements(cart);
+
 
 	// -x flag turns off all autodection
 	if (!x_flag) {
@@ -198,7 +215,6 @@ int main(int argc, char *argv[])
 		check(!detect_console( cart, transfer ), "Problem detecting cartridge.");	
 
 		//detect mapper as much as possible
-		//TODO first step is mirroring for NES boards
 		check(!detect_mirroring( cart, transfer ), "Problem detecting cart mirroring.");	
 
 		//TODO first step for SNES is mapping mode
@@ -206,6 +222,7 @@ int main(int argc, char *argv[])
 		//By this point we know a lot about the cartridge but for things like NES discrete
 		//mappers we'll have to play around with the memory to determine exact mapper
 		//detect board manufacturer/flash memories as much as possible
+		check(!detect_map_mem( cart, transfer ), "Problem detecting cart map & memory.");	
 
 		//detect rom sizes as much as possible
 

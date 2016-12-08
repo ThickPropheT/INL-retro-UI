@@ -9,11 +9,7 @@ int erase_nes( USBtransfer *transfer )
 
 	io_reset(transfer);
 
-	//for NROM flashing first verify EXP0 pull up will clock /WE properly
-	check( !exp0_pullup_test(transfer), "EXP0 pullup test failed can't erase PRG-ROM" );
-
 	nes_init(transfer);
-
 	
 	dictionary_call_debug( transfer,   DICT_NES,   DISCRETE_EXP0_PRGROM_WR,   	0x5555,   0xAA,	USB_IN, NULL, 1);
 	dictionary_call_debug( transfer,   DICT_NES,   DISCRETE_EXP0_PRGROM_WR,   	0x2AAA,   0x55,	USB_IN, NULL, 1);

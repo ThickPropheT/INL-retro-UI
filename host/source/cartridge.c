@@ -117,6 +117,8 @@ int detect_console( cartridge *cart, USBtransfer *transfer )
 	return SUCCESS;
 
 error:
+	//always end with resetting i/o
+	io_reset( transfer );
 	return -1;
 
 }
@@ -133,14 +135,54 @@ error:
 
 int detect_mirroring( cartridge *cart, USBtransfer *transfer ) 
 {
+	//always start with resetting i/o
+	io_reset( transfer );
 
 	if ( cart->console == NES_CART ) {
 		//For now just assume mirroring is fixed until start adding support for other mappers
 		cart->mirroring = MIR_FIXED;
 	}
 
+	//always end with resetting i/o
+	io_reset( transfer );
+
 	return SUCCESS;
 
 //error:
+	//always end with resetting i/o
+	//io_reset( transfer );
+//	return -1;
+}
+
+
+//detecting mapper and memories ends up being one big operation
+int detect_map_mem( cartridge *cart, USBtransfer *transfer ) 
+{
+	//always start with resetting i/o
+	io_reset( transfer );
+
+	if ( cart->console == NES_CART && cart->mirroring = MIR_FIXED ) {
+		//if INL-ROM discrete board with EXP0->PRG-ROM /WE
+		//EXP0 pullup test should pass
+		if( exp0_pullup_test(transfer) == SUCCESS ){
+
+		} else {
+		//Potentially some other discrete board without EXP0->WE flash control
+
+		//Some ASIC mappers have fixed mirroring as well
+
+		}
+	//for NROM flashing first verify EXP0 pull up will clock /WE properly
+
+	}
+
+	//always end with resetting i/o
+	io_reset( transfer );
+
+	return SUCCESS;
+
+//error:
+	//always end with resetting i/o
+	//io_reset( transfer );
 //	return -1;
 }

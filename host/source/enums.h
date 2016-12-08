@@ -19,5 +19,11 @@ enum mirroring {
 	MIR_MMC3
 };
 
+enum operations {
+	READ = 10,
+	WRITE,	
+	CHECK
+};
+
 
 #endif
