@@ -44,6 +44,9 @@ static uint8_t usbWrite_status;
 
 USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
+	//defined and controled by buffer.c
+	extern buffer *cur_usb_load_buff;
+
 	//cast incoming data into the the usb setup packet it is
 	setup_packet *spacket = (void *)data;
 
@@ -93,7 +96,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
 
 	switch(spacket->bRequest) {
-		case PINPORT:
+		case DICT_PINPORT:
 			switch (spacket->opcode) {
 				case PP_OPCODE_ONLY_MIN ... PP_OPCODE_ONLY_MAX:
 					rv[RV_ERR_IDX] = pinport_opcode_only( spacket->opcode );	
@@ -119,7 +122,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			}
 			break; //end of PINPORT
 
-		case IO:
+		case DICT_IO:
 			switch (spacket->opcode) {
 				case IO_OPCODE_ONLY_MIN ... IO_OPCODE_ONLY_MAX:
 					rv[RV_ERR_IDX] = io_opcode_only( spacket->opcode );	
@@ -134,7 +137,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			}
 			break; //end of IO
 
-		case NES:
+		case DICT_NES:
 			switch (spacket->opcode) {
 				case NES_OPCODE_24BOP_MIN ... NES_OPCODE_24BOP_MAX:
 					rv[RV_ERR_IDX] = nes_opcode_24b_operand( spacket->opcode,
@@ -150,7 +153,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			}
 			break; //end of NES
 
-		case SNES:
+		case DICT_SNES:
 			switch (spacket->opcode) {
 				case SNES_OPCODE_24BOP_MIN ... SNES_OPCODE_24BOP_MAX:
 					rv[RV_ERR_IDX] = snes_opcode_24b_operand( spacket->opcode, 
@@ -166,12 +169,12 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			}
 			break; //end of SNES
 
-		case BUFFER:
+		case DICT_BUFFER:
 			//just give buffer.c the setup packet and let it figure things out for itself
 			usbMsgPtr = (usbMsgPtr_t)buffer_usb_call( spacket, rv, &rlen );
 			break; //end of BUFFER
 
-		case USB:
+		case DICT_USB:
 			//currently just a simple way to read back usbFunctionWrite status SUCCESS/ERROR
 			//if there are future status' to read back may have to create some functions
 			rv[RV_ERR_IDX] = SUCCESS;
@@ -266,6 +269,10 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 //#define MAKECHECKS	0
 
 USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
+
+	//defined and controled by buffer.c
+	extern buffer *cur_usb_load_buff;
+	extern uint8_t incoming_bytes_remain;
 	
 	uint8_t data_cur = 0;	//current incoming byte to copy
 	uint8_t buf_cur = cur_usb_load_buff->cur_byte;	//current buffer byte

@@ -68,7 +68,7 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 			dictionary, opcode, opcode, addr, miscdata);
 	}
 	switch (dictionary) {
-		case PINPORT: debug("dict: PINPORT");
+		case DICT_PINPORT: debug("dict: PINPORT");
 			//transfer->wLength = 1;
 			switch (opcode) {
 				case PP_OPCODE_ONLY_MIN ... PP_OPCODE_ONLY_MAX:
@@ -92,7 +92,7 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 			}
 			break; //end of PINPORT
 
-		case IO: debug("dict: IO");
+		case DICT_IO: debug("dict: IO");
 //			transfer->wLength = 1;
 			switch (opcode) {
 				case IO_OPCODE_ONLY_MIN ... IO_OPCODE_ONLY_MAX:
@@ -107,7 +107,7 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 			}
 			break; //end of IO
 
-		case NES: debug("dict: NES");
+		case DICT_NES: debug("dict: NES");
 //			transfer->wLength = 1;
 			switch (opcode) {
 				case NES_OPCODE_24BOP_MIN ... NES_OPCODE_24BOP_MAX:
@@ -122,7 +122,7 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 			}
 			break; //end of NES
 
-		case SNES: debug("dict: SNES");
+		case DICT_SNES: debug("dict: SNES");
 //			transfer->wLength = 1;
 			switch (opcode) {
 				case SNES_OPCODE_24BOP_MIN ... SNES_OPCODE_24BOP_MAX:
@@ -137,14 +137,14 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 			}
 			break; //end of SNES
 
-		case BUFFER: debug("dict: BUFFER");
+		case DICT_BUFFER: debug("dict: BUFFER");
 //			transfer->wLength = length;
 			if (buffer != NULL) {
 				transfer->data = (unsigned char *)buffer;
 			}
 			break; //end of BUFF
 
-		case USB: debug("dict: USB");
+		case DICT_USB: debug("dict: USB");
 //			transfer->wLength = length;
 			break;
 

@@ -177,6 +177,14 @@ void software_AXL_CLK();
 // used for a very short delay
 #define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
 
+//PORT wide set/clear
+#define LO 0x00
+#define HI 0xFF
+
+//DDR values
+#define IP 0x00
+#define OP 0xFF
+
 //============================
 //ADDR[7:0] PORTA
 //============================

@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
-#include <libusb.h>
 
 //include prior to other file includes
 //that way DEBUG can be turned on/off for this file alone
@@ -19,11 +18,12 @@
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
-#include "types.h"
+#include "enums.h"
 
 #include "io.h"
 #include "nes.h"
 #include "snes.h"
+#include "memory.h"
 
 //cartridge object/struct
 typedef struct cartridge{
@@ -39,17 +39,13 @@ typedef struct cartridge{
 	memory	*sec_rom;	//secondary rom if used (CHR-ROM for NES)
 	memory	*save_mem;	//save data memory
 	memory	*aux_mem;	//additional memory
-	memory	*logic;		//programmable logic
+	memory	*logic_mem;		//programmable logic
 } cartridge;
 
-//console options
-#define UNKNOWN 	0	
-#define NES_CART 	'N'
-#define FC_CART 	'F'
-#define SNES_CART 	'S'
-#define BKWD_CART 	'B'
 
+int init_cart_elements( cartridge *cart );
 int detect_console( cartridge *cart, USBtransfer *transfer );
+int detect_mirroring( cartridge *cart, USBtransfer *transfer );
 
 
 #endif

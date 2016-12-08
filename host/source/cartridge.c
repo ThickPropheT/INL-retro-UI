@@ -1,5 +1,43 @@
 #include "cartridge.h"
 
+//init all cart elements to UNKNOWN
+//allocate memory for memory elements
+int init_cart_elements( cartridge *cart ) 
+{
+	cart->console =	UNKNOWN;
+	cart->mapper = UNKNOWN;
+	cart->submap = UNKNOWN;
+	cart->mapvariant = UNKNOWN;
+	cart->manf = UNKNOWN;
+	cart->product = UNKNOWN;
+	cart->mirroring = UNKNOWN;
+	cart->sound = UNKNOWN;
+	
+	cart->pri_rom = malloc( sizeof(memory));	
+	check_mem(cart->pri_rom);
+	init_memory_elements(cart->pri_rom);
+
+	cart->sec_rom = malloc( sizeof(memory));	
+	check_mem(cart->sec_rom);
+	init_memory_elements(cart->sec_rom);
+
+	cart->save_mem = malloc( sizeof(memory));	
+	check_mem(cart->save_mem);
+	init_memory_elements(cart->save_mem);
+
+	cart->aux_mem = malloc( sizeof(memory));	
+	check_mem(cart->aux_mem);
+	init_memory_elements(cart->aux_mem);
+
+	cart->logic_mem = malloc( sizeof(memory));	
+	check_mem(cart->logic_mem);
+	init_memory_elements(cart->logic_mem);
+
+	return SUCCESS;
+error:
+	return ~SUCCESS;
+}
+
 int detect_console( cartridge *cart, USBtransfer *transfer ) 
 {
 	printf("attempting to detect cartridge...\n");
@@ -92,3 +130,17 @@ error:
 	//INL SNES boards memory mapping is controlled by /RESET pin
 	//roms are still visible when /RESET low, but SRAM isn't
 
+
+int detect_mirroring( cartridge *cart, USBtransfer *transfer ) 
+{
+
+	if ( cart->console == NES_CART ) {
+		//For now just assume mirroring is fixed until start adding support for other mappers
+		cart->mirroring = MIR_FIXED;
+	}
+
+	return SUCCESS;
+
+//error:
+//	return -1;
+}

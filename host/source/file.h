@@ -27,8 +27,10 @@ typedef struct rom_image{
 	int	ram_size;
 	int	battery;
 	int	mirroring;
+	FILE	*fileptr;
 } rom_image;
 
-int detect_file( rom_image *rom_info, char *filename );
+int open_file( FILE **fptr, char *filename );
+int detect_file( rom_image *rom );
 
 #endif

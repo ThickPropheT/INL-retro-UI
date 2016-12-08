@@ -1,5 +1,12 @@
 #include "buffer.h"
 
+//used to communicate to usbFunctionWrite which buffer object
+//it should be filling
+buffer *cur_usb_load_buff;
+//used to determine number of bytes left to finish current
+//OUT transfer utilized by usbFunctionWrite
+//uint16_t incoming_bytes_remain;
+uint8_t incoming_bytes_remain;
 
 //min define of two buffers
 static buffer buff0;

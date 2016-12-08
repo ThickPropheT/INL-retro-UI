@@ -19,6 +19,7 @@
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
+#include "io.h"
 
 
 int erase_nes( USBtransfer *transfer );

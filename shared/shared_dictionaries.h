@@ -27,7 +27,7 @@
 
 //=============================================================================================
 //=============================================================================================
-#define PINPORT 1
+#define DICT_PINPORT 1
 #include "shared_dict_pinport.h"
 //pinport dictionary has various commands giving low and mid level access to retro prog's i/o pins.
 //It also contains internal avr registers associated with the avr's io.
@@ -72,7 +72,7 @@
 
 //=============================================================================================
 //=============================================================================================
-#define IO 2
+#define DICT_IO 2
 #include "shared_dict_io.h"
 //io dictionary contains commands 
 //Scope of functions contained is intended to be general and generic not specific
@@ -88,7 +88,7 @@
 
 //=============================================================================================
 //=============================================================================================
-#define NES 3
+#define DICT_NES 3
 #include "shared_dict_nes.h"
 //nes dictionary contains commands 
 //These commands rely on io initialization from io dictionary prior to calling
@@ -99,7 +99,7 @@
 
 //=============================================================================================
 //=============================================================================================
-#define SNES 4
+#define DICT_SNES 4
 #include "shared_dict_snes.h"
 //snes dictionary contains commands 
 //These commands rely on io initialization from io dictionary prior to calling
@@ -110,7 +110,7 @@
 
 //=============================================================================================
 //=============================================================================================
-#define BUFFER 5
+#define DICT_BUFFER 5
 #include "shared_dict_buffer.h"
 //mcu buffer dictionary commands 
 //This library is intended to contain all buffer related opcodes/commands
@@ -121,7 +121,7 @@
 
 //=============================================================================================
 //=============================================================================================
-#define USB 6
+#define DICT_USB 6
 #include "shared_dict_usb.h"
 //currently no actual dictionary as there are no opcodes.
 //just used to return status of usbfunctions in event of a transfer error. 

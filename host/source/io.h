@@ -22,5 +22,6 @@
 void io_reset( USBtransfer *transfer );
 void nes_init( USBtransfer *transfer );
 void snes_init( USBtransfer *transfer );
+int exp0_pullup_test( USBtransfer *transfer );
 
 #endif

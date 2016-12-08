@@ -11,10 +11,10 @@ int jumper_ciramce_ppuA13n( USBtransfer *transfer )
 	uint8_t rv[RV_DATA0_IDX+1];
 
 	//check that we can clear CIRAM /CE with PPU /A13
-	dictionary_call( transfer, PINPORT, 	ADDRH_SET,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	ADDRH_SET,	0,		0,	
 					USB_IN,		NULL,	1);
 	//read CIRAM /CE pin
-	dictionary_call( transfer, PINPORT, 	CICE_RD,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	CICE_RD,	0,		0,	
 					USB_IN,		rv,	RV_DATA0_IDX+1);
 
 	//CIRAM /CE's port PIN register contents are now in rv[RV_DATA_IDX]
@@ -26,10 +26,10 @@ int jumper_ciramce_ppuA13n( USBtransfer *transfer )
 	}
 
 	//set PPU /A13 high
-	dictionary_call( transfer, PINPORT, 	ADDRH_SET,	PPU_A13N_MSK,	0,	
+	dictionary_call( transfer, DICT_PINPORT, 	ADDRH_SET,	PPU_A13N_MSK,	0,	
 					USB_IN,		NULL,	1);
 	//read CIRAM /CE pin
-	dictionary_call( transfer, PINPORT, 	CICE_RD,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	CICE_RD,	0,		0,	
 					USB_IN,		rv,	RV_DATA0_IDX+1);
 
 	//CIRAM /CE's port PIN register contents are now in rv[RV_DATA_IDX]
@@ -58,10 +58,10 @@ int ciramce_inv_ppuA13( USBtransfer *transfer )
 	uint8_t rv[RV_DATA0_IDX+1];
 
 	//set PPU /A13 low
-	dictionary_call( transfer, PINPORT, 	ADDRH_SET,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	ADDRH_SET,	0,		0,	
 					USB_IN,		NULL,	1);
 	//read CIRAM /CE pin
-	dictionary_call( transfer, PINPORT, 	CICE_RD,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	CICE_RD,	0,		0,	
 					USB_IN,		rv,	RV_DATA0_IDX+1);
 
 	// CIRAM /CE should be high if inverted A13 is what drives it
@@ -72,10 +72,10 @@ int ciramce_inv_ppuA13( USBtransfer *transfer )
 	}
 
 	//check that we can clear CIRAM /CE with PPU /A13 high
-	dictionary_call( transfer, PINPORT, 	ADDRH_SET,	PPU_A13_MSK,	0,	
+	dictionary_call( transfer, DICT_PINPORT, 	ADDRH_SET,	PPU_A13_MSK,	0,	
 					USB_IN,		NULL,	1);
 	//read CIRAM /CE pin
-	dictionary_call( transfer, PINPORT, 	CICE_RD,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	CICE_RD,	0,		0,	
 					USB_IN,		rv,	RV_DATA0_IDX+1);
 
 	// CIRAM /CE should be low if inverted A13 is what drives it
@@ -120,41 +120,41 @@ int famicom_sound( USBtransfer *transfer )
 	//but don't leave it enabled before exiting function
 
 	//set AXLOE to output
-	dictionary_call( transfer, PINPORT, 	AXLOE_OP,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	AXLOE_OP,	0,		0,	
 					USB_IN,		NULL,	1);
 	//enable EXP FF
-	dictionary_call( transfer, PINPORT, 	EXPFF_OP,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	EXPFF_OP,	0,		0,	
 					USB_IN,		NULL,	1);
 	//Latch low first
-	dictionary_call( transfer, PINPORT, 	ADDRX_SET,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	ADDRX_SET,	0,		0,	
 					USB_IN,		NULL,	1);
 	//read EXP0 Famicom APU audio pin
-	dictionary_call( transfer, PINPORT, 	FC_APU_RD,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	FC_APU_RD,	0,		0,	
 					USB_IN,		rv,	RV_DATA0_IDX+1);
 
 	//need to mask out the pin
 	if ( rv[RV_DATA0_IDX] & FC_APU_MSK ) {
 		debug("RF audio out (EXP6) didn't drive APU audio in (EXP0) low");
 		//disable EXP FF
-		dictionary_call( transfer, PINPORT, 	EXPFF_FLT,	0,		0,	
+		dictionary_call( transfer, DICT_PINPORT, 	EXPFF_FLT,	0,		0,	
 						USB_IN,		NULL,	1);
 		//retun AXLOE to input
-		dictionary_call( transfer, PINPORT, 	AXLOE_IP,	0,		0,	
+		dictionary_call( transfer, DICT_PINPORT, 	AXLOE_IP,	0,		0,	
 					USB_IN,		NULL,	1);
 		return FALSE;
 	}
 
 	//Latch pin high 
-	dictionary_call( transfer, PINPORT, 	ADDRX_SET,	FC_RF_MSK,	0,	
+	dictionary_call( transfer, DICT_PINPORT, 	ADDRX_SET,	FC_RF_MSK,	0,	
 					USB_IN,		NULL,	1);
 	//read EXP0 Famicom APU audio pin
-	dictionary_call( transfer, PINPORT, 	FC_APU_RD,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	FC_APU_RD,	0,		0,	
 					USB_IN,		rv,	RV_DATA0_IDX+1);
 	//disable EXP FF
-	dictionary_call( transfer, PINPORT, 	EXPFF_FLT,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	EXPFF_FLT,	0,		0,	
 					USB_IN,		NULL,	1);
 	//retun AXLOE to input
-	dictionary_call( transfer, PINPORT, 	AXLOE_IP,	0,		0,	
+	dictionary_call( transfer, DICT_PINPORT, 	AXLOE_IP,	0,		0,	
 					USB_IN,		NULL,	1);
 
 	//mask pin from byte

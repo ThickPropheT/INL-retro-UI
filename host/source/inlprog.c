@@ -19,6 +19,7 @@
 #include "test.h"
 #include "cartridge.h"
 #include "file.h"
+#include "enums.h"
 
 
 int main(int argc, char *argv[]) 
@@ -147,11 +148,17 @@ int main(int argc, char *argv[])
 
 	//create USBtransfer struct to hold all transfer info
 	USBtransfer *transfer = malloc( sizeof(USBtransfer));	
-	check_mem(transfer);
-
 	//create usb device handle pointer to interact with retro-prog
 	//libusb_device_handle *rprog_handle = NULL;
 	transfer->handle = NULL;
+
+	//create file object/struct 
+	rom_image *rom = malloc( sizeof(rom_image));	
+	rom->fileptr = NULL;
+
+	check_mem(transfer);
+	check_mem(rom);
+
 
 	//command line arg L_value to set different LIBUSB debugging options
 	//any value > 0 also prints debug statements in open_usb_device function
@@ -182,29 +189,37 @@ int main(int argc, char *argv[])
 	cartridge *cart = malloc( sizeof(cartridge));	
 	check_mem(cart);
 
-	//attempt to detect board inserted in device
-	cart->console = UNKNOWN;
+	//set all cart elements to UNKNOWN
+	init_cart_elements(cart);
+
 	// -x flag turns off all autodection
 	if (!x_flag) {
+		//attempt to detect board inserted in device
 		check(!detect_console( cart, transfer ), "Problem detecting cartridge.");	
+
+		//detect mapper as much as possible
+		//TODO first step is mirroring for NES boards
+		check(!detect_mirroring( cart, transfer ), "Problem detecting cart mirroring.");	
+
+		//TODO first step for SNES is mapping mode
+	
+		//By this point we know a lot about the cartridge but for things like NES discrete
+		//mappers we'll have to play around with the memory to determine exact mapper
+		//detect board manufacturer/flash memories as much as possible
+
+		//detect rom sizes as much as possible
+
 	} else {
 		printf("auto-detection turned off\n");
 	}
 
-	//detect mapper as much as possible
-
-	//detect board manufacturer/flash memories as much as possible
-
-	//detect rom sizes as much as possible
-
 	//read in user files/args that glean info about expected board
-	//create file object/struct 
-	rom_image *rom_info = malloc( sizeof(rom_image));	
-	check_mem(rom_info);
+
 	//for now just assume user file/args are correct
 	if ( p_value != NULL ) {
 		//program file provided at commandline
-		detect_file( rom_info, p_value );
+		check( !open_file( &rom->fileptr, p_value ), "Problem opening file %s", p_value);
+		detect_file( rom );
 	}
 
 	//compare detections to user args and get permission to continue if there are discrepencies
@@ -214,7 +229,7 @@ int main(int argc, char *argv[])
 	//erase required sectors of flash
 
 	//forced to erase board regardless of current status
-	if (e_flag) {
+	if (e_flag || p_value) {
 		erase_nes( transfer );
 	}
 
@@ -248,7 +263,7 @@ int main(int argc, char *argv[])
 		}
 		printf("\n");
 		transfer->endpoint = USB_IN;
-		transfer->request = PINPORT;
+		transfer->request = DICT_PINPORT;
 		if (o_flag) transfer->wValueLSB = LED_ON;
 		if (n_flag) transfer->wValueLSB = LED_OFF;
 		transfer->data = rbuf;
@@ -268,11 +283,21 @@ int main(int argc, char *argv[])
 
 close:
 	close_usb( context, transfer->handle);	
+
+	if(rom->fileptr != NULL){
+	//close file
+		fclose(rom->fileptr);
+	}
 	
 	return 0;
 
 error:
-	printf("main program went to error\n");
+//	printf("main program went to error\n");
+//
+//	close_usb( context, transfer->handle);	
+//	if(rom->fileptr != NULL){
+//		fclose(rom->fileptr);
+//	}
 
 	return 1;
 
