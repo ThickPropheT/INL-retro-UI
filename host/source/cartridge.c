@@ -138,7 +138,7 @@ int detect_mirroring( cartridge *cart, USBtransfer *transfer )
 	//always start with resetting i/o
 	io_reset( transfer );
 
-	if ( cart->console == NES_CART ) {
+	if ( (cart->console == NES_CART) || (cart->console == FC_CART) ) {
 		//For now just assume mirroring is fixed until start adding support for other mappers
 		cart->mirroring = MIR_FIXED;
 	}
@@ -156,24 +156,95 @@ int detect_mirroring( cartridge *cart, USBtransfer *transfer )
 
 
 //detecting mapper and memories ends up being one big operation
-int detect_map_mem( cartridge *cart, USBtransfer *transfer ) 
+int detect_map_mem( cartridge *cart, USBtransfer *transfer, int oper ) 
 {
+	debug("detecting mapping");
 	//always start with resetting i/o
 	io_reset( transfer );
 
-	if ( cart->console == NES_CART && cart->mirroring = MIR_FIXED ) {
-		//if INL-ROM discrete board with EXP0->PRG-ROM /WE
-		//EXP0 pullup test should pass
-		if( exp0_pullup_test(transfer) == SUCCESS ){
 
-		} else {
-		//Potentially some other discrete board without EXP0->WE flash control
+	//Most ASIC mappers can be determined by their mirroring alone
 
-		//Some ASIC mappers have fixed mirroring as well
+	//Discrete mappers are tricky as memory operations are needed
+	//If flashing can attempt to determine by reading flash manf/part
+	//If dumping have to rely on rom page checksums and register writes
+//================
+// NES & Famicom
+//================
+	switch(cart->console) {
 
-		}
-	//for NROM flashing first verify EXP0 pull up will clock /WE properly
+		case FC_CART:
+		case NES_CART:
+			nes_init(transfer);
+			debug("NES cart mapping");
+			//gather other helpful info
 
+			//result of chr-ram test
+			if ( ppu_ram_sense( transfer, 0x0000 ) == SUCCESS ) {
+				debug("CHR-RAM detected @ PPU $0000");
+				cart->sec_rom->manf = SRAM;
+				cart->sec_rom->part = SRAM;
+			} else
+			//check for CHR-ROM flash
+			if ( read_flashID_chrrom_8K( transfer, cart->sec_rom ) == SUCCESS ) {
+				//8KB bank with no banking operations
+				debug("8K CHR-ROM flash detected");
+				cart->sec_rom->size = 8 * KBYTE;
+			}
+			
+			//perform WRAM test without corrupting results
+			//TODO store result in save_mem
+
+			//exp0 pullup test passes on many INL boards
+			if ( exp0_pullup_test(transfer) == SUCCESS) {
+				debug("EXP0 pullup cart mapping");
+				//if passed exp0 test try 16/32KB bank flash check
+
+				//if 16KB banks writing 0xFF to mapper reg should set A14 bit
+				//That will cause flash detection to fail.
+				//TODO handle bus conflicts...?
+				dictionary_call( transfer, DICT_NES, 	NES_CPU_WR,	0x8000,	0xFF,	
+									USB_IN,		NULL,	1);
+				//if ID check passes, the should be 32KB PRG-ROM banking
+				if ( read_flashID_prgrom_exp0( transfer, cart->pri_rom ) == SUCCESS ) {
+					//32KB bank with EXP0->WE PRG-ROM sensed
+					debug("32KB banking NES EXP0 enabled flash");
+					cart->pri_rom->bank_size = 32 * KBYTE;
+				} else { 
+				//set mapper reg to 0 if present which sets A14 low when needed if 16KB banks
+					dictionary_call( transfer, DICT_NES, 	NES_CPU_WR,	0x8000,	0x00,	
+										USB_IN,		NULL,	1);
+					if ( read_flashID_prgrom_exp0( transfer, cart->pri_rom ) == SUCCESS ){
+						//16KB bank with EXP0->WE PRG-ROM sensed
+						debug("16KB banking NES EXP0 enabled flash");
+						cart->pri_rom->bank_size = 16 * KBYTE;
+					}
+				}
+				//TODO determine how many banks are present
+				//best to do this by writing last bank, then see if
+				//blank banks can be found
+			}
+
+			switch (cart->mirroring) {
+				case MIR_MMC1:
+					break;
+				case MIR_MMC3:
+					break;
+				case MIR_FIXED:
+					break;
+				default:
+					sentinel("Problem with mapper detect mirroring switch statement.");
+			}
+			break;
+//================
+// SNES
+//================
+		case SNES_CART:
+			snes_init(transfer);
+			break;
+
+		default:
+			sentinel("This console not supported by detect_map_mem function.");
 	}
 
 	//always end with resetting i/o
@@ -181,8 +252,8 @@ int detect_map_mem( cartridge *cart, USBtransfer *transfer )
 
 	return SUCCESS;
 
-//error:
+error:
 	//always end with resetting i/o
-	//io_reset( transfer );
-//	return -1;
+	io_reset( transfer );
+	return -1;
 }

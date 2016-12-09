@@ -4,6 +4,8 @@ int erase_nes( USBtransfer *transfer )
 {
 	//uint8_t rv[8];
 	//int i = 0;
+
+return 0;
 	
 	debug("erasing_nrom");
 
@@ -92,6 +94,6 @@ int erase_nes( USBtransfer *transfer )
 
 
 	return 0;
-error:
-	return -1;
+//error:
+//	return -1;
 }

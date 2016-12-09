@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 	//Also don't want to continue if conflicting args are being used
 
 	//flags about input files only used for writes
-	if ( p_flag || i_value || C_value || P_value || S_value || W_value ) {
+	if ( p_value || i_flag || C_value || P_value || S_value || W_value ) {
 		check( d_value == NULL, "input args conflict can't program and dump in same operation.");
 		operation = WRITE;
 	}
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
 		//By this point we know a lot about the cartridge but for things like NES discrete
 		//mappers we'll have to play around with the memory to determine exact mapper
 		//detect board manufacturer/flash memories as much as possible
-		check(!detect_map_mem( cart, transfer ), "Problem detecting cart map & memory.");	
+		check(!detect_map_mem( cart, transfer, operation ), "Problem detecting cart map & memory.");	
 
 		//detect rom sizes as much as possible
 

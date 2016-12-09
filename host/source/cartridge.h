@@ -46,6 +46,7 @@ typedef struct cartridge{
 int init_cart_elements( cartridge *cart );
 int detect_console( cartridge *cart, USBtransfer *transfer );
 int detect_mirroring( cartridge *cart, USBtransfer *transfer );
+int detect_map_mem( cartridge *cart, USBtransfer *transfer, int oper );
 
 
 #endif

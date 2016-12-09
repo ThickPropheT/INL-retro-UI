@@ -168,3 +168,165 @@ int famicom_sound( USBtransfer *transfer )
 	return ~FALSE;
 
 }
+
+/* Desc:PRG-ROM flash manf/prod ID sense test
+ *	Using EXP0 /WE writes 
+ *	Only senses SST flash ID's
+ *	Assumes that isn't getting tricked by having manf/prodID at $8000/8001
+ *	could add check and increment read address to ensure doesn't get tricked..
+ * Pre: nes_init() been called to setup i/o
+ *	exp0 pullup test must pass
+ *	if ROM A14 is mapper controlled it must be low when CPU A14 is low
+ *	controlling A14 outside of this function acts as a means of bank size detection
+ * Post:memory manf/prod ID set to read values if passed
+ *	Software mode exited if entered successfully
+ * Rtn: SUCCESS if flash sensed, GEN_FAIL if not, neg if error 
+ */
+int read_flashID_prgrom_exp0( USBtransfer *transfer, memory *flash ) {
+
+	uint8_t rv[RV_DATA0_IDX];
+
+	//enter software mode
+	//ROMSEL controls PRG-ROM /OE which needs to be low for flash writes
+	//So unlock commands need to be addressed below $8000
+	//DISCRETE_EXP0_PRGROM_WR doesn't toggle /ROMSEL by definition though, so A15 is unused
+	//	    15 14 13 12
+	// 0x5 = 0b  0  1  0  1	-> $5555
+	// 0x2 = 0b  0  0  1  0	-> $2AAA
+	dictionary_call( transfer, DICT_NES, 	DISCRETE_EXP0_PRGROM_WR,	0x5555,		0xAA,	
+									USB_IN,		NULL,	1);
+	dictionary_call( transfer, DICT_NES, 	DISCRETE_EXP0_PRGROM_WR,	0x2AAA,		0x55,	
+									USB_IN,		NULL,	1);
+	dictionary_call( transfer, DICT_NES, 	DISCRETE_EXP0_PRGROM_WR,	0x5555,		0x90,	
+									USB_IN,		NULL,	1);
+	//read manf ID
+	dictionary_call( transfer, DICT_NES, 	NES_CPU_RD,			0x8000,		NILL,	
+								USB_IN,		rv,	RV_DATA0_IDX+1);
+	debug("manf id: %x", rv[RV_DATA0_IDX]);
+	if ( rv[RV_DATA0_IDX] != SST_MANF_ID ) {
+		return GEN_FAIL;
+		//no need for software exit since failed to enter
+	}
+
+	//read prod ID
+	dictionary_call( transfer, DICT_NES, 	NES_CPU_RD,			0x8001,		NILL,	
+								USB_IN,		rv,	RV_DATA0_IDX+1);
+	debug("prod id: %x", rv[RV_DATA0_IDX]);
+	if ( (rv[RV_DATA0_IDX] == SST_PROD_128)
+	||   (rv[RV_DATA0_IDX] == SST_PROD_256)
+	||   (rv[RV_DATA0_IDX] == SST_PROD_512) ) {
+		//found expected manf and prod ID
+		flash->manf = SST_MANF_ID;
+		flash->part = rv[RV_DATA0_IDX];
+	}
+
+	//exit software
+	dictionary_call( transfer, DICT_NES, 	DISCRETE_EXP0_PRGROM_WR,	0x8000,		0xF0,	
+									USB_IN,		NULL,	1);
+
+	//verify exited
+	//dictionary_call( transfer, DICT_NES, 	NES_CPU_RD,			0x8000,		NILL,	
+	//							USB_IN,		rv,	RV_DATA0_IDX+1);
+	//debug("prod id: %x", rv[RV_DATA0_IDX]);
+
+	return SUCCESS;
+}
+
+
+/* Desc:CHR-ROM flash manf/prod ID sense test
+ *	Only senses SST flash ID's
+ *	Does not make CHR bank writes so A14-A13 must be made valid outside of this funciton
+ *	An NROM board does this by tieing A14:13 to A12:11
+ *	Other mappers will pass this function if PT0 has A14:13=01, PT1 has A14:13=10
+ *	Assumes that isn't getting tricked by having manf/prodID at $0000/0001
+ *	could add check and increment read address to ensure doesn't get tricked..
+ * Pre: nes_init() been called to setup i/o
+ * Post:memory manf/prod ID set to read values if passed
+ *	Software mode exited if entered successfully
+ * Rtn: SUCCESS if flash sensed, GEN_FAIL if not, neg if error 
+ */
+int read_flashID_chrrom_8K( USBtransfer *transfer, memory *flash ) {
+
+	uint8_t rv[RV_DATA0_IDX];
+
+	//enter software mode
+	//NROM has A13 tied to A11, and A14 tied to A12.
+	//So only A0-12 needs to be valid
+	//A13 needs to be low to address CHR-ROM
+	//	    15 14 13 12
+	// 0x5 = 0b  0  1  0  1	-> $1555
+	// 0x2 = 0b  0  0  1  0	-> $0AAA
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	0x1555,		0xAA,	
+									USB_IN,		NULL,	1);
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	0x0AAA,		0x55,	
+									USB_IN,		NULL,	1);
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	0x1555,		0x90,	
+									USB_IN,		NULL,	1);
+	//read manf ID
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	0x0000,		NILL,	
+							USB_IN,		rv,	RV_DATA0_IDX+1);
+	debug("manf id: %x", rv[RV_DATA0_IDX]);
+	if ( rv[RV_DATA0_IDX] != SST_MANF_ID ) {
+		return GEN_FAIL;
+		//no need for software exit since failed to enter
+	}
+
+	//read prod ID
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	0x0001,		NILL,	
+							USB_IN,		rv,	RV_DATA0_IDX+1);
+	debug("prod id: %x", rv[RV_DATA0_IDX]);
+	if ( (rv[RV_DATA0_IDX] == SST_PROD_128)
+	||   (rv[RV_DATA0_IDX] == SST_PROD_256)
+	||   (rv[RV_DATA0_IDX] == SST_PROD_512) ) {
+		//found expected manf and prod ID
+		flash->manf = SST_MANF_ID;
+		flash->part = rv[RV_DATA0_IDX];
+	}
+
+	//exit software
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	0x0000,		0xF0,	
+									USB_IN,		NULL,	1);
+
+	//verify exited
+	//dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	0x0000,		NILL,	
+	//							USB_IN,		rv,	RV_DATA0_IDX+1);
+	//debug("prod id: %x", rv[RV_DATA0_IDX]);
+
+	return SUCCESS;
+}
+
+/* Desc:Simple CHR-RAM sense test
+ *	A more thourough test should be implemented in firmware
+ *	This one simply tests one address in PPU address space
+ * Pre: nes_init() been called to setup i/o
+ * Post:
+ * Rtn: SUCCESS if ram sensed, GEN_FAIL if not, neg if error 
+ */
+int ppu_ram_sense( USBtransfer *transfer, uint16_t addr ) {
+
+	uint8_t rv[RV_DATA0_IDX];
+
+	//write 0xAA to addr 
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	addr,		0xAA,	
+									USB_IN,		NULL,	1);
+	//try to read it back
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	addr,		NILL,	
+							USB_IN,		rv,	RV_DATA0_IDX+1);
+	debug("reading back 0xAA: %x", rv[RV_DATA0_IDX]);
+	if ( rv[RV_DATA0_IDX] != 0xAA ) {
+		return GEN_FAIL;
+	} 
+
+	//write 0x55 to addr 
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	addr,		0x55,	
+									USB_IN,		NULL,	1);
+	//try to read it back
+	dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	addr,		NILL,	
+							USB_IN,		rv,	RV_DATA0_IDX+1);
+	debug("reading back 0x55: %x", rv[RV_DATA0_IDX]);
+	if ( rv[RV_DATA0_IDX] != 0x55 ) {
+		return GEN_FAIL;
+	}
+
+	return SUCCESS;
+}

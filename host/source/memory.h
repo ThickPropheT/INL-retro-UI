@@ -20,14 +20,25 @@
 #include "dictionary.h"
 #include "enums.h"
 
+//SST 39SF0x0 manf/prod IDs
+#define SST_MANF_ID	0xBF
+#define SST_PROD_128	0xB5
+#define SST_PROD_256	0xB6
+#define SST_PROD_512	0xB7
+
+//SRAM manf/prod ID
+#define SRAM	0xAA
+
+//KByte for easy math
+#define KBYTE	1024
 
 //memory object/struct
 typedef struct memory{
 	int	manf;
 	int	part;
 	int	volatility;	//sram no batt vs batt, mask rom, erasability, etc
-	int	size;		//size of the actual memory excluding grounded address pins etc
-	int	addr_size;	//addressable size of the memory including grounded address pins etc
+	int	size;		//size of the max addressable memory grounding addr pins lowers this value
+	int	bank_size;	//size of banks/pages of memory created by mapper banking
 	int	width;		//width of data bus as configured
 	int	protocol;	//parallel, SPI, I2C, JTAG, custom etc.
 	int	sector_size;	//minimum eraseable size in bytes

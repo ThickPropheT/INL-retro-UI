@@ -26,6 +26,9 @@ uint8_t nes_opcode_24b_operand( uint8_t opcode, uint8_t addrH, uint8_t addrL, ui
 		case NES_PPU_WR:	
 			nes_ppu_wr( addrH, addrL, data );
 			break;
+		case NES_CPU_WR:	
+			nes_cpu_wr( addrH, addrL, data );
+			break;
 		default:
 			 //macro doesn't exist
 			 return ERR_UNKN_NES_OPCODE_24BOP;
@@ -94,7 +97,6 @@ void	discrete_exp0_prgrom_wr( uint8_t addrH, uint8_t addrL, uint8_t data )
 	_EXP0_LO();	//Tas = 0ns, Tah = 30ns
 	_EXP0_PU();	//Twp = 40ns, Tds = 40ns, Tdh = 0ns
 	//16Mhz avr clk = 62.5ns period guarantees timing reqts
-	//Need to check with scope to make sure EXP0 P/U effective
 	_DATA_IP();
 }
 
@@ -216,7 +218,7 @@ uint8_t	nes_cpu_rd( uint8_t addrH, uint8_t addrL )
 void	nes_cpu_wr( uint8_t addrH, uint8_t addrL, uint8_t data )
 {
 	//Float EXP0 as it should be in NES
-	_EXP0_LO();
+	_EXP0_FLT();
 
 	//need for whole function
 	_DATA_OP();
@@ -265,13 +267,14 @@ uint8_t	nes_ppu_rd( uint8_t addrH, uint8_t addrL )
 {
 	uint8_t	read;	//return value
 
-	//set address bus
-	ADDR_OUT = addrL;
 	if (addrH < 0x20) { //below $2000 A13 clear, /A13 set
-		_ADDRH_SET(addrH & PPU_A13N);
+		_ADDRH_SET(addrH | PPU_A13N);
 	} else { //above PPU $1FFF, A13 set, /A13 clear 
 		_ADDRH_SET(addrH);
 	}
+
+	//set address bus
+	ADDR_OUT = addrL;
 	
 	//set CHR /RD and /WR
 	_CSRD_LO();
@@ -296,6 +299,7 @@ uint8_t	nes_ppu_rd( uint8_t addrH, uint8_t addrL )
 
 /* Desc:NES PPU Write 
  * 	decode A13 from addrH to set /A13 as expected
+ *	flash: address clocked falling edge, data rising edge of /WE
  * Pre: nes_init() setup of io pins
  * Post:data written to addrHL
  *	address left on bus
@@ -307,19 +311,22 @@ void	nes_ppu_wr( uint8_t addrH, uint8_t addrL, uint8_t data )
 	//will need output whole function
 	_DATA_OP();
 
-	//set address bus
-	ADDR_OUT = addrL;
 	//addrH with PPU /A13
 	if (addrH < 0x20) { //below $2000 A13 clear, /A13 set
-		DATA_OUT = (addrH & PPU_A13N);
+		DATA_OUT = (addrH | PPU_A13N);
 	} else { //above PPU $1FFF, A13 set, /A13 clear 
 		DATA_OUT = addrH;
 	}
 	//latch addrH
 	_AHL_CLK();
 
+	//set address bus
+	ADDR_OUT = addrL;
+
 	//put data on bus
 	DATA_OUT = data;
+
+	NOP();
 	
 	//set CHR /RD and /WR
 	//_CSRD_HI();	already done
