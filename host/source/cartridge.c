@@ -158,7 +158,7 @@ int detect_mirroring( cartridge *cart, USBtransfer *transfer )
 //detecting mapper and memories ends up being one big operation
 int detect_map_mem( cartridge *cart, USBtransfer *transfer, int oper ) 
 {
-	debug("detecting mapping");
+	//debug("detecting mapping");
 	//always start with resetting i/o
 	io_reset( transfer );
 
@@ -176,7 +176,7 @@ int detect_map_mem( cartridge *cart, USBtransfer *transfer, int oper )
 		case FC_CART:
 		case NES_CART:
 			nes_init(transfer);
-			debug("NES cart mapping");
+			//debug("NES cart mapping");
 			//gather other helpful info
 
 			//result of chr-ram test
@@ -184,57 +184,69 @@ int detect_map_mem( cartridge *cart, USBtransfer *transfer, int oper )
 				debug("CHR-RAM detected @ PPU $0000");
 				cart->sec_rom->manf = SRAM;
 				cart->sec_rom->part = SRAM;
-			} else
-			//check for CHR-ROM flash
+			} 
+			
+			//perform WRAM test without corrupting results
+			//TODO store result in save_mem
+
+//mapper select switch<<<<-------------------------------------------------------------
+switch (cart->mirroring) {
+	case MIR_MMC1:
+		break;
+	case MIR_MMC3:
+		break;
+	case MIR_FIXED:
+		//check for CHR-ROM flash
+		if ( cart->sec_rom->part != SRAM ) {
 			if ( read_flashID_chrrom_8K( transfer, cart->sec_rom ) == SUCCESS ) {
 				//8KB bank with no banking operations
 				debug("8K CHR-ROM flash detected");
 				cart->sec_rom->size = 8 * KBYTE;
 			}
-			
-			//perform WRAM test without corrupting results
-			//TODO store result in save_mem
+		}
+		//exp0 pullup test passes on many INL boards
+		if ( exp0_pullup_test(transfer) == SUCCESS) {
+			debug("EXP0 pullup cart mapping");
+			//if passed exp0 test try 16/32KB bank flash check
 
-			//exp0 pullup test passes on many INL boards
-			if ( exp0_pullup_test(transfer) == SUCCESS) {
-				debug("EXP0 pullup cart mapping");
-				//if passed exp0 test try 16/32KB bank flash check
-
-				//if 16KB banks writing 0xFF to mapper reg should set A14 bit
-				//That will cause flash detection to fail.
-				//TODO handle bus conflicts...?
-				dictionary_call( transfer, DICT_NES, 	NES_CPU_WR,	0x8000,	0xFF,	
+			//if 16KB banks writing 0xFF to mapper reg should set A14 bit
+			//That will cause flash detection to fail.
+			//TODO handle bus conflicts...?
+			dictionary_call( transfer, DICT_NES, 	NES_CPU_WR,	0x8000,	0xFF,	
+								USB_IN,		NULL,	1);
+			//if ID check passes, the should be 32KB PRG-ROM banking
+			if ( read_flashID_prgrom_exp0( transfer, cart->pri_rom ) == SUCCESS ) {
+				//32KB bank with EXP0->WE PRG-ROM sensed
+				debug("32KB banking NES EXP0 enabled flash");
+				cart->pri_rom->bank_size = 32 * KBYTE;
+			} else { 
+			//set mapper reg to 0 if present which sets A14 low when needed if 16KB banks
+				dictionary_call( transfer, DICT_NES, 	NES_CPU_WR,	0x8000,	0x00,	
 									USB_IN,		NULL,	1);
-				//if ID check passes, the should be 32KB PRG-ROM banking
-				if ( read_flashID_prgrom_exp0( transfer, cart->pri_rom ) == SUCCESS ) {
-					//32KB bank with EXP0->WE PRG-ROM sensed
-					debug("32KB banking NES EXP0 enabled flash");
-					cart->pri_rom->bank_size = 32 * KBYTE;
-				} else { 
-				//set mapper reg to 0 if present which sets A14 low when needed if 16KB banks
-					dictionary_call( transfer, DICT_NES, 	NES_CPU_WR,	0x8000,	0x00,	
-										USB_IN,		NULL,	1);
-					if ( read_flashID_prgrom_exp0( transfer, cart->pri_rom ) == SUCCESS ){
-						//16KB bank with EXP0->WE PRG-ROM sensed
-						debug("16KB banking NES EXP0 enabled flash");
-						cart->pri_rom->bank_size = 16 * KBYTE;
-					}
+				if ( read_flashID_prgrom_exp0( transfer, cart->pri_rom ) == SUCCESS ){
+					//16KB bank with EXP0->WE PRG-ROM sensed
+					debug("16KB banking NES EXP0 enabled flash");
+					cart->pri_rom->bank_size = 16 * KBYTE;
+					cart->mapper = UxROM;
 				}
-				//TODO determine how many banks are present
-				//best to do this by writing last bank, then see if
-				//blank banks can be found
 			}
-
-			switch (cart->mirroring) {
-				case MIR_MMC1:
-					break;
-				case MIR_MMC3:
-					break;
-				case MIR_FIXED:
-					break;
-				default:
-					sentinel("Problem with mapper detect mirroring switch statement.");
-			}
+			//TODO determine how many banks are present
+			//best to do this by writing last bank, then see if
+			//blank banks can be found
+		}
+		//check for mapper 30 controlled PRG-ROM writes
+		if ( read_flashID_prgrom_map30( transfer, cart->pri_rom ) == SUCCESS ){
+			debug("16KB mapper30 flash writes enabled");
+			cart->pri_rom->bank_size = 16 * KBYTE;
+			cart->mapper = UNROM512;
+		}
+		//TODO check for mapper 31 EZ-NSF
+		debug("PRG-ROM manfID: %x, prodID: %x", cart->pri_rom->manf, cart->pri_rom->part);
+		break;
+	default:
+		sentinel("Problem with mapper detect mirroring switch statement.");
+}
+//mapper select switch<<<<-------------------------------------------------------------
 			break;
 //================
 // SNES

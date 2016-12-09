@@ -15,6 +15,11 @@
 
 //TODO put defintions in separate project wide .h file
 #include "cartridge.h"
+#include "enums.h"
+
+#define SIZE_NES_HEADER 16
+#define SIZE_PRG_BANK 16384
+#define SIZE_CHR_BANK 8192
 
 //cartridge object/struct
 typedef struct rom_image{
@@ -30,7 +35,9 @@ typedef struct rom_image{
 	FILE	*fileptr;
 } rom_image;
 
-int open_file( FILE **fptr, char *filename );
+void init_rom_elements(rom_image *rom);
+int open_rom( rom_image *rom, char *filename );
 int detect_file( rom_image *rom );
+int create_file( rom_image *rom, char *filename );
 
 #endif

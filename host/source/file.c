@@ -1,19 +1,33 @@
 #include "file.h"
 
-#define SIZE_NES_HEADER 16
-#define SIZE_PRG_BANK 16384
-#define SIZE_CHR_BANK 8192
+void init_rom_elements( rom_image *rom )
+{
+	rom->console = UNKNOWN;
+	rom->mapper = UNKNOWN;
+	rom->submap = UNKNOWN;
+	rom->mapvariant = UNKNOWN;
+	rom->prg_size = UNKNOWN;
+	rom->chr_size = UNKNOWN;
+	rom->ram_size = UNKNOWN;
+	rom->battery = UNKNOWN;
+	rom->mirroring = UNKNOWN;
+	rom->fileptr = NULL;
+
+}
 
 //Need to pass in pointer to a filepointer to properly pass by reference
 //the OS/stdio creates a FILE struct and returns the address of that struct
 //so when this function opens a file it's setting the value of a pointer
 //for the calling function.  To set a pointer we must have a pointer to that pointer..
-int open_file( FILE **fptr, char *filename ) 
+//int open_file( FILE **fptr, char *filename ) 
+int open_rom( rom_image *rom, char *filename ) 
 {
 	//first open file
-	*fptr = fopen( filename, "rb");
+	//*fptr = fopen( filename, "rb");
+	rom->fileptr = fopen( filename, "rb");
 	//returns file ptr on success, NULL on fail
-	check( *fptr, "Unable to open file: %s in read binary mode", filename); 	
+	//check( *fptr, "Unable to open file: %s in read binary mode", filename); 	
+	check( rom->fileptr, "Unable to open file: %s in read binary mode", filename); 	
 
 	return SUCCESS;
 error:
@@ -74,6 +88,19 @@ int detect_file( rom_image *rom )
 	//10: Flags 10 (unofficial)
 	//11-15: Zero filled
 	
+	return SUCCESS;
+error:
+	return -1;
+}
+
+
+int create_file( rom_image *rom, char *filename )
+{
+	//TODO check if file already exists, if so prompt if user would like to overwrite
+
+	rom->fileptr = fopen( filename, "wb+");
+	check( rom->fileptr, "Unable to create file: %s in read/write binary mode", filename); 	
+
 	return SUCCESS;
 error:
 	return -1;

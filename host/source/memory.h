@@ -39,6 +39,8 @@ typedef struct memory{
 	int	volatility;	//sram no batt vs batt, mask rom, erasability, etc
 	int	size;		//size of the max addressable memory grounding addr pins lowers this value
 	int	bank_size;	//size of banks/pages of memory created by mapper banking
+	int	wr_dict;	//dictionary used to write to rom
+	int	wr_opcode;	//opcode used to write to rom
 	int	width;		//width of data bus as configured
 	int	protocol;	//parallel, SPI, I2C, JTAG, custom etc.
 	int	sector_size;	//minimum eraseable size in bytes

@@ -170,10 +170,10 @@ int main(int argc, char *argv[])
 
 	//create file object/struct 
 	rom_image *rom = malloc( sizeof(rom_image));	
-	rom->fileptr = NULL;
 
 	check_mem(transfer);
 	check_mem(rom);
+	init_rom_elements(rom);
 
 
 	//command line arg L_value to set different LIBUSB debugging options
@@ -232,14 +232,37 @@ int main(int argc, char *argv[])
 
 	//read in user files/args that glean info about expected board
 
-	//for now just assume user file/args are correct
-	if ( p_value != NULL ) {
-		//program file provided at commandline
-		check( !open_file( &rom->fileptr, p_value ), "Problem opening file %s", p_value);
-		detect_file( rom );
+	//compare detections to user args and get permission to continue if there are discrepencies
+
+	//just dump based on input args for now
+	if ( d_value ) {
+		//TODO input arg checking
+		if ( c_value ) {
+			if ( strcmp( "NES", c_value ) == 0 ) rom->console = NES_CART;
+			if ( strcmp( "FC", c_value ) == 0 ) rom->console = FC_CART;
+			if ( strcmp( "SNES", c_value ) == 0 ) rom->console = SNES_CART;
+		}
+		debug("console is: %c", rom->console);
+
+		if ( m_value ) rom->mapper = atoi(m_value);		
+		debug("mapper is: %d", rom->mapper);
+
+		if ( rom->mapper == NROM ) {
+			rom->prg_size = 32 * KBYTE;
+			rom->chr_size = 8 * KBYTE;
+			//TODO function to check mirroring
+			rom->mirroring = MIR_VERT;
+		}
+		
+		//TODO check if enough input args were provided or can be detected
+		check( !create_file( rom, d_value ), "Unable to create file %s", d_value);		
 	}
 
-	//compare detections to user args and get permission to continue if there are discrepencies
+	if ( p_value ) {
+		//program file provided at commandline
+		check( !open_rom( rom, p_value ), "Problem opening file %s", p_value);
+		detect_file( rom );
+	}
 
 	//if flashing, determine if erasures are necessary and where
 
