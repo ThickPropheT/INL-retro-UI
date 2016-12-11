@@ -19,7 +19,8 @@
 #include "test.h"
 #include "cartridge.h"
 #include "file.h"
-#include "enums.h"
+#include "dump.h"
+#include "shared_enums.h"
 
 
 int main(int argc, char *argv[]) 
@@ -127,11 +128,11 @@ int main(int argc, char *argv[])
 	
 	}
 
-	debug("flags= o:%d n:%d e:%d f:%d h:%d i:%d t:%d x:%d y:%d T:%d", 
-		o_flag, n_flag, e_flag, f_flag, h_flag, i_flag, t_flag, x_flag, y_flag, T_flag ); 
-	debug("args= b:%s c:%s d:%s m:%s p:%s", b_value, c_value, d_value, m_value, p_value); 
-	debug("args= s:%s v:%s C:%s L:%s K:%s", s_value, v_value, C_value, L_value, K_value); 
-	debug("args= O:%s P:%s S:%s W:%s", O_value, P_value, S_value, W_value); 
+//	debug("flags= o:%d n:%d e:%d f:%d h:%d i:%d t:%d x:%d y:%d T:%d", 
+//		o_flag, n_flag, e_flag, f_flag, h_flag, i_flag, t_flag, x_flag, y_flag, T_flag ); 
+//	debug("args= b:%s c:%s d:%s m:%s p:%s", b_value, c_value, d_value, m_value, p_value); 
+//	debug("args= s:%s v:%s C:%s L:%s K:%s", s_value, v_value, C_value, L_value, K_value); 
+//	debug("args= O:%s P:%s S:%s W:%s", O_value, P_value, S_value, W_value); 
 
 	for( index = optind; index < argc; index++) {
 		log_err("Non-option arguement: %s \n", argv[index]);
@@ -141,6 +142,10 @@ int main(int argc, char *argv[])
 	if (h_flag) {
 		printf("You've asked for help but the help message still needs created...\n");
 		return 0;
+	}
+
+	if ( O_value || v_value || s_value || b_value || y_flag || t_flag || f_flag ) {
+		printf("option not currently supported sorry...\n");
 	}
 
 	//Determine overall operation being performed based on user args
@@ -242,20 +247,22 @@ int main(int argc, char *argv[])
 			if ( strcmp( "FC", c_value ) == 0 ) rom->console = FC_CART;
 			if ( strcmp( "SNES", c_value ) == 0 ) rom->console = SNES_CART;
 		}
+		//TODO interpret provided file extension to determine desired console
 		debug("console is: %c", rom->console);
 
 		if ( m_value ) rom->mapper = atoi(m_value);		
 		debug("mapper is: %d", rom->mapper);
 
 		if ( rom->mapper == NROM ) {
-			rom->prg_size = 32 * KBYTE;
-			rom->chr_size = 8 * KBYTE;
-			//TODO function to check mirroring
-			rom->mirroring = MIR_VERT;
+			rom->prg_size = 32 * KByte;
+			rom->chr_size = 8 * KByte;
 		}
 		
 		//TODO check if enough input args were provided or can be detected
 		check( !create_file( rom, d_value ), "Unable to create file %s", d_value);		
+
+		//collected as much info as can dump cart without reading any data
+		check( !dump_cart( transfer, rom, cart ), "Error while dumping cart");
 	}
 
 	if ( p_value ) {
@@ -270,7 +277,7 @@ int main(int argc, char *argv[])
 
 	//forced to erase board regardless of current status
 	if (e_flag || p_value) {
-		erase_nes( transfer );
+	//	erase_nes( transfer );
 	}
 
 	//if flashing determine auto-doubling for oversized flash
@@ -282,7 +289,7 @@ int main(int argc, char *argv[])
 
 	//determine if snes input rom needs deinterleaved
 
-	//dump or flash data based on user args
+	//dump or program data based on user args
 
 	//find some fun trivia to present to user while waiting for flash operatoin..?
 

@@ -1,13 +1,10 @@
-#ifndef _test_h
-#define _test_h
+#ifndef _buffer_h
+#define _buffer_h
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
-#include <libusb.h>
-#include <time.h>
 
 //include prior to other file includes
 //that way DEBUG can be turned on/off for this file alone
@@ -16,17 +13,15 @@
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 
-#include "usb_operations.h"
 #include "shared_errors.h"
-#include "shared_enums.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
+#include "memory.h"
+//	 "cartridge.h" is above the scope of this module don't include
 
-//uncomment to DEBUG this file alone
-#define DEBUG
-//"make debug" to get DEBUG msgs on entire program
-#include "dbg.h"
+#include "pindef.h"
 
-int test_function( USBtransfer *transfer );
+int reset_buffers( USBtransfer *transfer );
+int allocate_buffers( USBtransfer *transfer, int num_buffers, int buff_size );
 
 #endif

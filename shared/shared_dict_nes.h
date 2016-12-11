@@ -76,4 +76,8 @@
 
 #define NES_PPU_RD			0x82
 
+//doesn't have operands just returns sensed CIRAM A10 mirroring 
+//returns VERT/HORIZ/1SCNA/1SCNB from shared_enums.h
+#define CIRAM_A10_MIRROR		0x83
+
 #endif

@@ -8,6 +8,7 @@
 #include "nes.h"
 #include "shared_dictionaries.h"
 #include "shared_errors.h"
+#include "shared_enums.h"
 
 uint8_t dump_page( buffer *buff ) ;
 

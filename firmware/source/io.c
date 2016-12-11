@@ -150,11 +150,6 @@ void nes_init()
 	_DATA_IP();
 	_DATA_HI();
 
-	//turn LED off
-	_LED_OFF();
-	//set as OP for future commands to utilize
-	_LED_OP();
-	
 }
 
 
@@ -208,11 +203,6 @@ void snes_init()
 	_DATA_IP();
 	_DATA_HI();
 
-	//turn LED off
-	_LED_OFF();
-	//set as OP for future commands to utilize
-	_LED_OP();
-	
 }
 
 //Test starts by verifying EXP0 can be driven low, if not, will return one byte of AUX_PIN

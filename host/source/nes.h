@@ -17,6 +17,7 @@
 #include "shared_dictionaries.h"
 #include "dictionary.h"
 #include "memory.h"
+//	 "cartridge.h" is above the scope of this module don't include
 
 #include "pindef.h"
 
@@ -27,5 +28,6 @@ int read_flashID_prgrom_exp0( USBtransfer *transfer, memory *flash );
 int read_flashID_prgrom_map30( USBtransfer *transfer, memory *flash );
 int read_flashID_chrrom_8K( USBtransfer *transfer, memory *flash );
 int ppu_ram_sense( USBtransfer *transfer, uint16_t addr );
+int ciram_A10_mirroring( USBtransfer *transfer );
 
 #endif

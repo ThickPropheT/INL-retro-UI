@@ -8,6 +8,9 @@ buffer *cur_usb_load_buff;
 //uint16_t incoming_bytes_remain;
 uint8_t incoming_bytes_remain;
 
+//host means of communicating to buffer manager
+uint8_t operation;
+
 //min define of two buffers
 static buffer buff0;
 static buffer buff1;
@@ -175,6 +178,9 @@ uint8_t buffer_opcode_no_return( uint8_t opcode, buffer *buff,
 	switch (opcode) { 
 		case RAW_BUFFER_RESET:	
 			raw_buffer_reset();	
+			break;
+		case SET_BUFFER_OPERATION:	
+			operation = operLSB;
 			break;
 		case SET_MEM_N_PART:	
 			buff->mem_type = operMSB;
@@ -470,50 +476,165 @@ uint8_t allocate_buffer( buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_
 
 }
 
+//used to determine how many buffers are in use at start of new operation
+//assume buffers are instantiated in order starting with zero.
+uint8_t num_alloc_buffers( void )
+{
+	uint8_t rv = 0;
+	if ( buff0.status != UNALLOC ) rv = 1;
+	if ( buff1.status != UNALLOC ) rv = 2;
+#if ( defined(NUM_BUFFERS_4) || (defined(NUM_BUFFERS_8)) )
+	if ( buff2.status != UNALLOC ) rv = 3;
+	if ( buff3.status != UNALLOC ) rv = 4;
+#endif
+#ifdef NUM_BUFFERS_8
+	if ( buff4.status != UNALLOC ) rv = 5;
+	if ( buff5.status != UNALLOC ) rv = 6;
+	if ( buff6.status != UNALLOC ) rv = 7;
+	if ( buff7.status != UNALLOC ) rv = 8;
+#endif
+
+	return rv;
+}
+
+//get next buffer provide a buffer pointer and number of buffers in use
+//return pointer to next buffer in sequence
+buffer * get_next_buff( buffer *buff, uint8_t num )
+{
+
+	//if there's 2 buffers need to toggle between 0 & 1
+	if ( num == 2 ) {
+		if ( buff == &buff0 ) return &buff1;
+		if ( buff == &buff1 ) return &buff0;
+	}
+#if ( defined(NUM_BUFFERS_4) || (defined(NUM_BUFFERS_8)) )
+	//if there's 3-4 buffers cycle through
+	if ( num == 3 ) {
+		if ( buff == &buff0 ) return &buff1;
+		if ( buff == &buff1 ) return &buff2;
+		if ( buff == &buff2 ) return &buff0;
+	}
+	if ( num == 4 ) {
+		if ( buff == &buff0 ) return &buff1;
+		if ( buff == &buff1 ) return &buff2;
+		if ( buff == &buff2 ) return &buff3;
+		if ( buff == &buff3 ) return &buff0;
+	}
+#endif
+#ifdef NUM_BUFFERS_8
+	if ( num == 5 ) {
+		if ( buff == &buff0 ) return &buff1;
+		if ( buff == &buff1 ) return &buff2;
+		if ( buff == &buff2 ) return &buff3;
+		if ( buff == &buff3 ) return &buff4;
+		if ( buff == &buff4 ) return &buff0;
+	}
+	if ( num == 6 ) {
+		if ( buff == &buff0 ) return &buff1;
+		if ( buff == &buff1 ) return &buff2;
+		if ( buff == &buff2 ) return &buff3;
+		if ( buff == &buff3 ) return &buff4;
+		if ( buff == &buff4 ) return &buff5;
+		if ( buff == &buff5 ) return &buff0;
+	}
+	if ( num == 7 ) {
+		if ( buff == &buff0 ) return &buff1;
+		if ( buff == &buff1 ) return &buff2;
+		if ( buff == &buff2 ) return &buff3;
+		if ( buff == &buff3 ) return &buff4;
+		if ( buff == &buff4 ) return &buff5;
+		if ( buff == &buff5 ) return &buff6;
+		if ( buff == &buff6 ) return &buff0;
+	}
+	if ( num == 8 ) {
+		if ( buff == &buff0 ) return &buff1;
+		if ( buff == &buff1 ) return &buff2;
+		if ( buff == &buff2 ) return &buff3;
+		if ( buff == &buff3 ) return &buff4;
+		if ( buff == &buff4 ) return &buff5;
+		if ( buff == &buff5 ) return &buff6;
+		if ( buff == &buff6 ) return &buff7;
+		if ( buff == &buff7 ) return &buff0;
+	}
+#endif
+
+	//if there's only one buffer, or if some other error, just return sent buffer ptr 
+	//if ( num == 1 ) return buff;
+	return buff;
+
+}
+
 //check buffer status' and instruct them to 
 //flash/dump as needed to keep data moving
 void update_buffers() 
 {
 	uint8_t result = 0;
-	buffer *buff = &buff0;
+	static uint8_t num_buff;
+	static buffer *cur_buff;
 
 	//when dumping we don't actually know when the buffer has been fully
 	//read back through USB IN transfer.  But we know when the next buffer
 	//is requested to read back, so we'll dump the second page into the second buffer
 	//after the first page has been requested for IN transfer
 	//need to get data dumped before in transfer..
+
+
+	//operations start by host resetting and initializing buffers
+	//this buffer manager is blind to the size of buffers and other such details
+	//this manager only needs to know which buffers are active
+	//but the host sets operation when it wants this manager to send 
+	//little buffers out to start dumping/flashing
+	if ( (operation == STARTDUMP) || (operation == STARTFLASH ) ) {
+		//only want to do this once per operation at the start
+		//figure out how many buffers are in operation
+		//assume buff0 is first and follows 1, 2, etc
+		num_buff = num_alloc_buffers();
+
+		//now that we know how many buffers there are in use
+		//we always start with buff0
+		cur_buff = &buff0;
+		//now we can get_next_buff by passing cur_buff
+	}
+	if (operation == STARTDUMP) {
+		//don't want to reenter start initialiation again
+		operation = DUMPING;
+	}
+	if (operation == STARTFLASH) {
+		//don't want to reenter start initialiation again
+		operation = FLASHING;
+	}
 	
 	//to start let's sense dumping operation by buffer status
 	//host updates status of buffer, then we go off and dump as appropriate
 	//might be best to add some opcode to kick things off.
-	if ( buff->function == DUMPING ) {
+//	if ( buff->function == DUMPING ) {
 
-		buff->cur_byte = 0;
-		//to start lets just dump the first page of PRG-ROM
-		result = dump_page( buff );
-
-		if (result == SUCCESS) {
-			buff->status = DUMPED;
-		}
-	
-		//now it can be read back in next IN transfer
-	}
+//		buff->cur_byte = 0;
+//		//to start lets just dump the first page of PRG-ROM
+//		result = dump_page( buff );
+//
+//		if (result == SUCCESS) {
+//			buff->status = DUMPED;
+//		}
+//	
+//		//now it can be read back in next IN transfer
+//	}
 
 	//for now lets use one buffer to flash a cartridge
 	//later try a second one to double buffer, might not actually matter much..
 //	buffer *buff = &buff0;
 	
 	//check if buffer is full and update status accordingly
-	if (cur_usb_load_buff->last_idx == cur_usb_load_buff->cur_byte) {
-		cur_usb_load_buff->status = USB_FULL;
-
-	//update other buffer so it can be filled by incoming USB data now
-	//if buffer size is smaller than data transfer lengths this must be done quickly
-	//enough for usbFunction write to not notice
-	} else {
-		//if there are no full buffers yet simply exit
-		//return;
-	}
+//	if (cur_usb_load_buff->last_idx == cur_usb_load_buff->cur_byte) {
+//		cur_usb_load_buff->status = USB_FULL;
+//
+//	//update other buffer so it can be filled by incoming USB data now
+//	//if buffer size is smaller than data transfer lengths this must be done quickly
+//	//enough for usbFunction write to not notice
+//	} else {
+//		//if there are no full buffers yet simply exit
+//		//return;
+//	}
 	
 	//found a buffer that's full and ready to flash onto cart
 	
@@ -523,19 +644,21 @@ void update_buffers()
 	//update any other necessary elements
 	
 	//send it off to it's flashing routine
-	if ( buff->function == FLASHING ) {
-
-
-		buff->cur_byte = 0;
-		//to start lets just dump the first page of PRG-ROM
-		result = flash_page( buff );
-
-		if (result == SUCCESS) {
-			buff->status = DUMPED;
-		}
-	
-		//now it can be read back in next IN transfer
-	}
+//	if ( buff->function == FLASHING ) {
+//
+//
+//		buff->cur_byte = 0;
+//		//to start lets just dump the first page of PRG-ROM
+//		result = flash_page( buff );
+//
+//		if (result == SUCCESS) {
+//			buff->status = FLASHED;
+//		} else {
+//			buff->status = PROBLEM;
+//		}
+//	
+//		//now it can be read back in next IN transfer
+//	}
 	
 	//now that it's flashed perform verifications if needed
 	

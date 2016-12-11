@@ -18,7 +18,7 @@
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
-#include "enums.h"
+#include "shared_enums.h"
 
 #include "io.h"
 #include "nes.h"
@@ -47,6 +47,7 @@ int init_cart_elements( cartridge *cart );
 int detect_console( cartridge *cart, USBtransfer *transfer );
 int detect_mirroring( cartridge *cart, USBtransfer *transfer );
 int detect_map_mem( cartridge *cart, USBtransfer *transfer, int oper );
+int detect_mirroring( cartridge *cart, USBtransfer *transfer );
 
 
 #endif

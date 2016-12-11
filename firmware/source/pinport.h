@@ -434,5 +434,8 @@ void software_AXL_CLK();
 //PPU /A13 is ADDRH bit 7
 #define PPU_A13N 0x80
 
+//PPU and CPU
+#define A10 0x04
+#define A11 0x08
 
 #endif

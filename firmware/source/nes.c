@@ -59,6 +59,9 @@ uint8_t nes_opcode_16b_operand_8b_return( uint8_t opcode, uint8_t addrH, uint8_t
 		case NES_PPU_RD:
 			*data = nes_ppu_rd( addrH, addrL );
 			break;
+		case CIRAM_A10_MIRROR:
+			*data = ciram_a10_mirroring( );
+			break;
 		default:
 			 //macro doesn't exist
 			 return ERR_UNKN_NES_OPCODE_16BOP_8BRV;
@@ -341,4 +344,98 @@ void	nes_ppu_wr( uint8_t addrH, uint8_t addrL, uint8_t data )
 	//clear data bus
 	_DATA_IP();
 	
+}
+
+
+/* Desc:PPU CIRAM A10 NT arrangement sense
+ *	Toggle A11 and A10 and read back CIRAM A10
+ *	report back if vert/horiz/1scnA/1scnB
+ *	reports nesdev defined mirroring
+ *	does not report Nintendo's "Name Table Arrangement"
+ * Pre: nes_init() setup of io pins
+ * Post:address left on bus
+ * Rtn:	MIR_VERT, MIR_HORIZ, MIR_1SCNA, MIR_1SCNB
+ *	errors not really possible since all combinations
+ *	of CIRAM A10 level designate something valid
+ */
+uint8_t	ciram_a10_mirroring( void )
+{
+	uint8_t readV, readH;
+
+	//will need output majority of function
+	_DATA_OP();
+
+	//set A10, clear A11
+	DATA_OUT = A10;
+	_AHL_CLK();
+	readV = AUX_IN & (1<<CIA10);
+
+	//set A11, clear A10
+	DATA_OUT = A11;
+	_AHL_CLK();
+	readH = AUX_IN & (1<<CIA10);
+
+	//return data bus clear
+	_DATA_IP();
+
+	//if CIRAM A10 was always low -> 1 screen A
+	if ((readV==0) & (readH==0))	return MIR_1SCNA;
+	//if CIRAM A10 was always hight -> 1screen B
+	if ((readV!=0) & (readH!=0))	return MIR_1SCNB;
+	//if CIRAM A10 toggled with A10 -> Vertical mirroring, horizontal arrangement
+	if ((readV!=0) & (readH==0))	return MIR_VERT;
+	//if CIRAM A10 toggled with A11 -> Horizontal mirroring, vertical arrangement
+	if ((readV==0) & (readH!=0))	return MIR_HORIZ;
+
+	//shouldn't be here...
+	return UNKNOWN;
+}
+
+/* Desc:NES CPU Page Read 
+ * 	decode A15 from addrH to set /ROMSEL as expected
+ * 	float EXP0
+ * 	toggle M2 as NES would
+ * Pre: nes_init() setup of io pins
+ *	num_bytes can't exceed 256B page boundary
+ * Post:address left on bus
+ * 	data bus left clear
+ * 	EXP0 left floating
+ *	data buffer filled starting at first to last
+ * Rtn:	Index of last byte read
+ */
+uint8_t nes_cpu_page_rd( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last )
+{
+	uint8_t i;
+
+	//set address bus
+	_ADDRH_SET(addrH);
+	
+	//set M2 and /ROMSEL
+	_M2_HI();
+	if( addrH >= 0x80 ) {	//addressing cart rom space
+		_ROMSEL_LO();	//romsel trails M2 during CPU operations
+	}
+
+	ADDR_OUT = first;	//doing this prior to entry and right after latching
+				//gives longest delay between address out and latching data
+	for( i=0; i<=last; i++ ) {
+		//set lower address bits
+		//couple more NOP's waiting for data
+		//zero nop's returned previous databus value
+		NOP();	//one nop got most of the bits right
+		NOP();	//two nop got all the bits right
+		NOP();	//add third nop for some extra
+		//might need to wait longer for some carts...
+
+		//latch data
+		data[i] = DATA_IN;
+		ADDR_OUT = ++first;
+	}
+
+	//return bus to default
+	_M2_LO();
+	_ROMSEL_HI();
+	
+	//return index of last byte read
+	return i;
 }

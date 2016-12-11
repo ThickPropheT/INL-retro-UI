@@ -15,7 +15,7 @@
 
 //TODO put defintions in separate project wide .h file
 #include "cartridge.h"
-#include "enums.h"
+#include "shared_enums.h"
 
 #define SIZE_NES_HEADER 16
 #define SIZE_PRG_BANK 16384

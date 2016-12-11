@@ -133,17 +133,36 @@ error:
 	//roms are still visible when /RESET low, but SRAM isn't
 
 
+/* Desc:Run through supported mapper mirroring modes to help detect mapper.
+ * Pre: 
+ * Post:cart mirroring set to found mirroring
+ * Rtn: SUCCESS if nothing bad happened, neg if error with kazzo etc
+ */
 int detect_mirroring( cartridge *cart, USBtransfer *transfer ) 
 {
 	//always start with resetting i/o
 	io_reset( transfer );
 
 	if ( (cart->console == NES_CART) || (cart->console == FC_CART) ) {
-		//For now just assume mirroring is fixed until start adding support for other mappers
-		cart->mirroring = MIR_FIXED;
-	}
+		nes_init(transfer);
+		//TODO call mmc3 detection function
 
-	//always end with resetting i/o
+		//TODO call mmc1 detection function
+
+		//fme7 and many other ASIC mappers
+
+		//none of ASIC mappers passed, assume fixed/discrete style mirroring
+		cart->mirroring = ciram_A10_mirroring( transfer );
+		switch (cart->mirroring) {
+			case MIR_1SCNA:	debug("detected mirroring: 1scnA");	break;
+			case MIR_1SCNB:	debug("detected mirroring: 1scnB");	break;
+			case MIR_VERT:	debug("detected mirroring: Vert");	break;
+			case MIR_HORIZ:	debug("detected mirroring: Horiz");	break;
+			default:	debug("detected mirroring: %x", cart->mirroring);
+		}
+	}
+	
+	//always end with reset
 	io_reset( transfer );
 
 	return SUCCESS;
@@ -189,19 +208,24 @@ int detect_map_mem( cartridge *cart, USBtransfer *transfer, int oper )
 			//perform WRAM test without corrupting results
 			//TODO store result in save_mem
 
+
 //mapper select switch<<<<-------------------------------------------------------------
 switch (cart->mirroring) {
 	case MIR_MMC1:
 		break;
 	case MIR_MMC3:
 		break;
-	case MIR_FIXED:
+	case MIR_1SCNA:
+	case MIR_1SCNB:
+		break;
+	case MIR_VERT:
+	case MIR_HORIZ:
 		//check for CHR-ROM flash
 		if ( cart->sec_rom->part != SRAM ) {
 			if ( read_flashID_chrrom_8K( transfer, cart->sec_rom ) == SUCCESS ) {
 				//8KB bank with no banking operations
 				debug("8K CHR-ROM flash detected");
-				cart->sec_rom->size = 8 * KBYTE;
+				cart->sec_rom->size = 8 * KByte;
 			}
 		}
 		//exp0 pullup test passes on many INL boards
@@ -218,7 +242,7 @@ switch (cart->mirroring) {
 			if ( read_flashID_prgrom_exp0( transfer, cart->pri_rom ) == SUCCESS ) {
 				//32KB bank with EXP0->WE PRG-ROM sensed
 				debug("32KB banking NES EXP0 enabled flash");
-				cart->pri_rom->bank_size = 32 * KBYTE;
+				cart->pri_rom->bank_size = 32 * KByte;
 			} else { 
 			//set mapper reg to 0 if present which sets A14 low when needed if 16KB banks
 				dictionary_call( transfer, DICT_NES, 	NES_CPU_WR,	0x8000,	0x00,	
@@ -226,7 +250,7 @@ switch (cart->mirroring) {
 				if ( read_flashID_prgrom_exp0( transfer, cart->pri_rom ) == SUCCESS ){
 					//16KB bank with EXP0->WE PRG-ROM sensed
 					debug("16KB banking NES EXP0 enabled flash");
-					cart->pri_rom->bank_size = 16 * KBYTE;
+					cart->pri_rom->bank_size = 16 * KByte;
 					cart->mapper = UxROM;
 				}
 			}
@@ -237,14 +261,14 @@ switch (cart->mirroring) {
 		//check for mapper 30 controlled PRG-ROM writes
 		if ( read_flashID_prgrom_map30( transfer, cart->pri_rom ) == SUCCESS ){
 			debug("16KB mapper30 flash writes enabled");
-			cart->pri_rom->bank_size = 16 * KBYTE;
+			cart->pri_rom->bank_size = 16 * KByte;
 			cart->mapper = UNROM512;
 		}
 		//TODO check for mapper 31 EZ-NSF
 		debug("PRG-ROM manfID: %x, prodID: %x", cart->pri_rom->manf, cart->pri_rom->part);
 		break;
 	default:
-		sentinel("Problem with mapper detect mirroring switch statement.");
+		sentinel("Problem with map mem detect based on mirroring switch statement.");
 }
 //mapper select switch<<<<-------------------------------------------------------------
 			break;
@@ -269,3 +293,4 @@ error:
 	io_reset( transfer );
 	return -1;
 }
+

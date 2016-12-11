@@ -18,7 +18,7 @@
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
-#include "enums.h"
+#include "shared_enums.h"
 
 //SST 39SF0x0 manf/prod IDs
 #define SST_MANF_ID	0xBF
@@ -30,7 +30,7 @@
 #define SRAM	0xAA
 
 //KByte for easy math
-#define KBYTE	1024
+#define KByte	1024
 
 //memory object/struct
 typedef struct memory{

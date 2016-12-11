@@ -412,3 +412,20 @@ int ppu_ram_sense( USBtransfer *transfer, uint16_t addr ) {
 
 	return SUCCESS;
 }
+
+
+/* Desc:Just calls CIRAM_A10_MIRROR opcode and returns result.
+ *	result will be return value of opcode
+ * Pre: nes_init() been called to setup i/o
+ * Post:address bus left assigned
+ * Rtn: VERT/HORIZ/1SCNA/1SCNB
+ */
+int ciram_A10_mirroring( USBtransfer *transfer )
+{
+	uint8_t rv[RV_DATA0_IDX];
+
+	dictionary_call( transfer, DICT_NES, 	CIRAM_A10_MIRROR,	NILL,		NILL,	
+							USB_IN,		rv,	RV_DATA0_IDX+1);
+	debug("mirroring detected: %x", rv[RV_DATA0_IDX]);
+	return rv[RV_DATA0_IDX];
+}

@@ -44,23 +44,6 @@
 #define NUM_BUFFERS_4	4
 //#define NUM_BUFFERS_8	8
 
-//defined here so identical to host and firmware
-//status values
-#define EMPTY 		0x00
-#define PROBLEM		0x10
-#define USB_UNLOADING	0x80
-#define USB_LOADING	0x90
-#define USB_FULL	0x98
-#define CHECKING	0xC0
-#define DUMPING		0xD0
-#define DUMPED		0xD8
-#define ERASING		0xE0
-#define FLASHING	0xF0
-#define FLASH_WAIT	0xF8
-#define UNALLOC 	0xFF
-
-
-
 
 //=============================================================================================
 //	OPCODES with up to 24bit operand and optional return value  besides SUCCESS/ERROR_CODE
@@ -103,6 +86,10 @@
 //reset all buffers to unallocated
 //no operands no return value
 #define	RAW_BUFFER_RESET	0x00
+
+//set buffer manager operation value
+//lower operand byte sets value
+#define SET_BUFFER_OPERATION	0x01
 
 
 

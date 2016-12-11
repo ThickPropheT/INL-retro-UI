@@ -1,13 +1,11 @@
-#ifndef _test_h
-#define _test_h
+#ifndef _dump_h
+#define _dump_h
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
-#include <libusb.h>
-#include <time.h>
 
 //include prior to other file includes
 //that way DEBUG can be turned on/off for this file alone
@@ -18,15 +16,19 @@
 
 #include "usb_operations.h"
 #include "shared_errors.h"
-#include "shared_enums.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
+#include "shared_enums.h"
 
-//uncomment to DEBUG this file alone
-#define DEBUG
-//"make debug" to get DEBUG msgs on entire program
-#include "dbg.h"
+#include "io.h"
+#include "nes.h"
+#include "snes.h"
+#include "memory.h"
+#include "cartridge.h"
+#include "file.h"
+#include "buffer.h"
 
-int test_function( USBtransfer *transfer );
+int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart );
+
 
 #endif
