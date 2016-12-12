@@ -4,6 +4,43 @@ int test_function( USBtransfer *transfer )
 {
 	
 	debug("testing");
+
+	//debug("uninit");
+	//get_buff_elements( transfer, 0 );
+	//get_buff_elements( transfer, 1 );
+
+/*
+	check(! reset_buffers( transfer ), "Unable to reset device buffers");
+	//need to allocate some buffers for dumping
+	//2x 128Byte buffers
+	check(! allocate_buffers( transfer, 2, 128 ), "Unable to allocate buffers");
+
+	debug("reset and allocate");
+	get_buff_elements( transfer, 0 );
+	get_buff_elements( transfer, 1 );
+
+	check(! set_mem_n_part( transfer, 0, 0x12, 0x34 ), "Unable to set mem_type and part");
+	debug("set buff0 mem_n_part");
+	get_buff_elements( transfer, 0 );
+	get_buff_elements( transfer, 1 );
+	check(! set_mem_n_part( transfer, 1, 0x56, 0x78 ), "Unable to set mem_type and part");
+	debug("set buff1 mem_n_part");
+	get_buff_elements( transfer, 0 );
+	get_buff_elements( transfer, 1 );
+
+	check(! set_map_n_mapvar( transfer, 0, 0x89, 0xAB ), "Unable to set mapper and map_var");
+	debug("set buff0 map_n_mapvar");
+	get_buff_elements( transfer, 0 );
+	get_buff_elements( transfer, 1 );
+	check(! set_map_n_mapvar( transfer, 1, 0xCD, 0XEF ), "Unable to set mapper and map_var");
+	debug("set buff1 map_n_mapvar");
+
+	get_buff_operation( transfer );
+	get_buff_elements( transfer, 0 );
+	get_buff_elements( transfer, 1 );
+*/
+/*
+
 	dictionary_call( transfer,	DICT_IO,	IO_RESET,			0,		0,		USB_IN,		NULL,		1);
 	dictionary_call( transfer,	DICT_IO,	NES_INIT,			0,		0,		USB_IN,		NULL,		1);
 	dictionary_call( transfer,	DICT_IO,	EXP0_PULLUP_TEST,		0,		0,		USB_IN,		NULL,		8);
@@ -95,7 +132,6 @@ int test_function( USBtransfer *transfer )
 		printf(" %x",load_in[i]);
 	}
 	printf("\n");
-
 	//clock_t tstart, tstop;
 	//printf("load_in data:");
 	//for (i=0; i<254; i++) {
@@ -173,7 +209,7 @@ int test_function( USBtransfer *transfer )
 	printf("\n");
 
 	dictionary_call( transfer,	DICT_IO,	IO_RESET,			0,		0,		USB_IN,		NULL,		1);
-
+*/
 //	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER2,		0x3508,		4);
 //	dictionary_call( transfer,	BUFFER,	ALLOCATE_BUFFER3,		0x4A0C,		4);
 //	dictionary_call( transfer,	BUFFER,	RAW_BANK_STATUS,		0,		0);
@@ -290,5 +326,8 @@ int test_function( USBtransfer *transfer )
 //	dictionary_call( transfer,	NES,	NES_CPU_RD,			0x8000,		0);
 
 	return 0;
+
+error:
+	return -1;
 
 }

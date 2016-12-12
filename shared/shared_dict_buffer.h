@@ -138,7 +138,7 @@
 //designate what buffer to fill with miscdata byte
 //no return value as it's write OUT only
 //operandMSB:LSB actually contains first 2 bytes
-#define BUFF_NODESG_PAYLOAD		0x41
+#define BUFF_PAYLOADN			0x41
 
 
 //#define BUFF_PAYLOADN_MAX	0x4F
@@ -184,6 +184,9 @@
 //operandLSB: raw bank number to retrieve status of
 //return value status of that raw bank (set to bank id if allocated)
 #define RAW_BANK_STATUS		0x60
+
+//retrieve buffer manager current operation variable
+#define GET_BUFF_OPERATION	0x61
 
 
 

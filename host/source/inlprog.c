@@ -263,6 +263,11 @@ int main(int argc, char *argv[])
 
 		//collected as much info as can dump cart without reading any data
 		check( !dump_cart( transfer, rom, cart ), "Error while dumping cart");
+		debug("done dumping, closing");
+
+		check(! close_rom( rom ), "Problem closing file");
+		rom->fileptr = NULL;
+		debug("closed");
 	}
 
 	if ( p_value ) {

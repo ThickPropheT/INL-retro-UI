@@ -1,5 +1,8 @@
 #include "buffer.h"
 
+//used by buffer manager to know what buffer to send to USB/memory
+buffer *cur_buff;
+
 //used to communicate to usbFunctionWrite which buffer object
 //it should be filling
 buffer *cur_usb_load_buff;
@@ -12,26 +15,26 @@ uint8_t incoming_bytes_remain;
 uint8_t operation;
 
 //min define of two buffers
-static buffer buff0;
-static buffer buff1;
+buffer buff0;
+buffer buff1;
 #if ( defined(NUM_BUFFERS_4) || (defined(NUM_BUFFERS_8)) )
-static buffer buff2;
-static buffer buff3;
+buffer buff2;
+buffer buff3;
 #endif
 #ifdef NUM_BUFFERS_8
-static buffer buff4;
-static buffer buff5;
-static buffer buff6;
-static buffer buff7;
+buffer buff4;
+buffer buff5;
+buffer buff6;
+buffer buff7;
 #endif
 
 //max raw buffer size is only limited based on buffer struct
 //raw buffer memory to which smaller buffers will be created from
 //set pointers and lengths to prevent buffer conflicts
-static uint8_t raw_buffer[NUM_RAW_BANKS * RAW_BANK_SIZE];	//8 banks of 32bytes each 256Bytes total
+uint8_t raw_buffer[NUM_RAW_BANKS * RAW_BANK_SIZE];	//8 banks of 32bytes each 256Bytes total
 
 //buffer status stores allocation status of each raw buffer 32Byte bank
-static uint8_t raw_bank_status[NUM_RAW_BANKS]; 
+uint8_t raw_bank_status[NUM_RAW_BANKS]; 
 
 
 
@@ -51,11 +54,12 @@ static uint8_t raw_bank_status[NUM_RAW_BANKS];
 //uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint16_t *rlen)
 uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 {
-	buffer *called_buff = &buff0; //used to point to buffer that was called based on opcode
+	buffer *called_buff; //= &buff0; //used to point to buffer that was called based on opcode
 	uint8_t *rptr = rv; //used for return pointer set to small rv buffer by default
 
 	//some opcodes place buffer number in misc/data
 	if ( (spacket->opcode > BUFFN_INMISC_MIN) && (spacket->opcode < BUFFN_INMISC_MAX) ) {
+//		called_buff = &buff1;
 		switch ( spacket->miscdata ) {
 			//2 buffers minimum support
 			case 0:	called_buff = &buff0;	break;
@@ -175,6 +179,7 @@ uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 uint8_t buffer_opcode_no_return( uint8_t opcode, buffer *buff, 
 				uint8_t operMSB, uint8_t operLSB, uint8_t miscdata )
 {
+
 	switch (opcode) { 
 		case RAW_BUFFER_RESET:	
 			raw_buffer_reset();	
@@ -222,6 +227,10 @@ uint8_t buffer_opcode_return( uint8_t opcode, buffer *buff,
 	switch (opcode) { 
 		case RAW_BANK_STATUS:	
 				*rvalue = raw_bank_status[operLSB];	
+				*rlength += 1;
+			break;
+		case GET_BUFF_OPERATION:	
+				*rvalue = operation;	
 				*rlength += 1;
 			break;
 		case GET_PRI_ELEMENTS:	
@@ -309,19 +318,28 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 
 	//buffer in use depends on opcode which was decoded prior to calling into hostsetbuff
 	//if buffer number not designated by host buffer.c gets to decide
-	if ( hostsetbuff != ~FALSE ) {
+	if ( hostsetbuff == FALSE ) {
 		//buffer.c gets to decide buffer in use
 		//TODO implement some fancy double buffering code
 		//for now just designate buffer 0
 		if ( endpoint == ENDPOINT_IN) {
 			//reads
-			rtnpointer = buff0.data;
-			buff0.status = USB_UNLOADING;
+			if ( cur_buff->status == DUMPED ) {
+				rtnpointer = cur_buff->data;
+				cur_buff->status = USB_UNLOADING;
+			} else {
+				//problem, buffers not prepared or initialized 
+				*rlength = USB_NO_MSG;
+				operation = PROBLEM;
+			}
 		} else {//writes
-			cur_usb_load_buff = &buff0;
-			buff0.status = USB_LOADING;
+			//cur_usb_load_buff = &buff0;
+			cur_usb_load_buff = cur_buff;
+			//buff0.status = USB_LOADING;
+			cur_buff->status = USB_LOADING;
 		}
-		buff0.cur_byte = 0;
+		//buff0.cur_byte = 0;
+		cur_buff->cur_byte = 0;
 
 	} else { //host determined the buffer to use
 		if ( endpoint == ENDPOINT_IN) {
@@ -355,6 +373,7 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
  * Pre: static instantitions of raw_buffer, raw_bank_status, and buff0-7
  * Post:all raw buffer ram unallocated
  * 	buffer status updated to UNALLOC
+ *	operation set to RESET
  * Rtn:	None
  */
 void raw_buffer_reset( )
@@ -390,6 +409,8 @@ void raw_buffer_reset( )
 	buff6.id = UNALLOC;
 	buff7.id = UNALLOC;
 #endif
+
+	operation = RESET;
 
 }
 
@@ -462,6 +483,7 @@ uint8_t allocate_buffer( buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_
 	buff->multiple = 0;
 	buff->add_mult = 0;
 	buff->mapper = 0;
+	buff->mapvar = 0;
 	buff->function = 0;
 
 	//set buffer data pointer to base ram address
@@ -570,7 +592,6 @@ void update_buffers()
 {
 	uint8_t result = 0;
 	static uint8_t num_buff;
-	static buffer *cur_buff;
 
 	//when dumping we don't actually know when the buffer has been fully
 	//read back through USB IN transfer.  But we know when the next buffer
@@ -596,14 +617,71 @@ void update_buffers()
 		//now we can get_next_buff by passing cur_buff
 	}
 	if (operation == STARTDUMP) {
+		//prepare both buffers to dump
+//		cur_buff->cur_byte = 0;
+//		cur_buff->status = DUMPING;
+//		//send first buffer off to dump 
+//		result = dump_page( cur_buff );
+//		if (result != SUCCESS) {
+//			cur_buff->status = PROBLEM;
+//		} else {
+//			cur_buff->status = DUMPED;
+//			//increment page_num so everything is ready for next dump
+//			cur_buff->page_num += cur_buff->reload;
+//		}
+		//now it's ready and just waiting for IN transfer
+		//pretend the last buffer is in USB transfer and 
+		//we're waiting to have that dump until the first buffer starts USB transfer
+			
+		//do all the same things that would happen between buffers to start things moving
+		//pretend the last buffer is unloading via USB right now
+		//so that operation == DUMPING code gets run for the first time but appears like
+		//it's not the first time.
+		//to do this, set cur_buff to last buff and set it's status to USB_UNLOADING
+		for ( result=1; result<num_buff; result++ ) {
+			cur_buff = get_next_buff( cur_buff, num_buff );
+		}
+		cur_buff->status = USB_UNLOADING;
+		//that will now trigger operation == DUMPING to dump first buffer
+
 		//don't want to reenter start initialiation again
 		operation = DUMPING;
 	}
 	if (operation == STARTFLASH) {
 		//don't want to reenter start initialiation again
 		operation = FLASHING;
+
 	}
 	
+
+	//this will get entered on first and all successive calls
+	if ( operation == DUMPING ) {
+		//buffer_payload will pass cur_buff to usb driver on next IN transfer
+		//on receipt of the IN transfer buffer_payload sets: 
+		// cur_buff->status = USB_UNLOADING;
+		// So that's what we're waiting on before sending next buffer to dump
+		if ( cur_buff->status == USB_UNLOADING ) {
+			//move on to next buffer now that last one is at USB
+			//WARNING!!! this current design won't work well if there's only one buffer
+			//Because the buffer getting read via USB will get stopped on by next dump
+			//So things won't really work with only one buffer
+			cur_buff = get_next_buff( cur_buff, num_buff );
+			cur_buff->cur_byte = 0;
+			cur_buff->status = DUMPING;
+			//send buffer off to dump 
+			result = dump_page( cur_buff );
+			if (result != SUCCESS) {
+				cur_buff->status = PROBLEM;
+			} else {
+				cur_buff->status = DUMPED;
+				//increment page_num so everything is ready for next dump
+				//TODO make buffer_update function to handle everything
+				cur_buff->page_num += cur_buff->reload;
+			}
+		}
+	}
+
+
 	//to start let's sense dumping operation by buffer status
 	//host updates status of buffer, then we go off and dump as appropriate
 	//might be best to add some opcode to kick things off.
@@ -673,6 +751,9 @@ void update_buffers()
 	//perhaps this should be done after it's flashed as we want to start at zero.
 	
 	//update it's status so buffer is ready for reuse.
+
+	return;
+
 
 }
 

@@ -56,6 +56,20 @@ enum operations {
 	CHECK
 };
 
+//SST 39SF0x0 manf/prod IDs
+#define SST_MANF_ID	0xBF
+#define SST_PROD_128	0xB5
+#define SST_PROD_256	0xB6
+#define SST_PROD_512	0xB7
+
+
+//SRAM manf/prod ID
+#define SRAM	0xAA
+
+
+//MASK ROM read only
+#define MASKROM	0xDD
+
 enum buff_mem_type {
 	PRGROM = 10,
 	CHRROM,
@@ -66,6 +80,7 @@ enum buff_mem_type {
 
 //buffer status values
 #define EMPTY 		0x00
+#define RESET		0x01
 #define PROBLEM		0x10
 #define USB_UNLOADING	0x80
 #define USB_LOADING	0x90

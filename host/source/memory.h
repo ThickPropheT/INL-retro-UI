@@ -20,14 +20,6 @@
 #include "dictionary.h"
 #include "shared_enums.h"
 
-//SST 39SF0x0 manf/prod IDs
-#define SST_MANF_ID	0xBF
-#define SST_PROD_128	0xB5
-#define SST_PROD_256	0xB6
-#define SST_PROD_512	0xB7
-
-//SRAM manf/prod ID
-#define SRAM	0xAA
 
 //KByte for easy math
 #define KByte	1024

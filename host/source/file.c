@@ -34,6 +34,14 @@ error:
 	return -1;
 }
 
+int close_rom( rom_image *rom ) 
+{
+	debug("flushing");
+	fflush(rom->fileptr);
+	debug("closing");
+	return fclose( rom->fileptr );
+}
+
 int detect_file( rom_image *rom )
 {
 	int rv = 0;
@@ -100,6 +108,26 @@ int create_file( rom_image *rom, char *filename )
 
 	rom->fileptr = fopen( filename, "wb+");
 	check( rom->fileptr, "Unable to create file: %s in read/write binary mode", filename); 	
+
+	return SUCCESS;
+error:
+	return -1;
+}
+
+
+/* Desc:Append data to rom file
+ * Pre: rom file created and opened
+ * Post:data of length appended to file
+ *	file still open
+ * Rtn: SUCCESS if no errors
+ */
+int append_to_file( rom_image *rom, uint8_t *data, int length )
+{
+	int rv = 0;
+	//size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+	rv = fwrite( data, sizeof(data[0]), length, rom->fileptr );
+
+	check( (rv == length), "Error appending to file, %dB out written when trying to write %d", rv, length);
 
 	return SUCCESS;
 error:

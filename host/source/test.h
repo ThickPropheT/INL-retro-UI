@@ -21,6 +21,7 @@
 #include "shared_enums.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
+#include "buffer.h"
 
 //uncomment to DEBUG this file alone
 #define DEBUG
