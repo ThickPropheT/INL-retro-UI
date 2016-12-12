@@ -442,3 +442,51 @@ uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	//return index of last byte read
 	return i;
 }
+
+/* Desc:NES PPU Page Read with optional USB polling
+ * 	decode A13 from addrH to set /A13 as expected
+ *	if poll is true calls usbdrv.h usbPoll fuction
+ *	this is needed to keep from timing out when double buffering usb data
+ * Pre: nes_init() setup of io pins
+ *	num_bytes can't exceed 256B page boundary
+ * Post:address left on bus
+ * 	data bus left clear
+ *	data buffer filled starting at first for len number of bytes
+ * Rtn:	Index of last byte read
+ */
+uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t len, uint8_t poll )
+{
+	uint8_t i;
+
+	if (addrH < 0x20) { //below $2000 A13 clear, /A13 set
+		_ADDRH_SET(addrH | PPU_A13N);
+	} else { //above PPU $1FFF, A13 set, /A13 clear 
+		_ADDRH_SET(addrH);
+	}
+
+	//set CHR /RD and /WR
+	_CSRD_LO();
+
+	//set lower address bits
+	ADDR_OUT = first;	//doing this prior to entry and right after latching
+				//gives longest delay between address out and latching data
+	for( i=0; i<=len; i++ ) {
+		//couple more NOP's waiting for data
+		if ( poll == FALSE ) {
+			NOP();	//one prob good enough considering the if/else
+			NOP();
+		} else {
+			usbPoll();
+		}
+		//latch data
+		data[i] = DATA_IN;
+		//set lower address bits
+		ADDR_OUT = ++first;
+	}
+
+	//return bus to default
+	_CSRD_HI();
+	
+	//return index of last byte read
+	return i;
+}

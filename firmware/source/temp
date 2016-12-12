@@ -1,0 +1,20 @@
+AVR Memory Usage
+----------------
+Device: atmega164a
+
+Program:    5486 bytes (33.5% Full)
+(.text + .data + .bootloader)
+
+Data:        653 bytes (63.8% Full)
+(.data + .bss + .noinit)
+
+AVR Memory Usage
+----------------
+Device: atmega164a
+
+Program:    5498 bytes (33.6% Full)
+(.text + .data + .bootloader)
+
+Data:        653 bytes (63.8% Full)
+(.data + .bss + .noinit)
+

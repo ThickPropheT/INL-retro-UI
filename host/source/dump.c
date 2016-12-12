@@ -114,7 +114,27 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 
 
 	//tell buffer manager when to stop
+	// or not..?  just reset buffers and start next memory or quit
 	//reset buffers and setup to dump CHR-ROM
+
+	check(! reset_buffers( transfer ), "Unable to reset device buffers");
+	check(! allocate_buffers( transfer, num_buffers, buff_size ), "Unable to allocate buffers");
+	check(! set_mem_n_part( transfer, buff0, CHRROM, MASKROM ), "Unable to set mem_type and part");
+	check(! set_mem_n_part( transfer, buff1, CHRROM, MASKROM ), "Unable to set mem_type and part");
+	check(! set_map_n_mapvar( transfer, buff0, NROM, NILL ), "Unable to set mapper and map_var");
+	check(! set_map_n_mapvar( transfer, buff1, NROM, NILL ), "Unable to set mapper and map_var");
+
+	debug("\n\nsetting operation STARTDUMP");
+	check(! set_buff_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
+
+	for( i=0; i<(8*KByte/buff_size); i++) {
+		//payload transfer in and append to file
+		if ( i % 256 == 0 ) debug("payload in #%d", i);
+		check(! payload_in( transfer, data, buff_size ), "Error with payload IN");
+		if (i==0) printf("first byte: %x\n", data[0]);
+		check(! append_to_file( rom, data, buff_size ), "Error with file append");
+	}
+	debug("payload done");
 
 	//close file in main
 

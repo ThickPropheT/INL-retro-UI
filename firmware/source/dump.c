@@ -24,8 +24,8 @@ uint8_t dump_page( buffer *buff ) {
 								buff->last_idx, ~FALSE );
 			break;
 		case CHRROM:		//$0000
-			//buff->cur_byte = nes_ppu_page_rd( buff->data, addrH, buff->id,
-			//					(buff->last_idx | buff->id) );
+			buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
+								buff->last_idx, ~FALSE );
 			break;
 		case PRGRAM:
 			addrH |= 0x60;	//$6000
