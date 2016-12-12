@@ -94,6 +94,7 @@ enum buff_mem_type {
 #define STARTFLASH	0xF2
 #define FLASHED		0xF4
 #define FLASH_WAIT	0xF8
+#define STOPPED		0xFE
 #define UNALLOC 	0xFF
 
 #endif

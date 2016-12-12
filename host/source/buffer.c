@@ -92,9 +92,7 @@ error:
 int set_mem_n_part( USBtransfer *transfer, int buff_num, int mem_type, int part_num ) 
 {
 	return dictionary_call( transfer,	DICT_BUFFER,	SET_MEM_N_PART,	
-				//( (mem_type<<8) | (part_num) ),		buff_num,	USB_IN,	NULL,	1);
-				( (mem_type<<8) | (part_num) ),		1,	USB_IN,	NULL,	1);
-				// 0xAABB,		buff_num,	USB_IN,	NULL,	1);
+				( (mem_type<<8) | (part_num) ),		buff_num,	USB_IN,	NULL,	1);
 }
 
 /* Desc:Set buffer mapper and map_var
@@ -106,7 +104,6 @@ int set_map_n_mapvar( USBtransfer *transfer, int buff_num, int mapper, int map_v
 {
 	return dictionary_call( transfer,	DICT_BUFFER,	SET_MAP_N_MAPVAR,	
 				( (mapper<<8) | (map_var) ),		buff_num,	USB_IN,	NULL,	1);
-				// 0xCCDD,		buff_num,	USB_IN,	NULL,	1);
 }
 
 /* Desc:Set buffer manager operation 

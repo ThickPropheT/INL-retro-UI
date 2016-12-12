@@ -9,7 +9,7 @@
 uint8_t dump_page( buffer *buff ) {
 
 	uint8_t addrH = buff->page_num;	//A15:8  while accessing page
-	uint8_t addrX;	//A23:16 while accessing page
+//warn	uint8_t addrX;	//A23:16 while accessing page
 
 	//TODO use mapper to set mapper controlled address bits
 
@@ -18,10 +18,10 @@ uint8_t dump_page( buffer *buff ) {
 	switch ( buff->mem_type ) {
 		case PRGROM:
 			addrH |= 0x80;	//$8000
-			//uint8_t nes_cpu_page_rd( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last )
-			buff->cur_byte = nes_cpu_page_rd( buff->data, addrH, buff->id, 
+	//uint8_t nes_cpu_page_rd( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last, uint8_t poll )
+			buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id, 
 								//id contains MSb of page when <256B buffer
-								(buff->last_idx | buff->id) );
+								buff->last_idx, ~FALSE );
 			break;
 		case CHRROM:		//$0000
 			//buff->cur_byte = nes_ppu_page_rd( buff->data, addrH, buff->id,
@@ -29,12 +29,12 @@ uint8_t dump_page( buffer *buff ) {
 			break;
 		case PRGRAM:
 			addrH |= 0x60;	//$6000
-			buff->cur_byte = nes_cpu_page_rd( buff->data, addrH, buff->id,
-								(buff->last_idx | buff->id) );
+			buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id,
+								buff->last_idx, ~FALSE );
 			break;
 		case SNESROM:
 		case SNESRAM:
-			addrX = ((buff->page_num)>>8);
+//warn			addrX = ((buff->page_num)>>8);
 			break;
 		default:
 			return ERR_BUFF_UNSUP_MEM_TYPE;

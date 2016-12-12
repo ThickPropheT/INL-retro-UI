@@ -2,9 +2,126 @@
 
 int test_function( USBtransfer *transfer ) 
 {
-	
 	debug("testing");
+	dictionary_call_debug( transfer,	DICT_IO,	IO_RESET,		0,   0,   USB_IN,
+										NULL,			1);
+	dictionary_call_debug( transfer,	DICT_IO,	NES_INIT,		0,   0,   USB_IN,
+										NULL,			1);
+	debug("\nreset");
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BUFFER_RESET,	0,   0,   USB_IN,
+										NULL,			1);
 
+	debug("\nallocate 0");							// id:base, numbanks
+	dictionary_call_debug( transfer,	DICT_BUFFER,	ALLOCATE_BUFFER0,  0x0E00,   4,   USB_IN,
+										NULL,			1);
+	debug("\nallocate 1");							// id:base, numbanks
+	dictionary_call_debug( transfer,	DICT_BUFFER,	ALLOCATE_BUFFER1,  0x8104,   4,   USB_IN,
+										NULL,			1);
+	debug("\nallocate 2");							// id:base, numbanks
+	dictionary_call_debug( transfer,	DICT_BUFFER,	ALLOCATE_BUFFER2,  0x2208,   6,   USB_IN,
+										NULL,			1);
+	debug("\nallocate 3");							// id:base, numbanks
+	dictionary_call_debug( transfer,	DICT_BUFFER,	ALLOCATE_BUFFER3,  0x330E,   2,   USB_IN,
+										NULL,			1);
+	debug("\nmapvar 2: 21,22");						
+	dictionary_call_debug( transfer,	DICT_BUFFER,	SET_MAP_N_MAPVAR,  0x2122,   2,   USB_IN,
+										NULL,			1);
+	debug("\nmapvar 0: e1,1e");						
+	dictionary_call_debug( transfer,	DICT_BUFFER,	SET_MAP_N_MAPVAR,  0xe11e,   0,   USB_IN,
+										NULL,			1);
+	debug("\nmapvar 1: 11,12");						
+	dictionary_call_debug( transfer,	DICT_BUFFER,	SET_MAP_N_MAPVAR,  0x1112,   1,   USB_IN,
+										NULL,			1);
+	debug("\nmapvar 3: 31,33");						
+	dictionary_call_debug( transfer,	DICT_BUFFER,	SET_MAP_N_MAPVAR,  0x3133,   3,   USB_IN,
+										NULL,			1);
+	
+
+	debug("\npri elements");
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	0,   0,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	0,   1,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	0,   2,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	0,   3,   USB_IN,
+										NULL,			8);
+	debug("\nsec elements");
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   0,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   1,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   2,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   3,   USB_IN,
+										NULL,			8);
+	
+///////////////////////////////
+	debug("\nmem_part 0: ea,eb");						
+	dictionary_call_debug( transfer,	DICT_BUFFER,	SET_MEM_N_PART,  0xeaeb,   0,   USB_IN,
+										NULL,			1);
+	debug("\nmem_part 1: 1a,1b");						
+	dictionary_call_debug( transfer,	DICT_BUFFER,	SET_MEM_N_PART,  0x1a1b,   1,   USB_IN,
+										NULL,			1);
+	debug("\nmem_part 2: 2a,2b");						
+	dictionary_call_debug( transfer,	DICT_BUFFER,	SET_MEM_N_PART,  0x2a2b,   2,   USB_IN,
+										NULL,			1);
+	debug("\nmem_part 3: 3a,3b");						
+	dictionary_call_debug( transfer,	DICT_BUFFER,	SET_MEM_N_PART,  0x3a3b,   3,   USB_IN,
+										NULL,			1);
+///////////////////////////////
+
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	0,   0,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	0,   1,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	0,   2,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	0,   3,   USB_IN,
+										NULL,			8);
+	debug("\nsec elements");
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   0,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   1,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   2,   USB_IN,
+										NULL,			8);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   3,   USB_IN,
+										NULL,			8);
+	/*debug("\nraw bank status");
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	0,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	1,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	2,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	3,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	4,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	5,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	6,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	7,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	8,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	9,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	10,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	11,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	12,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	13,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	14,   0,   USB_IN,
+										NULL,			2);
+	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	15,   0,   USB_IN,
+										NULL,			2);
+*/
 	//debug("uninit");
 	//get_buff_elements( transfer, 0 );
 	//get_buff_elements( transfer, 1 );
@@ -327,7 +444,7 @@ int test_function( USBtransfer *transfer )
 
 	return 0;
 
-error:
-	return -1;
+//error:
+//	return -1;
 
 }

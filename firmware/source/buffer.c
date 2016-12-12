@@ -54,11 +54,11 @@ uint8_t raw_bank_status[NUM_RAW_BANKS];
 //uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint16_t *rlen)
 uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 {
-	buffer *called_buff; //= &buff0; //used to point to buffer that was called based on opcode
+	buffer *called_buff = &buff0; //used to point to buffer that was called based on opcode init no warn
 	uint8_t *rptr = rv; //used for return pointer set to small rv buffer by default
 
 	//some opcodes place buffer number in misc/data
-	if ( (spacket->opcode > BUFFN_INMISC_MIN) && (spacket->opcode < BUFFN_INMISC_MAX) ) {
+	if ( (spacket->opcode >= BUFFN_INMISC_MIN) && (spacket->opcode <= BUFFN_INMISC_MAX) ) {
 //		called_buff = &buff1;
 		switch ( spacket->miscdata ) {
 			//2 buffers minimum support
@@ -653,7 +653,7 @@ void update_buffers()
 
 	}
 	
-
+//usbPoll();
 	//this will get entered on first and all successive calls
 	if ( operation == DUMPING ) {
 		//buffer_payload will pass cur_buff to usb driver on next IN transfer
@@ -671,7 +671,7 @@ void update_buffers()
 			//send buffer off to dump 
 			result = dump_page( cur_buff );
 			if (result != SUCCESS) {
-				cur_buff->status = PROBLEM;
+				cur_buff->status = result;
 			} else {
 				cur_buff->status = DUMPED;
 				//increment page_num so everything is ready for next dump
@@ -679,6 +679,7 @@ void update_buffers()
 				cur_buff->page_num += cur_buff->reload;
 			}
 		}
+		
 	}
 
 

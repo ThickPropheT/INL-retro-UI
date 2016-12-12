@@ -2,6 +2,7 @@
 #define _nes_h
 
 #include <avr/io.h>
+#include "usbdrv.h"
 #include "pinport.h"
 #include "shared_dictionaries.h"
 #include "shared_errors.h"
@@ -17,6 +18,6 @@ void	nes_cpu_wr( uint8_t addrH, uint8_t addrL, uint8_t data );
 uint8_t	nes_ppu_rd( uint8_t addrH, uint8_t addrL );
 void	nes_ppu_wr( uint8_t addrH, uint8_t addrL, uint8_t data );
 uint8_t	ciram_a10_mirroring( void );
-uint8_t nes_cpu_page_rd( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last );
+uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last, uint8_t poll );
 
 #endif

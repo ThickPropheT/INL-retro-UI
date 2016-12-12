@@ -391,10 +391,12 @@ uint8_t	ciram_a10_mirroring( void )
 	return UNKNOWN;
 }
 
-/* Desc:NES CPU Page Read 
+/* Desc:NES CPU Page Read with optional USB polling
  * 	decode A15 from addrH to set /ROMSEL as expected
  * 	float EXP0
  * 	toggle M2 as NES would
+ *	if poll is true calls usbdrv.h usbPoll fuction
+ *	this is needed to keep from timing out when double buffering usb data
  * Pre: nes_init() setup of io pins
  *	num_bytes can't exceed 256B page boundary
  * Post:address left on bus
@@ -403,7 +405,7 @@ uint8_t	ciram_a10_mirroring( void )
  *	data buffer filled starting at first to last
  * Rtn:	Index of last byte read
  */
-uint8_t nes_cpu_page_rd( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last )
+uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t len, uint8_t poll )
 {
 	uint8_t i;
 
@@ -416,19 +418,20 @@ uint8_t nes_cpu_page_rd( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t la
 		_ROMSEL_LO();	//romsel trails M2 during CPU operations
 	}
 
+	//set lower address bits
 	ADDR_OUT = first;	//doing this prior to entry and right after latching
 				//gives longest delay between address out and latching data
-	for( i=0; i<=last; i++ ) {
-		//set lower address bits
+	for( i=0; i<=len; i++ ) {
 		//couple more NOP's waiting for data
-		//zero nop's returned previous databus value
-		NOP();	//one nop got most of the bits right
-		NOP();	//two nop got all the bits right
-		NOP();	//add third nop for some extra
-		//might need to wait longer for some carts...
-
+		if ( poll == FALSE ) {
+			NOP();	//one prob good enough considering the if/else
+			NOP();
+		} else {
+			usbPoll();
+		}
 		//latch data
 		data[i] = DATA_IN;
+		//set lower address bits
 		ADDR_OUT = ++first;
 	}
 

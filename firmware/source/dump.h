@@ -2,6 +2,7 @@
 #define _dump_h
 
 #include <avr/io.h>
+#include "usbdrv.h"
 #include "types.h"
 #include "logic.h"
 #include "usb.h"
