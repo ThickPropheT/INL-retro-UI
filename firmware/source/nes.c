@@ -422,12 +422,12 @@ uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	ADDR_OUT = first;	//doing this prior to entry and right after latching
 				//gives longest delay between address out and latching data
 	for( i=0; i<=len; i++ ) {
-		//couple more NOP's waiting for data
+		//testing shows that having this if statement doesn't affect overall dumping speed
 		if ( poll == FALSE ) {
+			NOP();	//couple more NOP's waiting for data
 			NOP();	//one prob good enough considering the if/else
-			NOP();
 		} else {
-			usbPoll();
+			usbPoll();	//Call usbdrv.h usb polling while waiting for data
 		}
 		//latch data
 		data[i] = DATA_IN;

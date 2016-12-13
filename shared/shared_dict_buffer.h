@@ -400,6 +400,7 @@
 //	256Byte OUT (write) transfers with long transfers ENABLED:  18.56sec/512KByte = 27.6 KBps
 //	254Byte OUT (write) transfers with long transfers DISABLED: 17.9 sec/512KByte = 28.6 KBps (assuming 2 bytes stuffed in setup packet)
 //	128Byte  IN (read)  with long xfr DISABLED, w/o usbFuncRd:  30.5 sec/512KByte = 16.8 KBps
+//with read data dumping operations and file writing: 128Byte IN    32.25sec/512KByte = 15.8 KBps only 1KBps lost due to dumping operation
 //	128Byte  IN (read)  with long xfr DISABLED,   w/usbFuncRd:  34.9 sec/512KByte = 14.7 KBps
 //	1033*254Byte  IN (read)  long xfr DISABLED, w/o usbFuncRd:  28.35sec/512KByte = 18.1 KBps
 //

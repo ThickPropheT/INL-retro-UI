@@ -97,19 +97,24 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 //	get_buff_operation( transfer );
 //	get_buff_elements( transfer, buff0 );
 //	get_buff_elements( transfer, buff1 );
+	clock_t tstart, tstop;
+	tstart = clock();
 
 	//now just need to call series of payload IN transfers to retrieve data
-	//for( i=0; i<(256*KByte/buff_size); i++) {
+	//for( i=0; i<(512*KByte/buff_size); i++) {
 	for( i=0; i<(32*KByte/buff_size); i++) {
 	//for( i=0; i<(8*KByte/buff_size); i++) {
 		//payload transfer in and append to file
-		if ( i % 256 == 0 ) debug("payload in #%d", i);
+	//	if ( i % 256 == 0 ) debug("payload in #%d", i);
 		check(! payload_in( transfer, data, buff_size ), "Error with payload IN");
 		if (i==0) printf("first byte: %x\n", data[0]);
 		check(! append_to_file( rom, data, buff_size ), "Error with file append");
 	}
 	debug("payload done");
 
+	tstop = clock();
+	float timediff = ( (float)(tstop-tstart) / CLOCKS_PER_SEC);
+	printf("total time: %fsec, speed: %fKBps", timediff, (512/timediff));
 	//TODO flush file from time to time..?
 
 

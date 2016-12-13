@@ -653,7 +653,6 @@ void update_buffers()
 
 	}
 	
-//usbPoll();
 	//this will get entered on first and all successive calls
 	if ( operation == DUMPING ) {
 		//buffer_payload will pass cur_buff to usb driver on next IN transfer
