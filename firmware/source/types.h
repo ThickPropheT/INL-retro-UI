@@ -37,4 +37,8 @@ typedef struct buffer {
 	uint8_t		function;	//function "pointer" for flash/dump operation control
 }buffer;
 
+//write function pointers
+typedef	void	(*write_funcptr) 	( uint8_t addrH, uint8_t addrL, uint8_t data );
+typedef	uint8_t	(*read_funcptr)		( uint8_t addrH, uint8_t addrL );
+
 #endif

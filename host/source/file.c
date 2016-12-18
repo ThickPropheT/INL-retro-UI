@@ -49,7 +49,7 @@ int detect_file( rom_image *rom )
 
 	//size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 	rv = fread( header, sizeof(header[0]), (sizeof(header)/sizeof(header[0])), rom->fileptr);
-	check( rv = sizeof(header), "Unable to read NES header");
+	check( rv == sizeof(header), "Unable to read NES header");
 
 	//0-3: Constant $4E $45 $53 $1A ("NES" followed by MS-DOS end-of-file)
 	if ( (header[0]=='N') && (header[1]=='E') && (header[2]=='S') && (header[3]==0x1A) ) {
@@ -128,6 +128,25 @@ int append_to_file( rom_image *rom, uint8_t *data, int length )
 	rv = fwrite( data, sizeof(data[0]), length, rom->fileptr );
 
 	check( (rv == length), "Error appending to file, %dB out written when trying to write %d", rv, length);
+
+	return SUCCESS;
+error:
+	return -1;
+}
+
+/* Desc:Read data from file
+ * Pre: file opened and current position set to desired location
+ * Post:data filled with length amount of data from file
+ *	file still open
+ * Rtn: SUCCESS if no errors
+ */
+int read_from_file( rom_image *rom, uint8_t *data, int length )
+{
+	int rv = 0;
+	//size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+	rv = fread( data, sizeof(data[0]), length, rom->fileptr );
+
+	check( (rv == length), "Error reading from file, %dB read when trying to read %d", rv, length);
 
 	return SUCCESS;
 error:

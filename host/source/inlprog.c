@@ -20,6 +20,7 @@
 #include "cartridge.h"
 #include "file.h"
 #include "dump.h"
+#include "flash.h"
 #include "shared_enums.h"
 
 
@@ -274,6 +275,13 @@ int main(int argc, char *argv[])
 		//program file provided at commandline
 		check( !open_rom( rom, p_value ), "Problem opening file %s", p_value);
 		detect_file( rom );
+
+		check( !flash_cart( transfer, rom, cart ), "Error while flashing cart");
+		debug("done flashing, closing");
+
+		check(! close_rom( rom ), "Problem closing file");
+		rom->fileptr = NULL;
+		debug("closed");
 	}
 
 	//if flashing, determine if erasures are necessary and where

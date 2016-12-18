@@ -30,6 +30,9 @@ int allocate_buffers( USBtransfer *transfer, int num_buffers, int buff_size ) {
 	int buff1id = 0;
 	int buff1basebank = 0;
 	int numbanks= 0;
+	int reload = 0;
+	int buff0_firstpage = 0;
+	int buff1_firstpage = 0;
 
 	//want to allocate buffers as makes sense based on num and size
 	//Ideally a buffer will be 256Bytes which equals a page size
@@ -38,45 +41,68 @@ int allocate_buffers( USBtransfer *transfer, int num_buffers, int buff_size ) {
 	//But this means a single buffer can't hold a full page
 	//In this case the missing bits between buffer size and page_num must be contained
 	//in upper bits of the buffer id.
+
+	buff0basebank = 0;
+	numbanks= buff_size/RAW_BANK_SIZE;
+	buff1basebank= numbanks;	//buff1 starts right after buff0
+
 	if( (num_buffers == 2) && (buff_size == 128)) {
+	//buff0 dumps first half of page, buff1 dumps second half, repeat
 		//MSB tells buffer value of A7 when operating
 		buff0id = 0x00;
-		buff0basebank = 0;
-		numbanks= buff_size/RAW_BANK_SIZE;
 		buff1id = 0x80;
-		buff1basebank= numbanks;	//buff1 starts right after buff0
 
-		//allocate buffer0
-		rv = dictionary_call( transfer,	DICT_BUFFER,	ALLOCATE_BUFFER0,	
-					( (buff0id<<8)|(buff0basebank) ),	numbanks,	
-							USB_IN,		NULL,	1);
-		if ( rv != SUCCESS ){
-			//failed to allocate pass error code back
-			return rv;
-		}
-		//allocate buffer1
-		rv = dictionary_call( transfer,	DICT_BUFFER,	ALLOCATE_BUFFER1,	
-					( (buff1id<<8)|(buff1basebank) ),	numbanks,
-							USB_IN,		NULL,	1);
-		if ( rv != SUCCESS ){
-			//failed to allocate pass error code back
-			return rv;
-		}
+	//set reload (value added to page_num after each load/dump to sum of buffers
+	// 2 * 128 = 256 -> reload = 1
+		reload = 0x01;
+	//set first page
+		buff0_firstpage = 0x0000;
+		buff1_firstpage = 0x0000;
 
-		//set reload (value added to page_num after each load/dump to sum of buffers
-		// 2 * 128 = 256 -> reload = 1
-		//set buffer0
-		dictionary_call( transfer,	DICT_BUFFER,	SET_RELOAD_PAGENUM0,	0x0000,	0x01,
-							USB_IN,		NULL,	1);
-		//set buffer1
-		dictionary_call( transfer,	DICT_BUFFER,	SET_RELOAD_PAGENUM1,	0x0000,	0x01,
-							USB_IN,		NULL,	1);
-		
+	} else if( (num_buffers == 2) && (buff_size == 256)) {
+	//buff0 dumps even pages, buff1 dumps odd pages
+		//buffer id not used for addressing both id zero for now..
+		buff0id = 0x00;
+		buff1id = 0x00;
+
+	//set reload (value added to page_num after each load/dump to sum of buffers
+	// 2 * 256 = 512 -> reload = 2
+		reload = 0x02;
+	//set first page of each buffer
+		buff0_firstpage = 0x0000;
+		buff1_firstpage = 0x0001;
 
 	} else {
+		//don't continue
 		sentinel("Not setup to handle this buffer config");
 	}
 
+
+	//allocate buffer0
+	rv = dictionary_call( transfer,	DICT_BUFFER,	ALLOCATE_BUFFER0,	
+				( (buff0id<<8)|(buff0basebank) ),	numbanks,	
+						USB_IN,		NULL,	1);
+	if ( rv != SUCCESS ){
+		//failed to allocate pass error code back
+		return rv;
+	}
+	//allocate buffer1
+	rv = dictionary_call( transfer,	DICT_BUFFER,	ALLOCATE_BUFFER1,	
+				( (buff1id<<8)|(buff1basebank) ),	numbanks,
+						USB_IN,		NULL,	1);
+	if ( rv != SUCCESS ){
+		//failed to allocate pass error code back
+		return rv;
+	}
+
+	//set first page and reload (value added to page_num after each load/dump to sum of buffers
+	//set buffer0
+	dictionary_call( transfer,	DICT_BUFFER,	SET_RELOAD_PAGENUM0,	buff0_firstpage,	reload,
+						USB_IN,		NULL,	1);
+	//set buffer1
+	dictionary_call( transfer,	DICT_BUFFER,	SET_RELOAD_PAGENUM1,	buff1_firstpage,	reload,
+						USB_IN,		NULL,	1);
+	
 
 	return SUCCESS;
 error:
@@ -127,6 +153,29 @@ int payload_in( USBtransfer *transfer, uint8_t *data, int length )
 	return dictionary_call( transfer,	DICT_BUFFER,	BUFF_PAYLOAD,	NILL, 	NILL,	
 							USB_IN,		data,	length);
 }
+
+/* Desc:Payload OUT transfer
+ * Pre: buffers are allocated operation started
+ * Post:payload of length transfered to USB device
+ * Rtn: SUCCESS if no errors
+ */
+int payload_out( USBtransfer *transfer, uint8_t *data, int length ) 
+{
+	check( length < MAX_VUSB+3, "can't transfer more than %d bytes per transfer", MAX_VUSB+2 );
+	//if over 254 bytes, must stuff first two bytes in setup packet
+	if ( length > MAX_VUSB ) {
+		return dictionary_call( transfer,	DICT_BUFFER,	BUFF_OUT_PAYLOAD_2B_INSP,
+			//byte0, 	byte1, 				bytes3-254
+			data[0], 	data[1],	USB_OUT,	&data[2],	length-2);
+	} else {
+		return dictionary_call( transfer,	DICT_BUFFER,	BUFF_PAYLOAD,
+			NILL, 		NILL,		USB_OUT,	data,		length);
+	}
+
+error:
+	return ~SUCCESS;
+}
+
 
 /* Desc:Get buffer elements and print them
  * Pre: buffers are allocated

@@ -333,12 +333,14 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 				operation = PROBLEM;
 			}
 		} else {//writes
-			//cur_usb_load_buff = &buff0;
-			cur_usb_load_buff = cur_buff;
-			//buff0.status = USB_LOADING;
-			cur_buff->status = USB_LOADING;
+			if ( cur_buff->status == EMPTY ) {
+				//send cur_buff to usbFunctionWrite to be filled
+				cur_usb_load_buff = cur_buff;
+				cur_buff->status = USB_LOADING;
+			} else {
+				operation = PROBLEM;
+			}
 		}
-		//buff0.cur_byte = 0;
 		cur_buff->cur_byte = 0;
 
 	} else { //host determined the buffer to use
@@ -592,6 +594,7 @@ void update_buffers()
 {
 	uint8_t result = 0;
 	static uint8_t num_buff;
+	buffer *last_buff;
 
 	//when dumping we don't actually know when the buffer has been fully
 	//read back through USB IN transfer.  But we know when the next buffer
@@ -615,23 +618,10 @@ void update_buffers()
 		//we always start with buff0
 		cur_buff = &buff0;
 		//now we can get_next_buff by passing cur_buff
+
 	}
 	if (operation == STARTDUMP) {
 		//prepare both buffers to dump
-//		cur_buff->cur_byte = 0;
-//		cur_buff->status = DUMPING;
-//		//send first buffer off to dump 
-//		result = dump_page( cur_buff );
-//		if (result != SUCCESS) {
-//			cur_buff->status = PROBLEM;
-//		} else {
-//			cur_buff->status = DUMPED;
-//			//increment page_num so everything is ready for next dump
-//			cur_buff->page_num += cur_buff->reload;
-//		}
-		//now it's ready and just waiting for IN transfer
-		//pretend the last buffer is in USB transfer and 
-		//we're waiting to have that dump until the first buffer starts USB transfer
 			
 		//do all the same things that would happen between buffers to start things moving
 		//pretend the last buffer is unloading via USB right now
@@ -651,6 +641,16 @@ void update_buffers()
 		//don't want to reenter start initialiation again
 		operation = FLASHING;
 
+		//not much else to do, just waiting on payload OUT transfer
+		//current buffer prepared to be sent to usbFunctionWrite
+		cur_buff->status = EMPTY;
+
+		//TODO
+		//perhaps this is where the mapper registers should be initialized as needed
+		//for all buffer writes.
+		//but this will bloat firmware code with each mapper..
+		//so prob best for host to handle this with series of single byte write opcodes
+
 	}
 	
 	//this will get entered on first and all successive calls
@@ -668,7 +668,7 @@ void update_buffers()
 			cur_buff->cur_byte = 0;
 			cur_buff->status = DUMPING;
 			//send buffer off to dump 
-			result = dump_page( cur_buff );
+			result = dump_buff( cur_buff );
 			if (result != SUCCESS) {
 				cur_buff->status = result;
 			} else {
@@ -681,6 +681,33 @@ void update_buffers()
 		
 	}
 
+	if ( operation == FLASHING ) {
+		//cur_buff will get sent to usbFunctionWrite on next payload OUT transfer
+		//All we need to do here is monitor usbFWr's status via incoming_bytes_remain
+		//which gets set to 254 on wr transfers once gets to zero buffer is filled
+		if ( incoming_bytes_remain == 0 ) {
+			incoming_bytes_remain--;	//don't want to re-enter
+
+			//buffer full, send to flash routine
+			last_buff = cur_buff;
+			//but first want to update cur_buff to next buffer so it can 
+			//start loading on next OUT transfer
+			cur_buff = get_next_buff( cur_buff, num_buff );
+			cur_buff->status = EMPTY;
+			
+			last_buff->status = FLASHING;
+			result = flash_buff( last_buff );
+			if (result != SUCCESS) {
+				last_buff->status = result;
+			} else {
+				last_buff->status = FLASHED;
+				cur_buff->page_num += cur_buff->reload;
+			}
+			//page should be flashed to memory now
+			//the next buffer should be in process of getting filled
+			//once full we'll end up back here again
+		}
+	}
 
 	//to start let's sense dumping operation by buffer status
 	//host updates status of buffer, then we go off and dump as appropriate

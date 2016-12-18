@@ -39,6 +39,7 @@ int open_rom( rom_image *rom, char *filename );
 int detect_file( rom_image *rom );
 int create_file( rom_image *rom, char *filename );
 int append_to_file( rom_image *rom, uint8_t *data, int length );
+int read_from_file( rom_image *rom, uint8_t *data, int length );
 int close_rom( rom_image *rom );
 
 #endif

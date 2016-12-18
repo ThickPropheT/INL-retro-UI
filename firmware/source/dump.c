@@ -6,7 +6,7 @@
  * Post:page dumped from cart memory to buffer.
  * Rtn: SUCCESS or ERROR# depending on if there were errors.
  */
-uint8_t dump_page( buffer *buff ) {
+uint8_t dump_buff( buffer *buff ) {
 
 	uint8_t addrH = buff->page_num;	//A15:8  while accessing page
 //warn	uint8_t addrX;	//A23:16 while accessing page

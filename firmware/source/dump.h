@@ -11,6 +11,6 @@
 #include "shared_errors.h"
 #include "shared_enums.h"
 
-uint8_t dump_page( buffer *buff ) ;
+uint8_t dump_buff( buffer *buff ) ;
 
 #endif
