@@ -1,8 +1,7 @@
-#ifndef _dump_h
-#define _dump_h
+#ifndef _operation_h
+#define _operation_h
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
@@ -14,22 +13,19 @@
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 
-#include "usb_operations.h"
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 #include "dictionary.h"
-#include "shared_enums.h"
-
-#include "io.h"
-#include "nes.h"
-#include "snes.h"
 #include "memory.h"
 #include "cartridge.h"
-#include "file.h"
-#include "buffer.h"
-#include "operation.h"
 
-int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart );
+#include "pindef.h"
+
+int load_oper_info_elements( USBtransfer *transfer, cartridge *cart );
+int get_oper_info_elements( USBtransfer *transfer );
+int set_operation( USBtransfer *transfer, int operation );
+int get_operation( USBtransfer *transfer );
+
 
 
 #endif

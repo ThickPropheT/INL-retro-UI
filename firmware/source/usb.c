@@ -182,6 +182,11 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			rv[RV_DATA0_IDX+1] = cur_usb_load_buff->last_idx;
 			rlen = 3;
 			break; //end of USB
+
+		case DICT_OPER:
+			//just give operation.c the setup packet and let it figure things out for itself
+			usbMsgPtr = (usbMsgPtr_t)operation_usb_call( spacket, rv, &rlen );
+			break; //end of OPER
 		
 		default:
 			//request (aka dictionary) is unknown

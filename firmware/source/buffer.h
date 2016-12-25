@@ -8,7 +8,9 @@
 #include "usb.h"
 #include "flash.h"
 #include "dump.h"
+#include "operation.h"
 #include "shared_dictionaries.h"
+#include "shared_enums.h"
 #include "shared_errors.h"
 
 
@@ -27,6 +29,8 @@ uint8_t buffer_opcode_buffnum_no_return( uint8_t opcode, buffer *buff,
 
 void raw_buffer_reset( );
 uint8_t allocate_buffer( buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_t num_banks );
+void copy_buff0_to_data( uint8_t *data, uint8_t length );
+void copy_data_to_buff0( uint8_t *data, uint8_t length );
 
 uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbuff, uint8_t *rlength );
 

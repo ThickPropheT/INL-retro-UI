@@ -25,10 +25,8 @@ int reset_buffers( USBtransfer *transfer );
 int allocate_buffers( USBtransfer *transfer, int num_buffers, int buff_size );
 int set_mem_n_part( USBtransfer *transfer, int buff_num, int mem_type, int part_num );
 int set_map_n_mapvar( USBtransfer *transfer, int buff_num, int mapper, int map_var );
-int set_buff_operation( USBtransfer *transfer, int operation );
 int payload_in( USBtransfer *transfer, uint8_t *data, int length );
 int payload_out( USBtransfer *transfer, uint8_t *data, int length );
 int get_buff_elements( USBtransfer *transfer, int buff_num );
-int get_buff_operation( USBtransfer *transfer );
 
 #endif

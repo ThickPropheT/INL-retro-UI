@@ -39,7 +39,7 @@ typedef struct cartridge{
 	memory	*sec_rom;	//secondary rom if used (CHR-ROM for NES)
 	memory	*save_mem;	//save data memory
 	memory	*aux_mem;	//additional memory
-	memory	*logic_mem;		//programmable logic
+	memory	*logic_mem;	//programmable logic
 } cartridge;
 
 

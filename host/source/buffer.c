@@ -132,16 +132,16 @@ int set_map_n_mapvar( USBtransfer *transfer, int buff_num, int mapper, int map_v
 				( (mapper<<8) | (map_var) ),		buff_num,	USB_IN,	NULL,	1);
 }
 
-/* Desc:Set buffer manager operation 
- * Pre: buffers are allocated and elements set ready to start operation
- * Post:operation starts on device
- * Rtn: SUCCESS if no errors
- */
-int set_buff_operation( USBtransfer *transfer, int operation ) 
-{
-	return dictionary_call( transfer,	DICT_BUFFER,	SET_BUFFER_OPERATION,	operation, 	
-					NILL,	USB_IN,	NULL,	1);
-}
+///* Desc:Set buffer manager operation 
+// * Pre: buffers are allocated and elements set ready to start operation
+// * Post:operation starts on device
+// * Rtn: SUCCESS if no errors
+// */
+//int set_buff_operation( USBtransfer *transfer, int operation ) 
+//{
+//	return dictionary_call( transfer,	DICT_BUFFER,	SET_BUFFER_OPERATION,	operation, 	
+//					NILL,	USB_IN,	NULL,	1);
+//}
 
 /* Desc:Payload IN transfer
  * Pre: buffers are allocated operation started
@@ -193,15 +193,15 @@ int get_buff_elements( USBtransfer *transfer, int buff_num )
 	return SUCCESS;
 }
 
-/* Desc:Get buffer opertationt
- * Pre: 
- * Post:
- * Rtn: SUCCESS if no errors
- */
-int get_buff_operation( USBtransfer *transfer ) 
-{
-	printf("operation:");
-	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_BUFF_OPERATION,	NILL, 	NILL,
-								USB_IN,		NULL,	RV_DATA0_IDX+1);
-	return SUCCESS;
-}
+///* Desc:Get buffer opertationt
+// * Pre: 
+// * Post:
+// * Rtn: SUCCESS if no errors
+// */
+//int get_buff_operation( USBtransfer *transfer ) 
+//{
+//	printf("operation:");
+//	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_BUFF_OPERATION,	NILL, 	NILL,
+//								USB_IN,		NULL,	RV_DATA0_IDX+1);
+//	return SUCCESS;
+//}

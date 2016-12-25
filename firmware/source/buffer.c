@@ -12,7 +12,7 @@ buffer *cur_usb_load_buff;
 uint8_t incoming_bytes_remain;
 
 //host means of communicating to buffer manager
-uint8_t operation;
+//uint8_t operation;
 
 //min define of two buffers
 buffer buff0;
@@ -184,9 +184,9 @@ uint8_t buffer_opcode_no_return( uint8_t opcode, buffer *buff,
 		case RAW_BUFFER_RESET:	
 			raw_buffer_reset();	
 			break;
-		case SET_BUFFER_OPERATION:	
-			operation = operLSB;
-			break;
+		//case SET_BUFFER_OPERATION:	
+		//	operation = operLSB;
+		//	break;
 		case SET_MEM_N_PART:	
 			buff->mem_type = operMSB;
 			buff->part_num = operLSB;
@@ -217,7 +217,7 @@ uint8_t buffer_opcode_no_return( uint8_t opcode, buffer *buff,
  * Pre: Macros must be defined in firmware pinport.h
  * 	opcode must be defined in shared_dict_buffer.h
  * Post:function call complete.
- * Rtn: SUCCESS if opcode found, ERR_UNKN_BUFF_OPCODE_NRV if opcode not present.
+ * Rtn: SUCCESS if opcode found, ERR_UNKN_BUFF_OPCODE_RV if opcode not present.
  */
 uint8_t buffer_opcode_return( uint8_t opcode, buffer *buff, 
 				uint8_t operMSB, uint8_t operLSB, uint8_t miscdata, 
@@ -229,10 +229,10 @@ uint8_t buffer_opcode_return( uint8_t opcode, buffer *buff,
 				*rvalue = raw_bank_status[operLSB];	
 				*rlength += 1;
 			break;
-		case GET_BUFF_OPERATION:	
-				*rvalue = operation;	
-				*rlength += 1;
-			break;
+		//case GET_BUFF_OPERATION:	
+		//		*rvalue = operation;	
+		//		*rlength += 1;
+		//	break;
 		case GET_PRI_ELEMENTS:	
 				rvalue[0] = buff->last_idx;
 				rvalue[1] = buff->status;
@@ -255,7 +255,7 @@ uint8_t buffer_opcode_return( uint8_t opcode, buffer *buff,
 			break;
 		default:
 			 //opcode doesn't exist
-			 return ERR_UNKN_BUFF_OPCODE_NRV;
+			 return ERR_UNKN_BUFF_OPCODE_RV;
 	}
 	
 	return SUCCESS;
@@ -330,7 +330,8 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 			} else {
 				//problem, buffers not prepared or initialized 
 				*rlength = USB_NO_MSG;
-				operation = PROBLEM;
+				//operation = PROBLEM;
+				set_operation( PROBLEM );
 			}
 		} else {//writes
 			if ( cur_buff->status == EMPTY ) {
@@ -338,7 +339,8 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 				cur_usb_load_buff = cur_buff;
 				cur_buff->status = USB_LOADING;
 			} else {
-				operation = PROBLEM;
+				//operation = PROBLEM;
+				set_operation( PROBLEM );
 			}
 		}
 		cur_buff->cur_byte = 0;
@@ -412,7 +414,8 @@ void raw_buffer_reset( )
 	buff7.id = UNALLOC;
 #endif
 
-	operation = RESET;
+	//operation = RESET;
+	set_operation( RESET );
 
 }
 
@@ -498,6 +501,29 @@ uint8_t allocate_buffer( buffer *buff, uint8_t new_id, uint8_t base_bank, uint8_
 
 	return SUCCESS;	
 
+}
+
+
+//used to copy contents of buffer to another sram location
+void copy_buff0_to_data( uint8_t *data, uint8_t length )
+{
+	uint8_t i;
+
+	for ( i=0; i<length; i++ ) {
+		data[i] = buff0.data[i];
+	}
+	
+}
+
+//used to copy data to buff0 from another location
+void copy_data_to_buff0( uint8_t *data, uint8_t length )
+{
+	uint8_t i;
+
+	for ( i=0; i<length; i++ ) {
+		buff0.data[i] = data[i];
+	}
+	
 }
 
 //used to determine how many buffers are in use at start of new operation
@@ -608,7 +634,8 @@ void update_buffers()
 	//this manager only needs to know which buffers are active
 	//but the host sets operation when it wants this manager to send 
 	//little buffers out to start dumping/flashing
-	if ( (operation == STARTDUMP) || (operation == STARTFLASH ) ) {
+	//if ( (operation == STARTDUMP) || (operation == STARTFLASH ) ) {
+	if ( (get_operation() == STARTDUMP) || (get_operation() == STARTFLASH ) ) {
 		//only want to do this once per operation at the start
 		//figure out how many buffers are in operation
 		//assume buff0 is first and follows 1, 2, etc
@@ -620,7 +647,8 @@ void update_buffers()
 		//now we can get_next_buff by passing cur_buff
 
 	}
-	if (operation == STARTDUMP) {
+	//if (operation == STARTDUMP) {
+	if (get_operation() == STARTDUMP) {
 		//prepare both buffers to dump
 			
 		//do all the same things that would happen between buffers to start things moving
@@ -635,11 +663,14 @@ void update_buffers()
 		//that will now trigger operation == DUMPING to dump first buffer
 
 		//don't want to reenter start initialiation again
-		operation = DUMPING;
+		//operation = DUMPING;
+		set_operation( DUMPING );
 	}
-	if (operation == STARTFLASH) {
+	//if (operation == STARTFLASH) {
+	if (get_operation() == STARTFLASH) {
 		//don't want to reenter start initialiation again
-		operation = FLASHING;
+		//operation = FLASHING;
+		set_operation( FLASHING );
 
 		//not much else to do, just waiting on payload OUT transfer
 		//current buffer prepared to be sent to usbFunctionWrite
@@ -654,7 +685,8 @@ void update_buffers()
 	}
 	
 	//this will get entered on first and all successive calls
-	if ( operation == DUMPING ) {
+	//if ( operation == DUMPING ) {
+	if ( get_operation() == DUMPING ) {
 		//buffer_payload will pass cur_buff to usb driver on next IN transfer
 		//on receipt of the IN transfer buffer_payload sets: 
 		// cur_buff->status = USB_UNLOADING;
@@ -681,7 +713,8 @@ void update_buffers()
 		
 	}
 
-	if ( operation == FLASHING ) {
+	//if ( operation == FLASHING ) {
+	if ( get_operation() == FLASHING ) {
 		//cur_buff will get sent to usbFunctionWrite on next payload OUT transfer
 		//All we need to do here is monitor usbFWr's status via incoming_bytes_remain
 		//which gets set to 254 on wr transfers once gets to zero buffer is filled

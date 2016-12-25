@@ -66,7 +66,6 @@ enum operations {
 //SRAM manf/prod ID
 #define SRAM	0xAA
 
-
 //MASK ROM read only
 #define MASKROM	0xDD
 
@@ -78,10 +77,11 @@ enum buff_mem_type {
 	SNESRAM
 };
 
-//buffer status values
+//buffer/operation status values
 #define EMPTY 		0x00
 #define RESET		0x01
 #define PROBLEM		0x10
+#define PREPARING	0x20
 #define USB_UNLOADING	0x80
 #define USB_LOADING	0x90
 #define USB_FULL	0x98
@@ -96,5 +96,43 @@ enum buff_mem_type {
 #define FLASH_WAIT	0xF8
 #define STOPPED		0xFE
 #define UNALLOC 	0xFF
+
+enum addr_high_direct_mask {
+ //actual value is part mapper dependent and part flash dependent
+        //mapper controlled address bits dictate where split is
+        //32KB banking A14-0 NES ctl, A15+ mapper ctl "bank" NROM, BNROM, ANROM
+        //addrH_dmask   = 0b0111 1111 directly addressable addrH bits
+	MSK_32KB = 0x7F,
+        //16KB banking A13-0 NES ctl, A14+ mapper ctl "bank" UxROM, MMC1
+        //addrH_dmask   = 0b0011 1111
+	MSK_16KB = 0x3F,
+        // 8KB banking A12-0 NES ctl, A13+ mapper ctl "bank" MMC3, FME7, CHR discrete banking
+        //addrH_dmask   = 0b0001 1111
+	MSK_8KB  = 0x1F,
+        // 4KB banking A11-0 NES ctl, A12+ mapper ctl "bank" ezNSF MMC1 CHR
+        //addrH_dmask   = 0b0000 1111
+	MSK_4KB  = 0x0F,
+        // 2KB banking A10-0 NES ctl, A11+ mapper ctl "bank" MMC3 CHR
+        //addrH_dmask   = 0b0000 0111
+	MSK_2KB  = 0x07,
+        // 1KB banking A9-0 NES ctl, A10+ mapper ctl "bank" FME7 CHR
+        //addrH_dmask   = 0b0000 0011
+	MSK_1KB  = 0x03
+};
+
+enum page2bankshiftright {
+        //A15->A8 = 7 shifts (equal to number of set bits in addrH_mask
+	PG2B_32KB = 7,
+        //A14->A8 = 6 shifts
+	PG2B_16KB = 6,
+        //A13->A8 = 5 shifts
+	PG2B_8KB = 5,
+        //A12->A8 = 4 shifts
+	PG2B_4KB = 4,
+        //A11->A8 = 3 shifts
+	PG2B_2KB = 3,
+        //A10->A8 = 2 shifts
+	PG2B_1KB = 2
+};
 
 #endif

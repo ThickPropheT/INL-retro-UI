@@ -148,6 +148,13 @@ int dictionary_call_print_option( int print_debug, USBtransfer *transfer, uint8_
 //			transfer->wLength = length;
 			break;
 
+		case DICT_OPER: debug("dict: OPER");
+//			transfer->wLength = length;
+			if (buffer != NULL) {
+				transfer->data = (unsigned char *)buffer;
+			}
+			break; //end of BUFF
+
 		default:
 			//request (aka dictionary) is unknown
 			sentinel("unknown DICT err:%d",ERR_UNKN_DICTIONARY);

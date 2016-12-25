@@ -27,6 +27,7 @@
 #include "cartridge.h"
 #include "file.h"
 #include "buffer.h"
+#include "operation.h"
 
 int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart );
 

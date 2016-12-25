@@ -75,15 +75,19 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	//TODO when start implementing other mappers
 
 	//debugging print out buffer elements
-	get_buff_operation( transfer );
+	get_operation( transfer );
 	get_buff_elements( transfer, buff0 );
 	get_buff_elements( transfer, buff1 );
 
+	//load operation elements into buff0 and then copy buff0 to oper_info
+	load_oper_info_elements( transfer, cart );
+	get_oper_info_elements( transfer );
+
 	debug("\n\nsetting operation STARTFLASH");
 	//inform buffer manager to start dumping operation now that buffers are initialized
-	check(! set_buff_operation( transfer, STARTFLASH ), "Unable to set buffer operation");
+	check(! set_operation( transfer, STARTFLASH ), "Unable to set buffer operation");
 
-//	get_buff_operation( transfer );
+//	get_operation( transfer );
 //	get_buff_elements( transfer, buff0 );
 //	get_buff_elements( transfer, buff1 );
 //	//manager updates buffer status' so they'll start dumping
@@ -95,12 +99,12 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 //	check(! read_from_file( rom, data, buff_size ), "Error with file read");
 //	//check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
 //	payload_out( transfer, data, buff_size );
-//	get_buff_operation( transfer );
+//	get_operation( transfer );
 //	get_buff_elements( transfer, buff0 );
 //	get_buff_elements( transfer, buff1 );
 //
 //	debug("first payload done");
-////	get_buff_operation( transfer );
+////	get_operation( transfer );
 ////	get_buff_elements( transfer, buff0 );
 ////	get_buff_elements( transfer, buff1 );
 ////
@@ -108,7 +112,7 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 //	check(! read_from_file( rom, data, buff_size ), "Error with file read");
 //	check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
 
-//	get_buff_operation( transfer );
+//	get_operation( transfer );
 //	get_buff_elements( transfer, buff0 );
 //	get_buff_elements( transfer, buff1 );
 
@@ -151,7 +155,7 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 
 	debug("\n\nsetting operation STARTFLASH");
 	//inform buffer manager to start dumping operation now that buffers are initialized
-	check(! set_buff_operation( transfer, STARTFLASH ), "Unable to set buffer operation");
+	check(! set_operation( transfer, STARTFLASH ), "Unable to set buffer operation");
 
 	for( i=0; i<(8*KByte/buff_size); i++) {
 		check(! read_from_file( rom, data, buff_size ), "Error with file read");

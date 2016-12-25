@@ -89,7 +89,8 @@
 
 //set buffer manager operation value
 //lower operand byte sets value
-#define SET_BUFFER_OPERATION	0x01
+//#define SET_BUFFER_OPERATION	0x01
+//moved to shared_dict_operation.h
 
 
 
@@ -135,9 +136,7 @@
 //operandMSB:LSB actually contains first 2 bytes
 #define BUFF_OUT_PAYLOADN_2B_INSP	0x40
 
-//designate what buffer to fill with miscdata byte
-//no return value as it's write OUT only
-//operandMSB:LSB actually contains first 2 bytes
+//designate what buffer to fill/read with miscdata byte
 #define BUFF_PAYLOADN			0x41
 
 
@@ -149,14 +148,22 @@
 
 //return buffer elements
 //misc/data: buffer number
+#define GET_PRI_ELEMENTS	0x50
 //rv0: success/error code
 //rv1: last_idx
+#define BUFF_LASTIDX	1
 //rv2: status
+#define BUFF_STATUS	2
 //rv3: cur_byte
+#define BUFF_CURBYTE	3
 //rv4: reload
+#define BUFF_RELOAD	4
 //rv5: id
+#define BUFF_ID		5
 //rv76: page_num
-#define GET_PRI_ELEMENTS	0x50
+#define BUFF_PGNUM_MSB	7
+#define BUFF_PGNUM_LSB	6
+
 
 //return buffer elements
 //misc/data: buffer number
@@ -186,7 +193,8 @@
 #define RAW_BANK_STATUS		0x60
 
 //retrieve buffer manager current operation variable
-#define GET_BUFF_OPERATION	0x61
+//#define GET_BUFF_OPERATION	0x61
+//moved to shared_dict_operation.h
 
 
 

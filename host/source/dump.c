@@ -65,15 +65,15 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 								USB_IN,		NULL,	RV_DATA0_IDX+1);
 
 	//debugging print out buffer elements
-	//get_buff_operation( transfer );
+	//get_operation( transfer );
 	//get_buff_elements( transfer, buff0 );
 	//get_buff_elements( transfer, buff1 );
 
 	debug("\n\nsetting operation STARTDUMP");
 	//inform buffer manager to start dumping operation now that buffers are initialized
-	check(! set_buff_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
+	check(! set_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
 
-//	get_buff_operation( transfer );
+//	get_operation( transfer );
 //	get_buff_elements( transfer, buff0 );
 //	get_buff_elements( transfer, buff1 );
 	//manager updates buffer status' so they'll start dumping
@@ -86,7 +86,7 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 //	check(! append_to_file( rom, data, buff_size ), "Error with file append");
 //
 //	debug("first payload done");
-//	get_buff_operation( transfer );
+//	get_operation( transfer );
 //	get_buff_elements( transfer, buff0 );
 //	get_buff_elements( transfer, buff1 );
 //
@@ -94,7 +94,7 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 //	check(! payload_in( transfer, data, buff_size ), "Error with payload IN");
 //	check(! append_to_file( rom, data, buff_size ), "Error with file append");
 //
-//	get_buff_operation( transfer );
+//	get_operation( transfer );
 //	get_buff_elements( transfer, buff0 );
 //	get_buff_elements( transfer, buff1 );
 	clock_t tstart, tstop;
@@ -130,7 +130,7 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	check(! set_map_n_mapvar( transfer, buff1, NROM, NILL ), "Unable to set mapper and map_var");
 
 	debug("\n\nsetting operation STARTDUMP");
-	check(! set_buff_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
+	check(! set_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
 
 	for( i=0; i<(8*KByte/buff_size); i++) {
 		//payload transfer in and append to file
