@@ -44,29 +44,41 @@ uint8_t	* operation_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 	return rptr;
 }
 
-read_funcptr	decode_rdfunc_num( uint8_t func_num ) {
+read_funcptr	decode_rdfunc_num(uint8_t dict, uint8_t func_num ) 
+{
 
-	switch( func_num ) {
-		case NES_CPU_RD: return nes_cpu_rd;
-		case NES_PPU_RD: return nes_ppu_rd;
-		case EMULATE_NES_CPU_RD: return emulate_nes_cpu_rd;
-		default:
-			return (void*)~SUCCESS;
+	if ( dict == NES ) {
+		switch( func_num ) {
+			case NES_CPU_RD: return nes_cpu_rd;
+			case NES_PPU_RD: return nes_ppu_rd;
+			case EMULATE_NES_CPU_RD: return emulate_nes_cpu_rd;
+			default:
+				return (void*)~SUCCESS;
+		}
+	} else {
+		//dictionary not supported
+		return (void*)~SUCCESS;
 	}
 }
 
-write_funcptr	decode_wrfunc_num( uint8_t func_num ) {
-	switch( func_num ) {
-		case DISCRETE_EXP0_PRGROM_WR: 
-			return discrete_exp0_prgrom_wr;
-		case NES_CPU_WR: 
-			return nes_cpu_wr;
-		case NES_PPU_WR: 
-			return nes_ppu_wr;
-		default:
-			return (void*)~SUCCESS;
+write_funcptr	decode_wrfunc_num(uint8_t dict, uint8_t func_num ) 
+{
+	if ( dict == NES ) {
+		switch( func_num ) {
+			case DISCRETE_EXP0_PRGROM_WR: 
+				return discrete_exp0_prgrom_wr;
+			case NES_CPU_WR: 
+				return nes_cpu_wr;
+			case NES_PPU_WR: 
+				return nes_ppu_wr;
+			default:
+				return (void*)~SUCCESS;
+		}
 	}
-
+	} else {
+		//dictionary not supported
+		return (void*)~SUCCESS;
+	}
 }
 
 
@@ -93,17 +105,19 @@ uint8_t oper_opcode_no_return( uint8_t opcode, uint8_t operMSB, uint8_t operLSB,
 		case COPY_ELEMENTS_TO_BUFF0:	
 			copy_data_to_buff0( (uint8_t *)oper_info, OPER_DATA_NUM_BYTE_ELEMENTS );
 			break;
+		//operMSB contains dictionary, operLSB contains function number
+		//decode that into proper function pointer
 		case SET_OPER_FUNC:	
 			//oper_info->oper_func = decode_opfunc_num( operLSB );
 			break;
 		case SET_RD_FUNC:	
-			oper_info->rd_func = decode_rdfunc_num( operLSB );
+			oper_info->rd_func = decode_rdfunc_num( operMSB, operLSB );
 			break;
 		case SET_WR_MEM_FUNC:	
-			oper_info->wr_mem_func = decode_wrfunc_num( operLSB );
+			oper_info->wr_mem_func = decode_wrfunc_num( operMSB, operLSB );
 			break;
 		case SET_WR_MAP_FUNC:	
-			oper_info->wr_map_func = decode_wrfunc_num( operLSB );
+			oper_info->wr_map_func = decode_wrfunc_num( operMSB, operLSB );
 			break;
 		default:
 			 //opcode doesn't exist
@@ -128,8 +142,8 @@ uint8_t oper_opcode_return( uint8_t opcode, uint8_t operMSB, uint8_t operLSB, ui
 {
 	switch (opcode) { 
 		case GET_OPERATION:	
-				*rvalue = oper_info->operation;	
-				*rlength += 1;
+			*rvalue = oper_info->operation;	
+			*rlength += 1;
 			break;
 		default:
 			 //opcode doesn't exist

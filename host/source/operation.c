@@ -5,7 +5,7 @@
  * Post:oper_info elements loaded
  * Rtn: SUCCESS if no errors
  */
-int load_oper_info_elements( USBtransfer *transfer, cartridge *cart, int mem ) 
+int load_oper_info_elements( USBtransfer *transfer, cartridge *cart ) 
 {
 	uint8_t rv[RETURN_BUFF_SIZE];
 	uint8_t buff_num = 0;		//buffer used to load elements according to shared_dict_operation.h

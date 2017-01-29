@@ -110,6 +110,7 @@ enum operation_elem_nums {	//Each index is numbered by it's name
 #define COPY_ELEMENTS_TO_BUFF0	0x02
 
 
+//pass dictionary in operMSB and command/func in operLSB
 #define SET_OPER_FUNC		0x03
 #define SET_RD_FUNC		0x04
 #define SET_WR_MEM_FUNC		0x05
