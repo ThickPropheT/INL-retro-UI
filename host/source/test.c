@@ -10,6 +10,7 @@ int test_function( cartridge *cart, USBtransfer *transfer )
 										NULL,			1);
 	debug("io reset and nes init'd");
 
+/*
 	//spansion/cypress A18-11 are don't care, that translates to A19-12 for byte mode I think
 	//$AAA / AA 
 	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8AAA,		0xAA,
@@ -20,15 +21,39 @@ int test_function( cartridge *cart, USBtransfer *transfer )
 	//$AAA / 90 manf ID
 	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8AAA,		0x90,
 										USB_IN,		NULL,	1);
+*/
 
 	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8000,		0,
 										USB_IN,		NULL,	2);
 	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8002,		0,
 										USB_IN,		NULL,	2);
+	//RESET write F0 anywhere
+//	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8000,		0xF0,
+//										USB_IN,		NULL,	1);
+
 	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8000,		0,
 										USB_IN,		NULL,	2);
 	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8002,		0,
 										USB_IN,		NULL,	2);
+	//Read what we're looking to flash
+	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x80AA,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8055,		0,
+										USB_IN,		NULL,	2);
+
+/*
+	//$AAA / AA 
+	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8AAA,		0xAA,
+										USB_IN,		NULL,	1);
+	//$555 / 55
+	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8555,		0x55,
+										USB_IN,		NULL,	1);
+	//$AAA / A0 program byte
+	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8AAA,		0xA0,
+										USB_IN,		NULL,	1);
+	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8055,		0xAA,
+										USB_IN,		NULL,	1);
+*/
 
 /*
 	dictionary_call_debug( transfer,	DICT_IO,	IO_RESET,		0,   0,   USB_IN,
