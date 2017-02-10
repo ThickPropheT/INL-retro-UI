@@ -1,8 +1,36 @@
 #include "test.h"
 
-int test_function( USBtransfer *transfer ) 
+int test_function( cartridge *cart, USBtransfer *transfer ) 
 {
 	debug("testing");
+	detect_console( cart, transfer );
+	dictionary_call( transfer,	DICT_IO,	IO_RESET,		0,   0,   USB_IN,
+										NULL,			1);
+	dictionary_call( transfer,	DICT_IO,	NES_INIT,		0,   0,   USB_IN,
+										NULL,			1);
+	debug("io reset and nes init'd");
+
+	//spansion/cypress A18-11 are don't care, that translates to A19-12 for byte mode I think
+	//$AAA / AA 
+	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8AAA,		0xAA,
+										USB_IN,		NULL,	1);
+	//$555 / 55
+	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8555,		0x55,
+										USB_IN,		NULL,	1);
+	//$AAA / 90 manf ID
+	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8AAA,		0x90,
+										USB_IN,		NULL,	1);
+
+	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8000,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8002,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8000,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8002,		0,
+										USB_IN,		NULL,	2);
+
+/*
 	dictionary_call_debug( transfer,	DICT_IO,	IO_RESET,		0,   0,   USB_IN,
 										NULL,			1);
 	dictionary_call_debug( transfer,	DICT_IO,	NES_INIT,		0,   0,   USB_IN,
@@ -88,6 +116,7 @@ int test_function( USBtransfer *transfer )
 										NULL,			8);
 	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_SEC_ELEMENTS,	0,   3,   USB_IN,
 										NULL,			8);
+										*/
 	/*debug("\nraw bank status");
 	dictionary_call_debug( transfer,	DICT_BUFFER,	RAW_BANK_STATUS,	0,   0,   USB_IN,
 										NULL,			2);

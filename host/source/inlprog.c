@@ -201,12 +201,6 @@ int main(int argc, char *argv[])
 	transfer->handle = open_usb_device( context, libusb_log );
 	check( transfer->handle != NULL, "Unable to open INL retro-prog usb device handle.");
 	
-	//TEST flag for development use to provide means to only call test.c functions
-	if (T_flag) {
-		test_function( transfer );
-		goto close;
-	}
-
 	//create board object/struct 
 	cartridge *cart = malloc( sizeof(cartridge));	
 	check_mem(cart);
@@ -214,6 +208,11 @@ int main(int argc, char *argv[])
 	//set all cart elements to UNKNOWN and allocate memory object within
 	init_cart_elements(cart);
 
+	//TEST flag for development use to provide means to only call test.c functions
+	if (T_flag) {
+		test_function( cart, transfer );
+		goto close;
+	}
 
 	// -x flag turns off all autodection
 	if (!x_flag) {

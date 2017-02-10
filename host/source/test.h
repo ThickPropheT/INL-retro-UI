@@ -22,12 +22,13 @@
 #include "shared_dictionaries.h"
 #include "dictionary.h"
 #include "buffer.h"
+#include "cartridge.h"
 
 //uncomment to DEBUG this file alone
 #define DEBUG
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 
-int test_function( USBtransfer *transfer );
+int test_function( cartridge *cart, USBtransfer *transfer );
 
 #endif

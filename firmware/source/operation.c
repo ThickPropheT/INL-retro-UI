@@ -47,7 +47,7 @@ uint8_t	* operation_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 read_funcptr	decode_rdfunc_num(uint8_t dict, uint8_t func_num ) 
 {
 
-	if ( dict == NES ) {
+	if ( dict == DICT_NES ) {
 		switch( func_num ) {
 			case NES_CPU_RD: return nes_cpu_rd;
 			case NES_PPU_RD: return nes_ppu_rd;
@@ -63,7 +63,7 @@ read_funcptr	decode_rdfunc_num(uint8_t dict, uint8_t func_num )
 
 write_funcptr	decode_wrfunc_num(uint8_t dict, uint8_t func_num ) 
 {
-	if ( dict == NES ) {
+	if ( dict == DICT_NES ) {
 		switch( func_num ) {
 			case DISCRETE_EXP0_PRGROM_WR: 
 				return discrete_exp0_prgrom_wr;
@@ -74,7 +74,6 @@ write_funcptr	decode_wrfunc_num(uint8_t dict, uint8_t func_num )
 			default:
 				return (void*)~SUCCESS;
 		}
-	}
 	} else {
 		//dictionary not supported
 		return (void*)~SUCCESS;
