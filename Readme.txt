@@ -76,6 +76,10 @@ Install minGW:
 		-Add new entries below assuming you used default location for minGW
 			C:\MinGW\bin
 			C:\MinGW\msys\1.0\bin
+		-I had troubles once with cp (copy) commands in Makefile
+causing a crash, even though the commands works outside of make.  Bumping the
+mingw path variables to the top of all my path variables corrected this issue.
+So that might help if you have similar issues...
 	
 Now host app can be built from windows command prompt command make when in host directory
 
