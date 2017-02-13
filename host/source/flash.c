@@ -52,6 +52,21 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	io_reset( transfer );
 	nes_init( transfer );
 	//Run some CRC's to determine size of memories
+	
+	//start operation at reset	
+	check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
+
+	//setup buffers and manager
+	//reset buffers first
+	check(! reset_buffers( transfer ), "Unable to reset device buffers");
+	//need to allocate some buffers for flashing
+	//2x 256Byte buffers
+	check(! allocate_buffers( transfer, num_buffers, buff_size ), "Unable to allocate buffers");
+
+	//tell buffers what function to use for flashing
+	//load operation elements into buff0 and then copy buff0 to oper_info
+	load_oper_info_elements( transfer, cart );
+	get_oper_info_elements( transfer );
 
 	//setup buffers and manager
 	//reset buffers first
@@ -71,25 +86,15 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	check(! set_map_n_mapvar( transfer, buff0, NROM, NILL ), "Unable to set mapper and map_var");
 	check(! set_map_n_mapvar( transfer, buff1, NROM, NILL ), "Unable to set mapper and map_var");
 
-	//tell buffers what function to use for flashing
-	//TODO when start implementing other mappers
-
 	//debugging print out buffer elements
 	get_operation( transfer );
 	get_buff_elements( transfer, buff0 );
 	get_buff_elements( transfer, buff1 );
 
-	//load operation elements into buff0 and then copy buff0 to oper_info
-	load_oper_info_elements( transfer, cart );
-	get_oper_info_elements( transfer );
-
 	debug("\n\nsetting operation STARTFLASH");
 	//inform buffer manager to start dumping operation now that buffers are initialized
 	check(! set_operation( transfer, STARTFLASH ), "Unable to set buffer operation");
 
-//	get_operation( transfer );
-//	get_buff_elements( transfer, buff0 );
-//	get_buff_elements( transfer, buff1 );
 //	//manager updates buffer status' so they'll start dumping
 //	//once they're full manager prepares them to be read back on USB payloads
 //	//once the next payload request happens manager knows last buffer can start dumping again
@@ -120,6 +125,32 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	tstart = clock();
 
 	//now just need to call series of payload IN transfers to retrieve data
+	
+	for( i=0; i<(32*KByte/buff_size); i++) {
+	//for( i=0; i<8; i++) {
+	//debug("\n\npayload out #%d", i);
+	//get_operation( transfer );
+	get_buff_elements( transfer, buff0 );
+	get_buff_elements( transfer, buff1 );
+		check(! read_from_file( rom, data, buff_size ), "Error with file read");
+		check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
+		//if ( i % 256 == 0 ) debug("payload in #%d", i);
+		if ( i % 32 == 0 ) debug("payload out #%d", i);
+	}
+	get_operation( transfer );
+	get_buff_elements( transfer, buff0 );
+	get_buff_elements( transfer, buff1 );
+	get_buff_elements( transfer, buff0 );
+	get_buff_elements( transfer, buff1 );
+	get_buff_elements( transfer, buff0 );
+	get_buff_elements( transfer, buff1 );
+	debug("payload done");
+
+	//end operation at reset	
+	check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
+
+
+/*
 	//for( i=0; i<(512*KByte/buff_size); i++) {
 	for( i=0; i<(32*KByte/buff_size); i++) {
 	//for( i=0; i<(8*KByte/buff_size); i++) {
@@ -164,6 +195,7 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 		if ( i % 32 == 0 ) debug("payload out #%d", i);
 	}
 	debug("payload done");
+*/
 
 	//close file in main
 

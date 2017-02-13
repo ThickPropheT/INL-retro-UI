@@ -269,6 +269,24 @@ int main(int argc, char *argv[])
 		rom->fileptr = NULL;
 		debug("closed");
 	}
+	//if flashing, determine if erasures are necessary and where
+
+	//erase required sectors of flash
+
+	//forced to erase board regardless of current status
+	//if (e_flag || p_value) {
+	if (e_flag) {
+		erase_nes( transfer );
+	}
+
+	//if flashing determine auto-doubling for oversized flash
+
+	//determine if rom can be flashed in a manner to make board compatible with rom
+	//ie CNROM/colordreams can be over flashed to play NROM
+	//BNROM can be overflashed to simulate UNROM
+	//SUROM can be overflashed to run as SNROM
+
+	//determine if snes input rom needs deinterleaved
 
 	if ( p_value ) {
 		//program file provided at commandline
@@ -283,23 +301,6 @@ int main(int argc, char *argv[])
 		debug("closed");
 	}
 
-	//if flashing, determine if erasures are necessary and where
-
-	//erase required sectors of flash
-
-	//forced to erase board regardless of current status
-	if (e_flag || p_value) {
-	//	erase_nes( transfer );
-	}
-
-	//if flashing determine auto-doubling for oversized flash
-
-	//determine if rom can be flashed in a manner to make board compatible with rom
-	//ie CNROM/colordreams can be over flashed to play NROM
-	//BNROM can be overflashed to simulate UNROM
-	//SUROM can be overflashed to run as SNROM
-
-	//determine if snes input rom needs deinterleaved
 
 	//dump or program data based on user args
 

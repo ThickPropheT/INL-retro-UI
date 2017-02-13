@@ -10,6 +10,26 @@ int test_function( cartridge *cart, USBtransfer *transfer )
 										NULL,			1);
 	debug("io reset and nes init'd");
 
+	/*
+	dictionary_call( transfer,	DICT_PINPORT,	PRGRW_RD,		0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_LO,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ADDR16_SET,		0x00AA,	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_HI,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ROMSEL_LO,		0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call_debug( transfer,DICT_PINPORT,	DATA_RD,		0,   	0,   USB_IN, 	NULL,	2);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_LO,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ROMSEL_HI,		0,   	0,   USB_IN, 	NULL,	1);
+
+	dictionary_call( transfer,	DICT_PINPORT,	PRGRW_RD,		0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_LO,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ADDR16_SET,		0x0055,	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_HI,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ROMSEL_LO,		0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call_debug( transfer,DICT_PINPORT,	DATA_RD,		0,   	0,   USB_IN, 	NULL,	2);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_LO,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ROMSEL_HI,		0,   	0,   USB_IN, 	NULL,	1);
+	*/
+
 /*
 	//spansion/cypress A18-11 are don't care, that translates to A19-12 for byte mode I think
 	//$AAA / AA 
@@ -23,22 +43,37 @@ int test_function( cartridge *cart, USBtransfer *transfer )
 										USB_IN,		NULL,	1);
 */
 
-	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8000,		0,
+	dictionary_call_debug( transfer,	DICT_NES,	NES_PPU_RD,			0x0000,		0,
 										USB_IN,		NULL,	2);
-	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8002,		0,
+	dictionary_call_debug( transfer,	DICT_NES,	NES_PPU_RD,			0x0055,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	NES_PPU_RD,			0x00AA,		0,
+										USB_IN,		NULL,	2);
+
+	dictionary_call_debug( transfer,	DICT_NES,	EMULATE_NES_CPU_RD,			0x8000,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	EMULATE_NES_CPU_RD,			0x8002,		0,
 										USB_IN,		NULL,	2);
 	//RESET write F0 anywhere
 //	dictionary_call( transfer,	DICT_NES,	NES_CPU_WR,			0x8000,		0xF0,
 //										USB_IN,		NULL,	1);
 
-	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8000,		0,
+	dictionary_call_debug( transfer,	DICT_NES,	EMULATE_NES_CPU_RD,			0x8000,		0,
 										USB_IN,		NULL,	2);
-	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8002,		0,
+	dictionary_call_debug( transfer,	DICT_NES,	EMULATE_NES_CPU_RD,			0x8002,		0,
 										USB_IN,		NULL,	2);
 	//Read what we're looking to flash
+	dictionary_call_debug( transfer,	DICT_NES,	EMULATE_NES_CPU_RD,			0x80AA,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	EMULATE_NES_CPU_RD,			0x8055,		0,
+										USB_IN,		NULL,	2);
 	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x80AA,		0,
 										USB_IN,		NULL,	2);
-	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x8055,		0,
+	dictionary_call_debug( transfer,	DICT_NES,	NES_PPU_RD,			0x0055,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	NES_CPU_RD,			0x80AA,		0,
+										USB_IN,		NULL,	2);
+	dictionary_call_debug( transfer,	DICT_NES,	NES_PPU_RD,			0x00AA,		0,
 										USB_IN,		NULL,	2);
 
 /*
@@ -55,6 +90,25 @@ int test_function( cartridge *cart, USBtransfer *transfer )
 										USB_IN,		NULL,	1);
 */
 
+	/*
+	dictionary_call( transfer,	DICT_PINPORT,	PRGRW_RD,		0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_LO,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ADDR16_SET,		0x00AA,	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_HI,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ROMSEL_LO,		0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call_debug( transfer,DICT_PINPORT,	DATA_RD,		0,   	0,   USB_IN, 	NULL,	2);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_LO,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ROMSEL_HI,		0,   	0,   USB_IN, 	NULL,	1);
+
+	dictionary_call( transfer,	DICT_PINPORT,	PRGRW_RD,		0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_LO,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ADDR16_SET,		0x0055,	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_HI,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ROMSEL_LO,		0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call_debug( transfer,DICT_PINPORT,	DATA_RD,		0,   	0,   USB_IN, 	NULL,	2);
+	dictionary_call( transfer,	DICT_PINPORT,	M2_LO,			0,   	0,   USB_IN, 	NULL,	1);
+	dictionary_call( transfer,	DICT_PINPORT,	ROMSEL_HI,		0,   	0,   USB_IN, 	NULL,	1);
+	*/
 /*
 	dictionary_call_debug( transfer,	DICT_IO,	IO_RESET,		0,   0,   USB_IN,
 										NULL,			1);
@@ -495,6 +549,9 @@ int test_function( cartridge *cart, USBtransfer *transfer )
 //	dictionary_call( transfer,	NES,	DISCRETE_EXP0_PRGROM_WR,	0x8000,		0x00);
 //	dictionary_call( transfer,	NES,	NES_CPU_RD,			0x8000,		0);
 //	dictionary_call( transfer,	NES,	NES_CPU_RD,			0x8000,		0);
+
+	dictionary_call( transfer,	DICT_IO,	IO_RESET,		0,   0,   USB_IN,
+										NULL,			1);
 
 	return 0;
 

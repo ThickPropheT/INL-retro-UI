@@ -306,18 +306,20 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 	//update counters and status
 	cur_usb_load_buff->cur_byte += len;
 	incoming_bytes_remain -= len;
-	usbWrite_status = SUCCESS;
+	//usbWrite_status = SUCCESS;
 
 	//want this function to be as fast as possible, so buffer.c checks if
 	//the buffer is full 'behind the scenes' outside of this function.
 	
-	if ( (cur_usb_load_buff->last_idx) == buf_cur) {
+	//if ( (cur_usb_load_buff->last_idx) == buf_cur) {
+	if ( cur_usb_load_buff->last_idx == cur_usb_load_buff->cur_byte ) {
 		//this signals to buffer.c so it can update cur_usb_load_buf
 		//and start tasking this buffer to programming
 		cur_usb_load_buff->status = USB_FULL;
 	}
 
 	if ( incoming_bytes_remain == 0 ) { //done with OUT transfer
+		cur_usb_load_buff->status = USB_FULL;
 		return PAYLD_DONE;
 	} else {	//more data packets remain to complete OUT transfer	
 		return NOT_DONE;

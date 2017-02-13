@@ -10,7 +10,7 @@ int load_oper_info_elements( USBtransfer *transfer, cartridge *cart )
 	uint8_t rv[RETURN_BUFF_SIZE];
 	uint8_t buff_num = 0;		//buffer used to load elements according to shared_dict_operation.h
 	uint8_t oper_info[OPER_DATA_NUM_BYTE_ELEMENTS];
-	int i;
+//	int i;
 	
 	//first make sure buff0 is big enough
 	dictionary_call_debug( transfer,	DICT_BUFFER,	GET_PRI_ELEMENTS,	NILL, 	buff_num,

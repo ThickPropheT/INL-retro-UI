@@ -161,8 +161,8 @@
 //rv5: id
 #define BUFF_ID		5
 //rv76: page_num
-#define BUFF_PGNUM_MSB	7
 #define BUFF_PGNUM_LSB	6
+#define BUFF_PGNUM_MSB	7
 
 
 //return buffer elements

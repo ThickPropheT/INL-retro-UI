@@ -166,7 +166,8 @@ int payload_out( USBtransfer *transfer, uint8_t *data, int length )
 	if ( length > MAX_VUSB ) {
 		return dictionary_call( transfer,	DICT_BUFFER,	BUFF_OUT_PAYLOAD_2B_INSP,
 			//byte0, 	byte1, 				bytes3-254
-			data[0], 	data[1],	USB_OUT,	&data[2],	length-2);
+			//data[0], 	data[1],	USB_OUT,	&data[2],	length-2);
+			((data[0]<<8) | data[1]), 	NILL,	USB_OUT,	&data[2],	length-2);
 	} else {
 		return dictionary_call( transfer,	DICT_BUFFER,	BUFF_PAYLOAD,
 			NILL, 		NILL,		USB_OUT,	data,		length);

@@ -3,11 +3,12 @@
 
 uint8_t	write_page( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
 {
-	uint8_t i = buff->cur_byte;
+	uint16_t cur = buff->cur_byte;
+	uint8_t	n = buff->cur_byte;
 	uint8_t read;
 	extern operation_info *oper_info;
 
-	do {
+	while ( cur <= buff->last_idx ) {
 		//write unlock sequence
 		//need to make address and unlock data variable
 		//best for host to communcate these values
@@ -31,17 +32,21 @@ uint8_t	write_page( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_
 		wr_func( oper_info->unlock2_AH, oper_info->unlock2_AL, oper_info->unlock2_data );
 		//wr_func( 0x55, 0x55, 0xA0 );
 		wr_func( oper_info->command_AH, oper_info->command_AL, oper_info->command1_data );
-		wr_func( addrH, i, buff->data[i] );
+		wr_func( addrH, n, buff->data[n] );
 	
 		do {
 			usbPoll();
-			read = rd_func( addrH, i );
+			read = rd_func( addrH, n );
 	
-		} while( read != rd_func( addrH, i) );
+		} while( read != rd_func( addrH, n) );
 		//TODO verify byte is value that was trying to be flashed
 		//move on to next byte
-		i++;
-	} while ( i != buff->last_idx );
+		n++;
+		cur++;
+
+	}
+
+	buff->cur_byte = n;
 
 	return SUCCESS;
 

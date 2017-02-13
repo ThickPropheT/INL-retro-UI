@@ -320,8 +320,7 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 	//if buffer number not designated by host buffer.c gets to decide
 	if ( hostsetbuff == FALSE ) {
 		//buffer.c gets to decide buffer in use
-		//TODO implement some fancy double buffering code
-		//for now just designate buffer 0
+		//buffer manager sets cur_buff
 		if ( endpoint == ENDPOINT_IN) {
 			//reads
 			if ( cur_buff->status == DUMPED ) {
@@ -330,7 +329,6 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 			} else {
 				//problem, buffers not prepared or initialized 
 				*rlength = USB_NO_MSG;
-				//operation = PROBLEM;
 				set_operation( PROBLEM );
 			}
 		} else {//writes
@@ -339,7 +337,6 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 				cur_usb_load_buff = cur_buff;
 				cur_buff->status = USB_LOADING;
 			} else {
-				//operation = PROBLEM;
 				set_operation( PROBLEM );
 			}
 		}
@@ -358,8 +355,8 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 	}
 
 	//now only thing left to do is stuff 2 bytes from setup packet into the buffer if designated by the opcode
-	if ( (spacket->opcode == BUFF_OUT_PAYLOAD_2B_INSP)
-	   ||(spacket->opcode == BUFF_OUT_PAYLOADN_2B_INSP) ) {
+	if ( (cur_buff->status == USB_LOADING) &&
+	     ((spacket->opcode == BUFF_OUT_PAYLOAD_2B_INSP)||(spacket->opcode == BUFF_OUT_PAYLOADN_2B_INSP)) ) {
 	//operandMSB:LSB actually contains first 2 bytes
 	//these two bytes don't count as part of transfer OUT byte count
 	//but they do count as part of buffer's byte count.
@@ -634,7 +631,6 @@ void update_buffers()
 	//this manager only needs to know which buffers are active
 	//but the host sets operation when it wants this manager to send 
 	//little buffers out to start dumping/flashing
-	//if ( (operation == STARTDUMP) || (operation == STARTFLASH ) ) {
 	if ( (get_operation() == STARTDUMP) || (get_operation() == STARTFLASH ) ) {
 		//only want to do this once per operation at the start
 		//figure out how many buffers are in operation
@@ -647,7 +643,6 @@ void update_buffers()
 		//now we can get_next_buff by passing cur_buff
 
 	}
-	//if (operation == STARTDUMP) {
 	if (get_operation() == STARTDUMP) {
 		//prepare both buffers to dump
 			
@@ -666,7 +661,6 @@ void update_buffers()
 		//operation = DUMPING;
 		set_operation( DUMPING );
 	}
-	//if (operation == STARTFLASH) {
 	if (get_operation() == STARTFLASH) {
 		//don't want to reenter start initialiation again
 		//operation = FLASHING;
@@ -685,7 +679,6 @@ void update_buffers()
 	}
 	
 	//this will get entered on first and all successive calls
-	//if ( operation == DUMPING ) {
 	if ( get_operation() == DUMPING ) {
 		//buffer_payload will pass cur_buff to usb driver on next IN transfer
 		//on receipt of the IN transfer buffer_payload sets: 
@@ -713,13 +706,13 @@ void update_buffers()
 		
 	}
 
-	//if ( operation == FLASHING ) {
 	if ( get_operation() == FLASHING ) {
 		//cur_buff will get sent to usbFunctionWrite on next payload OUT transfer
 		//All we need to do here is monitor usbFWr's status via incoming_bytes_remain
 		//which gets set to 254 on wr transfers once gets to zero buffer is filled
-		if ( incoming_bytes_remain == 0 ) {
+		if ( (incoming_bytes_remain == 0) && (cur_buff->status != EMPTY) ) {
 			incoming_bytes_remain--;	//don't want to re-enter
+		//if ( cur_buff->status == USB_FULL) {
 
 			//buffer full, send to flash routine
 			last_buff = cur_buff;
@@ -729,12 +722,13 @@ void update_buffers()
 			cur_buff->status = EMPTY;
 			
 			last_buff->status = FLASHING;
+			//last_buff->cur_byte = 0;
 			result = flash_buff( last_buff );
 			if (result != SUCCESS) {
 				last_buff->status = result;
 			} else {
 				last_buff->status = FLASHED;
-				cur_buff->page_num += cur_buff->reload;
+				last_buff->page_num += last_buff->reload;
 			}
 			//page should be flashed to memory now
 			//the next buffer should be in process of getting filled
