@@ -29,6 +29,7 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	int buff_size = 256;	
 	int buff0 = 0;
 	int buff1 = 1;
+	int cur_buff_status = 0;
 	int i;
 	uint8_t data[buff_size];
 
@@ -128,15 +129,36 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	
 	for( i=0; i<(32*KByte/buff_size); i++) {
 	//for( i=0; i<8; i++) {
-	//debug("\n\npayload out #%d", i);
+	debug("\n\npayload out #%d", i);
 	//get_operation( transfer );
-	get_buff_elements( transfer, buff0 );
-	get_buff_elements( transfer, buff1 );
+	//get_buff_elements( transfer, buff0 );
+	//get_buff_elements( transfer, buff1 );
+	//get_buff_elements( transfer, buff0 );
+	//get_buff_elements( transfer, buff1 );
+	
+	//The device doesn't have a good way to respond if the last buffer is flashing
+	//and the current one is full.  We can only send a payload if the current buffer
+	//is empty.
+	
+		//Read next chunk from file
 		check(! read_from_file( rom, data, buff_size ), "Error with file read");
+
+		//ensure cur_buff is EMPTY prior to sending data
+		check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+		while (cur_buff_status != EMPTY ) {
+			debug("cur_buff->status: %x ", cur_buff_status);
+			check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+		}
+		debug("cur_buff->status: %x\n", cur_buff_status);
+
+		//send data
 		check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
 		//if ( i % 256 == 0 ) debug("payload in #%d", i);
 		if ( i % 32 == 0 ) debug("payload out #%d", i);
 	}
+	check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+	debug("\n\n\ncur_buff->status: %x\n", cur_buff_status);
+
 	get_operation( transfer );
 	get_buff_elements( transfer, buff0 );
 	get_buff_elements( transfer, buff1 );
@@ -144,10 +166,11 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	get_buff_elements( transfer, buff1 );
 	get_buff_elements( transfer, buff0 );
 	get_buff_elements( transfer, buff1 );
+	get_operation( transfer );
 	debug("payload done");
 
 	//end operation at reset	
-	check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
+	//check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
 
 
 /*

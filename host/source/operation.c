@@ -123,7 +123,7 @@ int set_operation( USBtransfer *transfer, int operation )
 int get_operation( USBtransfer *transfer ) 
 {
 	printf("operation:");
-	dictionary_call( transfer,	DICT_OPER,	GET_OPERATION,	NILL, 	NILL,
+	dictionary_call_debug( transfer,	DICT_OPER,	GET_OPERATION,	NILL, 	NILL,
 								USB_IN,		NULL,	RV_DATA0_IDX+1);
 	return SUCCESS;
 }

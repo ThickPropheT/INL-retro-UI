@@ -229,10 +229,10 @@ uint8_t buffer_opcode_return( uint8_t opcode, buffer *buff,
 				*rvalue = raw_bank_status[operLSB];	
 				*rlength += 1;
 			break;
-		//case GET_BUFF_OPERATION:	
-		//		*rvalue = operation;	
-		//		*rlength += 1;
-		//	break;
+		case GET_CUR_BUFF_STATUS:	
+				*rvalue = cur_buff->status;	
+				*rlength += 1;
+			break;
 		case GET_PRI_ELEMENTS:	
 				rvalue[0] = buff->last_idx;
 				rvalue[1] = buff->status;
@@ -337,6 +337,8 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 				cur_usb_load_buff = cur_buff;
 				cur_buff->status = USB_LOADING;
 			} else {
+				//both buffers are in use
+				//last buffer is flashing, and cur is full, need to wait on last to finish
 				set_operation( PROBLEM );
 			}
 		}
@@ -710,15 +712,19 @@ void update_buffers()
 		//cur_buff will get sent to usbFunctionWrite on next payload OUT transfer
 		//All we need to do here is monitor usbFWr's status via incoming_bytes_remain
 		//which gets set to 254 on wr transfers once gets to zero buffer is filled
-		if ( (incoming_bytes_remain == 0) && (cur_buff->status != EMPTY) ) {
-			incoming_bytes_remain--;	//don't want to re-enter
-		//if ( cur_buff->status == USB_FULL) {
+		//if ( (incoming_bytes_remain == 0) && (cur_buff->status != EMPTY) ) {
+		//	incoming_bytes_remain--;	//don't want to re-enter
+		if ( cur_buff->status == USB_FULL) {
 
 			//buffer full, send to flash routine
 			last_buff = cur_buff;
 			//but first want to update cur_buff to next buffer so it can 
 			//start loading on next OUT transfer
 			cur_buff = get_next_buff( cur_buff, num_buff );
+
+			//the other buffer must be complete if we've gotten to this point
+			//because this function only gets called from main
+			//so we can now change it from FLASHED to EMPTY
 			cur_buff->status = EMPTY;
 			
 			last_buff->status = FLASHING;

@@ -22,6 +22,7 @@
 #include "pindef.h"
 
 int reset_buffers( USBtransfer *transfer );
+int get_cur_buff_status( USBtransfer *transfer, int *status );
 int allocate_buffers( USBtransfer *transfer, int num_buffers, int buff_size );
 int set_mem_n_part( USBtransfer *transfer, int buff_num, int mem_type, int part_num );
 int set_map_n_mapvar( USBtransfer *transfer, int buff_num, int mapper, int map_var );

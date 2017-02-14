@@ -192,9 +192,8 @@
 //return value status of that raw bank (set to bank id if allocated)
 #define RAW_BANK_STATUS		0x60
 
-//retrieve buffer manager current operation variable
-//#define GET_BUFF_OPERATION	0x61
-//moved to shared_dict_operation.h
+//retrieve cur_buff status
+#define GET_CUR_BUFF_STATUS	0x61
 
 
 

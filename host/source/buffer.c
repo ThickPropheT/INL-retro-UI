@@ -11,6 +11,26 @@ int reset_buffers( USBtransfer *transfer )
 								USB_IN,		NULL,	1);
 }
 
+/* Desc:Get cur_buff status.  Used to ensure device is ready for next payload
+ * Pre: 
+ * Post:
+ * Rtn: cur buff status byte
+ */
+int get_cur_buff_status( USBtransfer *transfer, int *status ) 
+{
+	int rv;
+	uint8_t data[2];
+
+	rv = dictionary_call( transfer,	DICT_BUFFER,	GET_CUR_BUFF_STATUS,	NILL,	NILL,	
+								USB_IN,		data,	2);
+	
+	if ( rv == SUCCESS )
+		//was able to retrieve status
+		*status = data[RV_DATA0_IDX];
+
+	return rv;
+}
+
 /* Desc:allocate buffers on device
  * Pre: buffers must be reset
  * Post:All buffers and raw sram unallocated
