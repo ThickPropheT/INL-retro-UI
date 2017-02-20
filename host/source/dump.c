@@ -15,6 +15,7 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	int buff0 = 0;
 	int buff1 = 1;
 	int i;
+	int cur_buff_status = 0;
 	uint8_t data[buff_size];
 
 
@@ -103,6 +104,12 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	//now just need to call series of payload IN transfers to retrieve data
 	//for( i=0; i<(512*KByte/buff_size); i++) {
 	for( i=0; i<(32*KByte/buff_size); i++) {
+		//ensure cur_buff is DUMPED prior to requsting data
+		check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+		while (cur_buff_status != DUMPED ) {
+			//debug("cur_buff->status: %x ", cur_buff_status);
+			check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+		}
 	//for( i=0; i<(8*KByte/buff_size); i++) {
 		//payload transfer in and append to file
 	//	if ( i % 256 == 0 ) debug("payload in #%d", i);
