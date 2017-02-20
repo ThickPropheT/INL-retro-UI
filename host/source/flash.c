@@ -129,7 +129,7 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	
 	for( i=0; i<(32*KByte/buff_size); i++) {
 	//for( i=0; i<8; i++) {
-	debug("\n\npayload out #%d", i);
+	//debug("\n\npayload out #%d", i);
 	//get_operation( transfer );
 	//get_buff_elements( transfer, buff0 );
 	//get_buff_elements( transfer, buff1 );
@@ -146,10 +146,9 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 		//ensure cur_buff is EMPTY prior to sending data
 		check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
 		while (cur_buff_status != EMPTY ) {
-			debug("cur_buff->status: %x ", cur_buff_status);
+			//debug("cur_buff->status: %x ", cur_buff_status);
 			check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
 		}
-		debug("cur_buff->status: %x\n", cur_buff_status);
 
 		//send data
 		check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
@@ -158,41 +157,21 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	}
 	check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
 	debug("\n\n\ncur_buff->status: %x\n", cur_buff_status);
+	//TODO add check to ensure both buffers are done and operation is okay
+	//currently just make a few extra get elements calls to waste time
 
 	get_operation( transfer );
-	get_buff_elements( transfer, buff0 );
-	get_buff_elements( transfer, buff1 );
-	get_buff_elements( transfer, buff0 );
-	get_buff_elements( transfer, buff1 );
 	get_buff_elements( transfer, buff0 );
 	get_buff_elements( transfer, buff1 );
 	get_operation( transfer );
 	debug("payload done");
 
 	//end operation at reset	
-	//check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
-
-
-/*
-	//for( i=0; i<(512*KByte/buff_size); i++) {
-	for( i=0; i<(32*KByte/buff_size); i++) {
-	//for( i=0; i<(8*KByte/buff_size); i++) {
-		check(! read_from_file( rom, data, buff_size ), "Error with file read");
-		check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
-		//if ( i % 256 == 0 ) debug("payload in #%d", i);
-		if ( i % 32 == 0 ) debug("payload out #%d", i);
-	}
-	debug("payload done");
-	//need to delay further USB commands until last buffer is flashed
-	//TODO spin while buff1 status == FLASHING
-	//currently this takes about as long as two get elements
-	get_buff_elements( transfer, buff1 );
-	get_buff_elements( transfer, buff1 );
-	get_buff_elements( transfer, buff1 );
+	check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
 
 	tstop = clock();
 	float timediff = ( (float)(tstop-tstart) / CLOCKS_PER_SEC);
-	printf("total time: %fsec, speed: %fKBps\n", timediff, (512/timediff));
+	printf("total time: %fsec, speed: %fKBps\n", timediff, (32/timediff));
 	//TODO flush file from time to time..?
 
 
@@ -200,6 +179,7 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	// or not..?  just reset buffers and start next memory or quit
 	//reset buffers and setup to dump CHR-ROM
 
+/*
 	check(! reset_buffers( transfer ), "Unable to reset device buffers");
 	check(! allocate_buffers( transfer, num_buffers, buff_size ), "Unable to allocate buffers");
 	check(! set_mem_n_part( transfer, buff0, CHRROM, SST_MANF_ID ), "Unable to set mem_type and part");

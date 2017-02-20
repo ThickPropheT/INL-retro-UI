@@ -303,12 +303,15 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 		data_cur++;
 	}
 
+#ifdef MAKECHECKS
 	//need to account for the fact that cur_byte will roll over being 8bit value
 	if ( cur_usb_load_buff->last_idx == (cur_usb_load_buff->cur_byte + len - 1) ) {
 		//this signals to buffer.c so it can update cur_usb_load_buf
 		//and start tasking this buffer to programming
 		cur_usb_load_buff->status = USB_FULL;
 	}
+#endif
+
 
 	//update counters and status
 	cur_usb_load_buff->cur_byte += len;
@@ -320,7 +323,8 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 	
 
 	if ( incoming_bytes_remain == 0 ) { //done with OUT transfer
-	//	cur_usb_load_buff->status = USB_FULL;
+		//alternate to MAKECHECKS should be faster but require transfer sizes to match buffer size
+		cur_usb_load_buff->status = USB_FULL;
 		return PAYLD_DONE;
 	} else {	//more data packets remain to complete OUT transfer	
 		return NOT_DONE;
