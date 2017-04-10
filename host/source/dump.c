@@ -140,6 +140,12 @@ int dump_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	check(! set_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
 
 	for( i=0; i<(8*KByte/buff_size); i++) {
+		//ensure cur_buff is DUMPED prior to requsting data
+		check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+		while (cur_buff_status != DUMPED ) {
+			//debug("cur_buff->status: %x ", cur_buff_status);
+			check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+		}
 		//payload transfer in and append to file
 		if ( i % 256 == 0 ) debug("payload in #%d", i);
 		check(! payload_in( transfer, data, buff_size ), "Error with payload IN");
