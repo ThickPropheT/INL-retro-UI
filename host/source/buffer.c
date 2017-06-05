@@ -214,6 +214,24 @@ int get_buff_elements( USBtransfer *transfer, int buff_num )
 	return SUCCESS;
 }
 
+/* Desc:Get buffer element and return value
+ * Pre: buffers are allocated
+ * Post: sets value to requested value
+ * Rtn: SUCCESS if no errors
+ */
+int get_buff_element_value( USBtransfer *transfer, int buff_num, int pri_sec, int element_num, int *value ) 
+{
+	int rv;
+	uint8_t data[8];
+
+	rv = dictionary_call( transfer,	DICT_BUFFER,	pri_sec,	NILL,	buff_num,	
+								USB_IN,		data,	8);
+
+	*value = data[element_num];
+
+	return rv;
+}
+
 ///* Desc:Get buffer opertationt
 // * Pre: 
 // * Post:

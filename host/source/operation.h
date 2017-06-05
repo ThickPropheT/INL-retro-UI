@@ -22,6 +22,7 @@
 #include "pindef.h"
 
 int load_oper_info_elements( USBtransfer *transfer, cartridge *cart );
+int load_oper_info_elements_chr( USBtransfer *transfer, cartridge *cart );
 int get_oper_info_elements( USBtransfer *transfer );
 int set_operation( USBtransfer *transfer, int operation );
 int get_operation( USBtransfer *transfer );

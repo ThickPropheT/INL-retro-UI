@@ -101,26 +101,6 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 //	//once the next payload request happens manager knows last buffer can start dumping again
 //	//buffer updates it's elements and goes off to dump next page
 //
-//	debug("first payload");
-//	check(! read_from_file( rom, data, buff_size ), "Error with file read");
-//	//check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
-//	payload_out( transfer, data, buff_size );
-//	get_operation( transfer );
-//	get_buff_elements( transfer, buff0 );
-//	get_buff_elements( transfer, buff1 );
-//
-//	debug("first payload done");
-////	get_operation( transfer );
-////	get_buff_elements( transfer, buff0 );
-////	get_buff_elements( transfer, buff1 );
-////
-//	debug("second payload");
-//	check(! read_from_file( rom, data, buff_size ), "Error with file read");
-//	check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
-
-//	get_operation( transfer );
-//	get_buff_elements( transfer, buff0 );
-//	get_buff_elements( transfer, buff1 );
 
 	clock_t tstart, tstop;
 	tstart = clock();
@@ -128,13 +108,6 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	//now just need to call series of payload IN transfers to retrieve data
 	
 	for( i=0; i<(32*KByte/buff_size); i++) {
-	//for( i=0; i<8; i++) {
-	//debug("\n\npayload out #%d", i);
-	//get_operation( transfer );
-	//get_buff_elements( transfer, buff0 );
-	//get_buff_elements( transfer, buff1 );
-	//get_buff_elements( transfer, buff0 );
-	//get_buff_elements( transfer, buff1 );
 	
 	//The device doesn't have a good way to respond if the last buffer is flashing
 	//and the current one is full.  We can only send a payload if the current buffer
@@ -156,14 +129,16 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 		if ( i % 32 == 0 ) debug("payload out #%d", i);
 	}
 	check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
-	debug("\n\n\ncur_buff->status: %x\n", cur_buff_status);
-	//TODO add check to ensure both buffers are done and operation is okay
-	//currently just make a few extra get elements calls to waste time
+	//debug("\n\n\ncur_buff->status: %x\n", cur_buff_status);
+	
+	//add check to ensure both buffers are done and operation is okay
+	//need to get status of buff1 and make sure it's flashed
+	while (cur_buff_status != FLASHED ) {
+		check(! get_buff_element_value( transfer, buff1, GET_PRI_ELEMENTS, BUFF_STATUS, &cur_buff_status ), 
+			"Error retrieving buffer status post flashing");
+	//	debug("\n\n\ncur_buff->status: %x\n", cur_buff_status);
+	}
 
-	get_operation( transfer );
-	get_buff_elements( transfer, buff0 );
-	get_buff_elements( transfer, buff1 );
-	get_operation( transfer );
 	debug("payload done");
 
 	//end operation at reset	
@@ -178,8 +153,11 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	//tell buffer manager when to stop
 	// or not..?  just reset buffers and start next memory or quit
 	//reset buffers and setup to dump CHR-ROM
+	
+	//load operation elements into buff0 and then copy buff0 to oper_info
+	load_oper_info_elements_chr( transfer, cart );
+	get_oper_info_elements( transfer );
 
-/*
 	check(! reset_buffers( transfer ), "Unable to reset device buffers");
 	check(! allocate_buffers( transfer, num_buffers, buff_size ), "Unable to allocate buffers");
 	check(! set_mem_n_part( transfer, buff0, CHRROM, SST_MANF_ID ), "Unable to set mem_type and part");
@@ -191,16 +169,44 @@ int flash_cart( USBtransfer* transfer, rom_image *rom, cartridge *cart )
 	//inform buffer manager to start dumping operation now that buffers are initialized
 	check(! set_operation( transfer, STARTFLASH ), "Unable to set buffer operation");
 
+
+	tstart = clock();
+
+	//now just need to call series of payload IN transfers to retrieve data
+	
 	for( i=0; i<(8*KByte/buff_size); i++) {
+	
+		//Read next chunk from file
 		check(! read_from_file( rom, data, buff_size ), "Error with file read");
+
+		//ensure cur_buff is EMPTY prior to sending data
+		check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+		while (cur_buff_status != EMPTY ) {
+			//debug("cur_buff->status: %x ", cur_buff_status);
+			check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+		}
+
+		//send data
 		check(! payload_out( transfer, data, buff_size ), "Error with payload OUT");
 		//if ( i % 256 == 0 ) debug("payload in #%d", i);
 		if ( i % 32 == 0 ) debug("payload out #%d", i);
 	}
-	debug("payload done");
-*/
+	check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+	//debug("\n\n\ncur_buff->status: %x\n", cur_buff_status);
+	
+	//check to ensure both buffers are done and operation is okay before resetting
+	//need to get status of buff1 and make sure it's flashed
+	while (cur_buff_status != FLASHED ) {
+		check(! get_buff_element_value( transfer, buff1, GET_PRI_ELEMENTS, BUFF_STATUS, &cur_buff_status ), 
+			"Error retrieving buffer status post flashing");
+	//	debug("\n\n\ncur_buff->status: %x\n", cur_buff_status);
+	}
 
+	debug("payload done");
 	//close file in main
+	
+	//end operation at reset	
+	check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
 
 	//reset io at end
 	io_reset( transfer );

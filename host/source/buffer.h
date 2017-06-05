@@ -29,5 +29,6 @@ int set_map_n_mapvar( USBtransfer *transfer, int buff_num, int mapper, int map_v
 int payload_in( USBtransfer *transfer, uint8_t *data, int length );
 int payload_out( USBtransfer *transfer, uint8_t *data, int length );
 int get_buff_elements( USBtransfer *transfer, int buff_num );
+int get_buff_element_value( USBtransfer *transfer, int buff_num, int pri_sec, int element_num, int *value );
 
 #endif
