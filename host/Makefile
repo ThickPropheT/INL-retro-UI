@@ -5,19 +5,21 @@ WINLIB= -L ./winlib
 LIBUSB= -lusb-1.0
 CC= gcc
 
-SOURCES=$(wildcard source/**/*.c source/*.c)
+SOURCES=$(wildcard source/*.c)
 OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
+
+LUAOBJ=$(wildcard source/lua/*.o)
 
 TARGET=inlretro
 
 #default to windows build
 all:	shared
-	$(CC) $(INCLUDE) $(SOURCES) -o $(TARGET) $(WINLIB) $(CFLAGS) $(LIBUSB) 
+	$(CC) $(INCLUDE) $(LUAOBJ) $(SOURCES) -o $(TARGET) $(WINLIB) $(CFLAGS) $(LIBUSB) 
 
 #unix build doesn't need winlib directory as libusb should be installed on OS.
 #sudo apt-get install libusb-1.0-0-dev
 unix:	shared
-	$(CC) $(INCLUDE) $(SOURCES) -o $(TARGET) $(CFLAGS) -lm $(LIBUSB)
+	$(CC) $(INCLUDE) $(LUAOBJ) $(SOURCES) -o $(TARGET) $(CFLAGS) -lm $(LIBUSB)
 
 # "make debug" will build program with debug print messages
 # -DDEBUG show debug logs
@@ -36,6 +38,6 @@ shared:
 
 #clean on unix and windows(.exe)
 clean:
-	rm -f $(TARGET) $(TARGET).exe $(OBJECTS)
+	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) $(LUAOBJ)
 	rm -f source/shared_*
 
