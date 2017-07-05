@@ -8,6 +8,9 @@ sudo apt-get install libusb-1.0-0-dev
 
 make:
 gcc -I include inlretro.c -o inlretro -lusb-1.0
+or just run make unix from host folder.
+As noted in windows instructions below, lua must be built first
+-cd host/source/lua, make o a, then make from host/source
 
 run:
 ./inlretro
@@ -82,6 +85,15 @@ mingw path variables to the top of all my path variables corrected this issue.
 So that might help if you have similar issues...
 	
 Now host app can be built from windows command prompt command make when in host directory
+
+Currently setup to compile lua separate from host app.  Need to get better at writing makefiles..
+But whatever it works and saves ~12sec of compile time with current setup.
+-go to host/source/lua
+-make o a
+-go back to host
+-make
+This way lua is compiled separately using it's provided make file.
+make clean still deletes lua object files, so this process must be reperformed if cleaned.
 
 FIRMWARE:
 Download and Install WinAVR
