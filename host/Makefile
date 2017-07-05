@@ -17,7 +17,7 @@ all:	shared
 #unix build doesn't need winlib directory as libusb should be installed on OS.
 #sudo apt-get install libusb-1.0-0-dev
 unix:	shared
-	$(CC) $(INCLUDE) $(SOURCES) -o $(TARGET) $(CFLAGS) $(LIBUSB)
+	$(CC) $(INCLUDE) $(SOURCES) -o $(TARGET) $(CFLAGS) -lm $(LIBUSB)
 
 # "make debug" will build program with debug print messages
 # -DDEBUG show debug logs
