@@ -1,5 +1,40 @@
 #include "dictionary.h"
 
+static USBtransfer *usb_xfr = NULL;
+
+void init_dictionary( USBtransfer *transfer ) {
+	usb_xfr = transfer;
+	return;
+}
+
+int lua_dictionary_call (lua_State *L) {
+	//double d = lua_tonumber(L, 1); /* get argument */
+	int arg1 = luaL_checknumber(L, 1); /* get argument */
+	int arg2 = luaL_checknumber(L, 2); /* get argument */
+	int arg3 = luaL_checknumber(L, 3); /* get argument */
+	int arg4 = luaL_checknumber(L, 4); /* get argument */
+	printf("arg1 %d, arg2 %d\n", arg1, arg2);
+	printf("arg3 %d, arg4 %d\n", arg3, arg4);
+
+	check( usb_xfr != NULL, "dictionary usb transfer pointer not initialized.\n")
+
+	//dictionary_call_print_option( FALSE, transfer, dictionary, opcode, addr, miscdata, endpoint, buffer, length);
+	
+	dictionary_call( usb_xfr,	DICT_PINPORT,	LED_OP,		0,   0,   USB_IN,
+										NULL,			1);
+	dictionary_call( usb_xfr,	DICT_PINPORT,	LED_ON,		0,   0,   USB_IN,
+										NULL,			1);
+
+	lua_pushnumber(L, (2*arg1)); /* push result */
+	return 1; /* number of results */
+
+error:
+	printf("dictionary call went to error\n");
+	lua_pushstring(L, "ERROR"); /* push result */
+	return 1;
+
+}
+
 /* Make dictionary calls simpler
  * provide USBtransfer pointer with handle set to retro programmer
  * provide dictionary as defined in shared_dictionaries.h (request)

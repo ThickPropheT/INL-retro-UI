@@ -12,23 +12,24 @@
 //"make debug" to get DEBUG msgs on entire program
 #include "dbg.h"
 
-#include "shared_dictionaries.h"
+//#include "shared_dictionaries.h"
 #include "usb_operations.h"
-#include "write_operations.h"
-#include "erase.h"
-#include "test.h"
-#include "cartridge.h"
-#include "file.h"
-#include "dump.h"
-#include "flash.h"
-#include "shared_enums.h"
+#include "dictionary.h"
+//#include "write_operations.h"
+//#include "erase.h"
+//#include "test.h"
+//#include "cartridge.h"
+//#include "file.h"
+//#include "dump.h"
+//#include "flash.h"
+//#include "shared_enums.h"
 
 //lua libraries
 #include "lua/lua.h"
 #include "lua/lauxlib.h"
 #include "lua/lualib.h"
 
-void error (lua_State *L, const char *fmt, ...) {
+void error_lua (lua_State *L, const char *fmt, ...) {
 	va_list argp;
 	va_start(argp, fmt);
 	vfprintf(stderr, fmt, argp);
@@ -42,41 +43,21 @@ int getglobint (lua_State *L, const char *var) {
 	lua_getglobal(L, var);
 	result = (int)lua_tointegerx(L, -1, &isnum);
 	if (!isnum)
-		error(L, "'%s' should be a number\n", var);
-		//printf("'%s' should be a number\n", var);
+		error_lua(L, "'%s' should be a number\n", var);
 	lua_pop(L, 1); /* remove result from the stack */
 	return result;
 }
 
 void load (lua_State *L, const char *fname, int *w, int *h) {
 	if (luaL_loadfile(L, fname) || lua_pcall(L, 0, 0, 0))
-		error(L, "cannot run config. file: %s", lua_tostring(L, -1));
-		//printf("cannot run config. file: %s", lua_tostring(L, -1));
+		error_lua(L, "cannot run config. file: %s", lua_tostring(L, -1));
 	*w = getglobint(L, "width");
 	*h = getglobint(L, "height");
 }
 
 int main(int argc, char *argv[]) 
 {	
-//	char buff[256];
-//	int error;
-	lua_State *L = luaL_newstate(); /* opens Lua */
-	luaL_openlibs(L); /* opens the standard libraries */
 
-	int high, wide;
-	load(L, "scripts/test.lua", &high, &wide );
-	printf("high= %d, wide=%d\n", high, wide);
-//	while (fgets(buff, sizeof(buff), stdin) != NULL) {
-//		error = luaL_loadstring(L, buff) || lua_pcall(L, 0, 0, 0);
-//		if (error) {
-//			fprintf(stderr, "%s\n", lua_tostring(L, -1));
-//			lua_pop(L, 1); /* pop error message from the stack */
-//		}
-//	}
-	lua_close(L);
-	return 0;
-
-	/*luacut
 
 	//lower case flags suggested for average user
 	int e_flag = 0; //FORCE ERASE
@@ -109,10 +90,17 @@ int main(int argc, char *argv[])
 	char *S_value = NULL; //program SNES binary file
 	char *W_value = NULL; //program WRAM/SRAM file
 
-	int operation = 0;	//used to denote the overall operation being requested flash/dump/verify etc
+//	int operation = 0;	//used to denote the overall operation being requested flash/dump/verify etc
 	int index = 0;
 	int rv = 0;
 	opterr = 0;
+
+	//usb variables
+	USBtransfer *transfer = NULL;
+
+	//lua variables
+	lua_State *L = NULL;
+
 
 	//getopt returns args till done then returns -1
 	//string of possible args : denotes 1 required additional arg
@@ -180,11 +168,11 @@ int main(int argc, char *argv[])
 	
 	}
 
-//	debug("flags= o:%d n:%d e:%d f:%d h:%d i:%d t:%d x:%d y:%d T:%d", 
-//		o_flag, n_flag, e_flag, f_flag, h_flag, i_flag, t_flag, x_flag, y_flag, T_flag ); 
-//	debug("args= b:%s c:%s d:%s m:%s p:%s", b_value, c_value, d_value, m_value, p_value); 
-//	debug("args= s:%s v:%s C:%s L:%s K:%s", s_value, v_value, C_value, L_value, K_value); 
-//	debug("args= O:%s P:%s S:%s W:%s", O_value, P_value, S_value, W_value); 
+	debug("flags= o:%d n:%d e:%d f:%d h:%d i:%d t:%d x:%d y:%d T:%d", 
+		o_flag, n_flag, e_flag, f_flag, h_flag, i_flag, t_flag, x_flag, y_flag, T_flag ); 
+	debug("args= b:%s c:%s d:%s m:%s p:%s", b_value, c_value, d_value, m_value, p_value); 
+	debug("args= s:%s v:%s C:%s L:%s K:%s", s_value, v_value, C_value, L_value, K_value); 
+	debug("args= O:%s P:%s S:%s W:%s", O_value, P_value, S_value, W_value); 
 
 	for( index = optind; index < argc; index++) {
 		log_err("Non-option arguement: %s \n", argv[index]);
@@ -195,14 +183,21 @@ int main(int argc, char *argv[])
 		printf("You've asked for help but the help message still needs created...\n");
 		return 0;
 	}
-
-	if ( O_value || v_value || s_value || b_value || y_flag || t_flag || f_flag ) {
+/*
+	if ( O_value || v_value || b_value || y_flag || t_flag || f_flag ) {
 		printf("option not currently supported sorry...\n");
 	}
+*/
 
-	//Determine overall operation being performed based on user args
-	//Also don't want to continue if conflicting args are being used
+	//Start up Lua
+	L = luaL_newstate(); //opens Lua
+	luaL_openlibs(L); //opens the standard libraries
 
+	//register C functions that can be called from Lua
+	lua_pushcfunction(L, lua_dictionary_call);
+	lua_setglobal(L, "dict_call");
+	
+/*
 	//flags about input files only used for writes
 	if ( p_value || i_flag || C_value || P_value || S_value || W_value ) {
 		check( d_value == NULL, "input args conflict can't program and dump in same operation.");
@@ -214,44 +209,61 @@ int main(int argc, char *argv[])
 		check( e_flag == 0, "input args conflict can't erase and dump in same operation.");
 		operation = READ;
 	}
+*/
+
+//TODO all commandline args must be collected and passed into lua
 
 	//context set to NULL since only acting as single user of libusb
 	libusb_context *context = NULL;
 
 	//create USBtransfer struct to hold all transfer info
-	USBtransfer *transfer = malloc( sizeof(USBtransfer));	
+	transfer = malloc( sizeof(USBtransfer));	
+	check_mem(transfer);
 
 	//create usb device handle pointer to interact with retro-prog
-	//libusb_device_handle *rprog_handle = NULL;
 	transfer->handle = NULL;
 
+
 	//create file object/struct 
-	rom_image *rom = malloc( sizeof(rom_image));	
+//	rom_image *rom = malloc( sizeof(rom_image));	
+//
+//	check_mem(rom);
+//	init_rom_elements(rom);
 
-	check_mem(transfer);
-	check_mem(rom);
-	init_rom_elements(rom);
 
+	//lua script arg to set different LIBUSB debugging options
+	check( !(luaL_loadfile(L, "scripts/usb_device.lua") || lua_pcall(L, 0, 0, 0)),
+		"cannot run config. file: %s", lua_tostring(L, -1));
 
-	//command line arg L_value to set different LIBUSB debugging options
-	//any value > 0 also prints debug statements in open_usb_device function
 	int libusb_log = LIBUSB_LOG_LEVEL_NONE;	// 0: default no msgs ever printed
-	if (L_value != NULL) {
-		check( isdigit(L_value[0]), 
-			"Invalid LIBUSB_LOG_LEVEL: %s, only single digit allowed", L_value);
-		check( strlen(L_value) == 1, 
-			"Invalid LIBUSB_LOG_LEVEL: %s, only single digit allowed", L_value);
-		libusb_log = atoi(L_value);
-		check( ((libusb_log >= LIBUSB_LOG_LEVEL_NONE) && (libusb_log <=LIBUSB_LOG_LEVEL_DEBUG)), 
-		    "Invalid LIBUSB_LOG_LEVEL: %d, must be from 0 to 4", libusb_log );
-	}
+       	libusb_log = getglobint(L, "libusb_log");
+
+	//any value > 0 also prints debug statements in open_usb_device function
+	check( ((libusb_log >= LIBUSB_LOG_LEVEL_NONE) && (libusb_log <=LIBUSB_LOG_LEVEL_DEBUG)), 
+		"Invalid LIBUSB_LOG_LEVEL: %d, must be from 0 to 4", libusb_log );
+
+	//TODO get usb device settings from usb_device.lua
+
 	//open INL retro prog with firmware version 2.0 or greater
-	if (K_value != NULL) {
-		//TODO take K_value option to connect to different version kazzo
-	}
+	//if (K_value != NULL) {
+	//	//TODO take K_value option to connect to different version kazzo
+	//}
 	transfer->handle = open_usb_device( context, libusb_log );
 	check( transfer->handle != NULL, "Unable to open INL retro-prog usb device handle.");
+
 	
+	//provide dictionary.c with pointer to transfer so it can update it's local pointer
+	init_dictionary( transfer );
+
+	//usb device is open, pass args and control over to lua
+	if (s_value) {
+	check( !(luaL_loadfile(L, s_value) || lua_pcall(L, 0, 0, 0)),
+		"cannot run config. file: %s", lua_tostring(L, -1));
+	}
+
+	//program flow doesn't come back to this point until script call ends/returns
+	
+/*
 	//create board object/struct 
 	cartridge *cart = malloc( sizeof(cartridge));	
 	check_mem(cart);
@@ -351,6 +363,7 @@ int main(int argc, char *argv[])
 		rom->fileptr = NULL;
 		debug("closed");
 	}
+*/
 
 
 	//dump or program data based on user args
@@ -361,6 +374,7 @@ int main(int argc, char *argv[])
 
 	//handle simple LED ON/OFF within main for now
 	//TODO cut this newbie code out of here
+/*
 	int xfr_cnt = 0;
 	uint8_t rbuf[8];
 
@@ -390,20 +404,31 @@ int main(int argc, char *argv[])
 		}
 		printf("\n");
 	}
+*/
 
 
-close:
+//close:
+	lua_close(L);
+
 	close_usb( context, transfer->handle);	
 
-	if(rom->fileptr != NULL){
-	//close file
-		fclose(rom->fileptr);
-	}
+	free(transfer);
+
+//	if(rom->fileptr != NULL){
+//	//close file
+//		fclose(rom->fileptr);
+//	}
 	
 	return 0;
 
-error:
-//	printf("main program went to error\n");
+error: 	//checks goto error when failed
+	printf("main program went to error\n");
+
+	if ( transfer != NULL )
+		free(transfer);
+
+	if ( L != NULL )
+		lua_close(L);
 //
 //	close_usb( context, transfer->handle);	
 //	if(rom->fileptr != NULL){
@@ -412,6 +437,5 @@ error:
 
 
 	return 1;
-	luacut	*/
 
 }

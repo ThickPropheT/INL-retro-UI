@@ -50,6 +50,7 @@ libusb_device_handle * open_usb_device( libusb_context *context, int log_level )
 			printf("\tINFO: informational, warning, & error messages are printed to stdout\n");
 			break;
 			case 4:
+			default:
 			printf("\tDEBUG: debug, info, warning, & error messages are printed to stdout\n");
 			break;
 		}

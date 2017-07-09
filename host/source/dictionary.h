@@ -19,6 +19,15 @@
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 
+#include "lua/lua.h"
+#include "lua/lauxlib.h"
+#include "lua/lualib.h"
+
+
+void init_dictionary( USBtransfer *transfer );
+
+int lua_dictionary_call (lua_State *L);
+
 //default call dictionary without print option
 int dictionary_call( USBtransfer *transfer, uint8_t dictionary, uint8_t opcode, uint16_t addr, 
 			uint8_t miscdata, uint8_t endpoint, uint8_t *buffer, uint16_t length);
