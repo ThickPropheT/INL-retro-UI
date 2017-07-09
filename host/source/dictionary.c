@@ -8,24 +8,27 @@ void init_dictionary( USBtransfer *transfer ) {
 }
 
 int lua_dictionary_call (lua_State *L) {
-	//double d = lua_tonumber(L, 1); /* get argument */
-	int arg1 = luaL_checknumber(L, 1); /* get argument */
-	int arg2 = luaL_checknumber(L, 2); /* get argument */
-	int arg3 = luaL_checknumber(L, 3); /* get argument */
-	int arg4 = luaL_checknumber(L, 4); /* get argument */
-	printf("arg1 %d, arg2 %d\n", arg1, arg2);
-	printf("arg3 %d, arg4 %d\n", arg3, arg4);
+	int arg1 = luaL_checknumber(L, 1); /* get print argument */
+	int arg2 = luaL_checknumber(L, 2); /* get dictionary argument */
+	int arg3 = luaL_checknumber(L, 3); /* get opcode argument */
+	int arg4 = luaL_checknumber(L, 4); /* get addr argument */
+	int arg5 = luaL_checknumber(L, 5); /* get miscdata argument */
+	int arg6 = luaL_checknumber(L, 6); /* get endpoint argument */
+	//int arg7 = luaL_checknumber(L, 7); /* get buffer argument */
+	int arg8 = luaL_checknumber(L, 8); /* get length argument */
+	int rv; //return value
+
+
+//	printf("arg1 %d, arg2 %d\n", arg1, arg2);
+//	printf("arg3 %d, arg4 %d\n", arg3, arg4);
 
 	check( usb_xfr != NULL, "dictionary usb transfer pointer not initialized.\n")
 
 	//dictionary_call_print_option( FALSE, transfer, dictionary, opcode, addr, miscdata, endpoint, buffer, length);
 	
-	dictionary_call( usb_xfr,	DICT_PINPORT,	LED_OP,		0,   0,   USB_IN,
-										NULL,			1);
-	dictionary_call( usb_xfr,	DICT_PINPORT,	LED_ON,		0,   0,   USB_IN,
-										NULL,			1);
+	rv = dictionary_call_print_option( arg1, usb_xfr,	arg2,	arg3,	arg4,  arg5,   arg6, 	NULL,	arg8);
 
-	lua_pushnumber(L, (2*arg1)); /* push result */
+	lua_pushnumber(L, rv); /* push result */
 	return 1; /* number of results */
 
 error:
