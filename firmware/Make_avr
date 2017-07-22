@@ -9,6 +9,7 @@
 DEVICE  = atmega164a
 F_CPU   = 16000000	# in Hz
 PROJ	= avr_kazzo
+BUILD	= build_avr
 # Fuses and ISP programming handled in bootloader firmware build
 
 #SOURCES=$(wildcard source/**/*.c source/*.c)
@@ -22,22 +23,21 @@ COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 # symbolic targets:
 help:
 	@echo "This Makefile has no default rule. Use one of the following:"
-	@echo "make hex ............ to build $(PROJ).hex"
-	@echo "make program ........ windows flash firmware via bootloader"
-	@echo "make program_unix ... unix flash firmware via bootloader"
+	@echo "make hex ............ to build $(BUILD)/$(PROJ).hex"
+	@echo "make program ........ flash firmware via bootloader"
 	@echo "make clean .......... to delete objects and hex file"
 
-hex: $(PROJ).hex
+hex: $(BUILD)/$(PROJ).hex
 
-program: $(PROJ).hex 
-	../bootloader/commandline/bootloadHID.exe -r $<
-
-program_unix: $(PROJ).hex
+program: $(BUILD)/$(PROJ).hex
 	../bootloader/commandline/bootloadHID -r $<
+
+dir:
+	mkdir -p $(BUILD)
 
 # rule for deleting dependent files (those which can be built by Make):
 clean:
-	rm -f $(PROJ).hex $(PROJ).lst $(PROJ).obj $(PROJ).cof $(PROJ).list $(PROJ).map $(PROJ).eep.hex $(PROJ).elf $(OBJECTS) $(PROJ).s usbdrv_Vusb/oddebug.s usbdrv_Vusb/usbdrv.s source/shared_*
+	rm -rf $(BUILD) $(OBJECTS) $(BUILD)/$(PROJ).s usbdrv_Vusb/oddebug.s usbdrv_Vusb/usbdrv.s source/shared_*
 
 # Generic rule for compiling C files:
 .c.o:
@@ -57,22 +57,22 @@ clean:
 
 # file targets:
 
-$(PROJ).elf: shared $(OBJECTS)
-	$(COMPILE) -o $(PROJ).elf $(OBJECTS)
+$(BUILD)/$(PROJ).elf: dir shared $(OBJECTS)
+	$(COMPILE) -o $(BUILD)/$(PROJ).elf $(OBJECTS)
 
-$(PROJ).hex: $(PROJ).elf
-	rm -f $(PROJ).hex $(PROJ).eep.hex
-	avr-objcopy -j .text -j .data -O ihex $(PROJ).elf $(PROJ).hex
-#	avr-size -C --mcu=${DEVICE} $(PROJ).elf
-	avr-size $(PROJ).elf
+$(BUILD)/$(PROJ).hex: $(BUILD)/$(PROJ).elf
+	rm -f $(BUILD)/$(PROJ).hex $(BUILD)/$(PROJ).eep.hex
+	avr-objcopy -j .text -j .data -O ihex $(BUILD)/$(PROJ).elf $(BUILD)/$(PROJ).hex
+#	avr-size -C --mcu=${DEVICE} $(BUILD)/$(PROJ).elf
+	avr-size $(BUILD)/$(PROJ).elf
 
 # debugging targets:
 
-disasm:	$(PROJ).elf
-	avr-objdump -d $(PROJ).elf
+disasm:	$(BUILD)/$(PROJ).elf
+	avr-objdump -d $(BUILD)/$(PROJ).elf
 
 cpp:
-	$(COMPILE) -E $(PROJ).c
+	$(COMPILE) -E $(BUILD)/$(PROJ).c
 
 #copy shared .h files which are used in host and firmware
 shared:
