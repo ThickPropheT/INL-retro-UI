@@ -8,7 +8,6 @@
 
 DEVICE  = atmega164a
 F_CPU   = 16000000	# in Hz
-PROJ	= avr_kazzo
 # Fuses and ISP programming handled in bootloader firmware build
 
 #SOURCES=$(wildcard source/**/*.c source/*.c)
@@ -22,22 +21,22 @@ COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 # symbolic targets:
 help:
 	@echo "This Makefile has no default rule. Use one of the following:"
-	@echo "make hex ............ to build $(PROJ).hex"
+	@echo "make hex ............ to build main.hex"
 	@echo "make program ........ windows flash firmware via bootloader"
 	@echo "make program_unix ... unix flash firmware via bootloader"
 	@echo "make clean .......... to delete objects and hex file"
 
-hex: $(PROJ).hex
+hex: main.hex
 
-program: $(PROJ).hex 
+program: main.hex 
 	../bootloader/commandline/bootloadHID.exe -r $<
 
-program_unix: $(PROJ).hex
+program_unix: main.hex
 	../bootloader/commandline/bootloadHID -r $<
 
 # rule for deleting dependent files (those which can be built by Make):
 clean:
-	rm -f $(PROJ).hex $(PROJ).lst $(PROJ).obj $(PROJ).cof $(PROJ).list $(PROJ).map $(PROJ).eep.hex $(PROJ).elf $(OBJECTS) $(PROJ).s usbdrv_Vusb/oddebug.s usbdrv_Vusb/usbdrv.s source/shared_*
+	rm -f main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf $(OBJECTS) main.s usbdrv_Vusb/oddebug.s usbdrv_Vusb/usbdrv.s source/shared_*
 
 # Generic rule for compiling C files:
 .c.o:
@@ -57,22 +56,22 @@ clean:
 
 # file targets:
 
-$(PROJ).elf: shared $(OBJECTS)
-	$(COMPILE) -o $(PROJ).elf $(OBJECTS)
+main.elf: shared $(OBJECTS)
+	$(COMPILE) -o main.elf $(OBJECTS)
 
-$(PROJ).hex: $(PROJ).elf
-	rm -f $(PROJ).hex $(PROJ).eep.hex
-	avr-objcopy -j .text -j .data -O ihex $(PROJ).elf $(PROJ).hex
-#	avr-size -C --mcu=${DEVICE} $(PROJ).elf
-	avr-size $(PROJ).elf
+main.hex: main.elf
+	rm -f main.hex main.eep.hex
+	avr-objcopy -j .text -j .data -O ihex main.elf main.hex
+#	avr-size -C --mcu=${DEVICE} main.elf
+	avr-size main.elf
 
 # debugging targets:
 
-disasm:	$(PROJ).elf
-	avr-objdump -d $(PROJ).elf
+disasm:	main.elf
+	avr-objdump -d main.elf
 
 cpp:
-	$(COMPILE) -E $(PROJ).c
+	$(COMPILE) -E main.c
 
 #copy shared .h files which are used in host and firmware
 shared:
