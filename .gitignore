@@ -1,0 +1,11 @@
+########################################
+# Ignore files ending in the following #
+########################################
+*.o
+
+# ignore shared files that have been copied to host-firmware dirs
+firmware/source/shared_*.h
+host/source/shared_*.h
+
+# ignore trash/temp files stored in host/ignore
+host/ignore
