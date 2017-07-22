@@ -3,9 +3,9 @@
 #include <util/delay.h>
 
 #include "usbdrv.h"
-#include "io.h"
-#include "pinport.h"
-#include "buffer.h"
+//#include "io.h"
+//#include "pinport.h"
+//#include "buffer.h"
 
 int main(void)
 {
@@ -39,7 +39,7 @@ int main(void)
 	usbDeviceConnect();
 
 	//intialize i/o and LED to pullup state
-	io_reset();
+//	io_reset();
 
 	//enable interrupts
 	sei();
@@ -67,6 +67,6 @@ int main(void)
 		//+ cpu operations that can't be hid behind flash wait time
 		//another thought would be to call usbPoll mid programming
 		//a few times to prevent incoming data from being delayed too long
-		update_buffers();
+//		update_buffers();
 	}
 }

@@ -4,7 +4,6 @@
 #include <avr/io.h>
 
 #include "usbdrv.h"
-/*
 #include "logic.h"
 #include "types.h"
 #include "shared_dictionaries.h"
@@ -14,7 +13,6 @@
 #include "nes.h"
 #include "snes.h"
 #include "buffer.h"
-*/
 
 #define ENDPOINT_BIT   0x80    //Bit 7 of bmRequest type determines endpoint
 #define ENDPOINT_IN    0x80    //In: device-to-host.

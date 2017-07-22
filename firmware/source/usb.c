@@ -45,17 +45,17 @@ static uint8_t usbWrite_status;
 USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
 	//defined and controled by buffer.c
-	extern buffer *cur_usb_load_buff;
-
-	//cast incoming data into the the usb setup packet it is
-	setup_packet *spacket = (void *)data;
-
-	//8 Byte buffer to be used for returning error code and return values
-	//must be static so V-USB driver can still access after function return
-	static uint8_t rv[RETURN_BUFF_SIZE];
-	//rv[RV_ERR_IDX] contains opcode success/error code
-	//rv[1-7] available for return data, start with index 1
-	//rv[RETURN_BUFF_FIRST_IDX-RETURN_BUFFER_LAST_IDX]
+//	extern buffer *cur_usb_load_buff;
+//
+//	//cast incoming data into the the usb setup packet it is
+//	setup_packet *spacket = (void *)data;
+//
+//	//8 Byte buffer to be used for returning error code and return values
+//	//must be static so V-USB driver can still access after function return
+//	static uint8_t rv[RETURN_BUFF_SIZE];
+//	//rv[RV_ERR_IDX] contains opcode success/error code
+//	//rv[1-7] available for return data, start with index 1
+//	//rv[RETURN_BUFF_FIRST_IDX-RETURN_BUFFER_LAST_IDX]
 
 	/* (1) Set the global pointer 'usbMsgPtr' to the base of the static RAM data
 	 * block and return the length of the data in 'usbFunctionSetup()'. The driver
@@ -69,7 +69,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	//avr-gcc doesn't like this and gives warning
 	//source/usb.c:64: warning: assignment makes integer from pointer without a cast
 	//tried casting it to usbMsgPtr
-	usbMsgPtr = (usbMsgPtr_t)rv;
+//	usbMsgPtr = (usbMsgPtr_t)rv;
 
 //#if USB_CFG_LONG_TRANSFERS
 //	//number of bytes to return to host
@@ -81,6 +81,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	uint8_t rlen = 0;
 //#endif
 
+/*
 	//determine endpoint IN/OUT
 	if ( (spacket->bmRequestType & ENDPOINT_BIT) == ENDPOINT_IN ) {
 		//read from device request
@@ -192,6 +193,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			//request (aka dictionary) is unknown
 			rv[RV_ERR_IDX] = ERR_UNKN_DICTIONARY;
 	}
+*/
 
 	//TODO add check that verifies rlen == setup packet return lenght request
 	//current state has error checking somewhat embeded in the fact the host
@@ -275,6 +277,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
 USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 
+/*
 	//defined and controled by buffer.c
 	extern buffer *cur_usb_load_buff;
 	extern uint8_t incoming_bytes_remain;
@@ -330,5 +333,8 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 		return NOT_DONE;
 	}
 
+*/
+	
+	return 0;
 }
 
