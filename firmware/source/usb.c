@@ -2,7 +2,7 @@
 #include "usb.h"
 
 //used to store success/error code of last transfer for debugging
-static uint8_t usbWrite_status;
+//static uint8_t usbWrite_status;
 
 //USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]);
 /* This function is called when the driver receives a SETUP transaction from
@@ -41,21 +41,26 @@ static uint8_t usbWrite_status;
 	//}usbRequest_t;
 
 
-
+#ifdef AVR_CORE
 USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
+#endif
+#ifdef STM_CORE
+uint16_t usbFunctionSetup(uint8_t data[8]) {
+#endif
 
 	//defined and controled by buffer.c
 //	extern buffer *cur_usb_load_buff;
-//
-//	//cast incoming data into the the usb setup packet it is
+
+	//cast incoming data into the the usb setup packet it is
 //	setup_packet *spacket = (void *)data;
-//
-//	//8 Byte buffer to be used for returning error code and return values
-//	//must be static so V-USB driver can still access after function return
+
+	//8 Byte buffer to be used for returning error code and return values
+	//must be static so V-USB driver can still access after function return
 //	static uint8_t rv[RETURN_BUFF_SIZE];
-//	//rv[RV_ERR_IDX] contains opcode success/error code
-//	//rv[1-7] available for return data, start with index 1
-//	//rv[RETURN_BUFF_FIRST_IDX-RETURN_BUFFER_LAST_IDX]
+	static uint8_t rv[8];
+	//rv[RV_ERR_IDX] contains opcode success/error code
+	//rv[1-7] available for return data, start with index 1
+	//rv[RETURN_BUFF_FIRST_IDX-RETURN_BUFFER_LAST_IDX]
 
 	/* (1) Set the global pointer 'usbMsgPtr' to the base of the static RAM data
 	 * block and return the length of the data in 'usbFunctionSetup()'. The driver
@@ -275,7 +280,12 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 // with checks: using 8bit rlen = 18sec   = 28.3KBps
 //#define MAKECHECKS	0
 
+#ifdef AVR_CORE
 USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
+#endif
+#ifdef STM_CORE
+uint8_t usbFunctionWrite(uint8_t *data, uint8_t len) {
+#endif
 
 /*
 	//defined and controled by buffer.c
@@ -333,8 +343,7 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 		return NOT_DONE;
 	}
 
-*/
-	
+	*/
 	return 0;
 }
 

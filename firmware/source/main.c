@@ -1,15 +1,24 @@
-#include <avr/interrupt.h>
-#include <avr/wdt.h>
-#include <util/delay.h>
 
-#include "usbdrv.h"
-//#include "io.h"
-//#include "pinport.h"
-//#include "buffer.h"
+#include "usb.h"
+
+#ifdef AVR_CORE
+	#include <avr/interrupt.h>
+	#include <avr/wdt.h>
+	#include <util/delay.h>
+	#include "usbdrv.h"
+#endif
+
+#ifdef STM_CORE
+	#include <stm32f0xx.h>
+	#include "../source_stm_only/stm_init.h"
+#endif
+
+
 
 int main(void)
 {
 
+#ifdef AVR_CORE
 	//set watch dog timer with 1 second timer
 	wdt_enable(WDTO_1S);
 	/* Even if you don't use the watchdog, turn it off here. On newer devices,
@@ -19,9 +28,6 @@ int main(void)
 	 * That's the way we need D+ and D-. Therefore we don't need any
 	 * additional hardware initialization.
 	 */
-
-	//odDebugInit();	//intialize debuging printing via serial port
-	//DBG1(0x00, 0, 0);	//debug serial op: main starts
 
 	//initialize V-usb driver before interupts enabled and entering main loop
 	usbInit();
@@ -43,18 +49,45 @@ int main(void)
 
 	//enable interrupts
 	sei();
+#endif
+
+#ifdef STM_CORE
+	//System is running at reset defaults
+	
+	//Default clock is in operation
+	//Change system clock as needed
+	init_clock();
+	
+	//Initialize periphery clocks as needed
+	init_usb_clock();
+	
+	//Initialize WDT, core features, etc
+	
+	//enable interrupts
+	__enable_irq();		//clear's processor PRIMASK register bit to allow interrupts to be taken
+	//I think this gets done automatically when enabling individual IRQs
+	
+	//Initialize io, periphery, etc
+	//setup LED as outputs and turn them on
+	//setup user switch as input
+
+	init_usb();
+	//Initialize board/system
+#endif
 
 	//=================
 	//MAIN LOOP
 	//=================
 	while (1) {
 
+#ifdef AVR_CORE
 		//pet the watch doggie to keep him happy
 		wdt_reset();	
 
 		//must call at regular intervals no longer than 50msec
-		//checks for setup packets from what I understand
+		//keeps 8Byte EP buffer moving from what I understand
 		usbPoll();	
+#endif
 
 		//check buffer status' and instruct them to 
 		//flash/dump as needed to keep data moving

@@ -1,13 +1,30 @@
 #ifndef _usb_h
 #define _usb_h
 
-#include <avr/io.h>
 
-#include "usbdrv.h"
+//Define the target core, only define one of these
+//these defines are made in Makefile
+//#define AVR_CORE
+//#define STM_CORE
+
+//== AVR CORE == AVR CORE == AVR CORE == AVR CORE  == AVR CORE
+#ifdef AVR_CORE
+//	#include <avr/io.h>
+
+	#include "usbdrv.h"
+#endif
+//end AVR CORE
+
+//== STM CORE == STM CORE == STM CORE == STM CORE  == STM CORE
+#ifdef STM_CORE
+	#include "..\source_stm_only\usbstm.h"
+#endif
+//end STM CORE
+
 /*
-#include "logic.h"
-#include "types.h"
 #include "shared_dictionaries.h"
+#include "types.h"
+#include "logic.h"
 #include "shared_errors.h"
 #include "pinport.h"
 #include "io.h"
@@ -16,6 +33,7 @@
 #include "buffer.h"
 */
 
+/*
 #define ENDPOINT_BIT   0x80    //Bit 7 of bmRequest type determines endpoint
 #define ENDPOINT_IN    0x80    //In: device-to-host.
 #define ENDPOINT_OUT   0x00    //Out: host-to-device. 
@@ -27,6 +45,7 @@
 #define STALL 		0xFF
 #define PAYLD_DONE	1
 #define NOT_DONE	0
+*/
 
 
 

@@ -13,7 +13,7 @@ PROJ	= avr_kazzo
 
 #SOURCES=$(wildcard source/**/*.c source/*.c)
 SOURCES=$(wildcard source/*.c)
-CFLAGS  = -Iusbdrv_Vusb -Isource -DDEBUG_LEVEL=0
+CFLAGS  = -Iusbdrv_Vusb -Isource -DDEBUG_LEVEL=0 -DAVR_CORE
 USBOBJ = usbdrv_Vusb/usbdrv.o usbdrv_Vusb/usbdrvasm.o usbdrv_Vusb/oddebug.o
 OBJECTS=$(patsubst %.c,%.o,$(SOURCES)) $(USBOBJ)
 
