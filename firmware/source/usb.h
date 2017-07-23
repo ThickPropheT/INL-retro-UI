@@ -21,6 +21,8 @@
 #endif
 //end STM CORE
 
+#include "pinport_al.h"
+
 /*
 #include "shared_dictionaries.h"
 #include "types.h"

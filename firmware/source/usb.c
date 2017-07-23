@@ -48,6 +48,7 @@ USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 uint16_t usbFunctionSetup(uint8_t data[8]) {
 #endif
 
+
 	//defined and controled by buffer.c
 //	extern buffer *cur_usb_load_buff;
 

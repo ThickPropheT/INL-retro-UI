@@ -14,7 +14,7 @@ BUILD	= build_avr
 
 #SOURCES=$(wildcard source/**/*.c source/*.c)
 SOURCES=$(wildcard source/*.c)
-CFLAGS  = -Iusbdrv_Vusb -Isource -DDEBUG_LEVEL=0 -DAVR_CORE
+CFLAGS  = -Iusbdrv_Vusb -Isource -DDEBUG_LEVEL=0 -DAVR_CORE -DAVR_KAZZO
 USBOBJ = usbdrv_Vusb/usbdrv.o usbdrv_Vusb/usbdrvasm.o usbdrv_Vusb/oddebug.o
 OBJECTS=$(patsubst %.c,%.o,$(SOURCES)) $(USBOBJ)
 

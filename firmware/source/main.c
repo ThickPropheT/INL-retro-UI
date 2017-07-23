@@ -75,6 +75,14 @@ int main(void)
 	//Initialize board/system
 #endif
 
+	//Turn on LED
+#ifdef STM_CORE
+	RCC->AHBENR |= (IOP_LED_EN);
+#endif
+//	PCb_OP_EN(LEDbank, LED);
+//	PCb_SET_HI(LEDbank, LED);
+	PCb_IP_PU(LEDbank, LED);
+
 	//=================
 	//MAIN LOOP
 	//=================
