@@ -11,6 +11,8 @@ typedef struct setup_packet{
 	uint16_t	wLength;
 }setup_packet;
 
+/*
+
 //write function pointers
 typedef	void	(*write_funcptr) 	( uint8_t addrH, uint8_t addrL, uint8_t data );
 typedef	uint8_t	(*read_funcptr)		( uint8_t addrH, uint8_t addrL );
@@ -72,5 +74,6 @@ typedef struct operation_info {
 	write_funcptr	wr_map_func;	//function used to write to mapper
 }operation_info;
 
+*/
 
 #endif

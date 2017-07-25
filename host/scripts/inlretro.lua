@@ -79,7 +79,7 @@ end
 -- initial function called from C main
 function main ()
 	--			     print	dictionary		opcode               addr   miscdata endpt buffer length
-	print("dict_call ", dict_call( 1,	dict["DICT_PINPORT"],	op_pinport["LED_OFF"],	0,	0,	USB_IN,	nil,	1), "\n")
+	print("dict_call ", dict_call( 1,	dict["DICT_PINPORT"],	op_pinport["LED_OFF"],	0,	0,	USB_IN,	nil,	8), "\n")
 end
 
 -- Dictionary table definitions

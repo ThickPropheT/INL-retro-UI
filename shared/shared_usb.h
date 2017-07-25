@@ -6,10 +6,10 @@
 //The dictionary number is literally used as usb transfer request field
 //the opcodes and operands in this dictionary are fed directly into usb setup packet's wValue wIndex fields
 
-//#define RETURN_BUFF_SIZE	8	//number of bytes in generic return buffer
-//#define RV_ERR_IDX		0	//(first) index of buffer that contains SUCCESS/ERROR#
-//#define RV_DATA0_IDX		RV_ERR_IDX + 1	//first index of return data
-//#define RV_DATA_MAX_IDX		RETURN_BUFF_SIZE - 1	//last index available for return data
+#define RETURN_BUFF_SIZE	8	//number of bytes in generic return buffer
+#define RETURN_ERR_IDX		0	//index of IN DATA stage that contains SUCCESS/ERROR#
+#define RETURN_LEN_IDX		1	//index of IN DATA stage that contains length of return value(s) in bytes (0-125)
+#define RETURN_DATA		2	//index of IN DATA stage that contains start of return data
 
 //=============================================================================================
 //=============================================================================================

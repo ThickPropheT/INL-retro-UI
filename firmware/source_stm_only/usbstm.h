@@ -234,8 +234,8 @@ typedef struct usbRequest_t{
 //4..31 = Reserved
 
 
-#define usbMsgPtr_t uint16_t
-extern uint16_t *usbMsgPtr;
+#define usbMsgPtr_t uint16_t *
+extern  usbMsgPtr_t usbMsgPtr;
 
 extern uint16_t usbFunctionSetup(uint8_t data[8]);
 extern uint8_t usbFunctionWrite(uint8_t *data, uint8_t len);

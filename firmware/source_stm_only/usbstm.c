@@ -445,7 +445,7 @@ static uint16_t num_bytes_sending;
 static uint16_t num_bytes_expecting;
 static uint16_t num_bytes_xfrd;
 static uint8_t	req_dir;
-uint16_t *usbMsgPtr;
+usbMsgPtr_t usbMsgPtr;
 
 //function gets called after reception of setup packet for IN transfer,
 //and each time an interrupt for successful data tx from control EP

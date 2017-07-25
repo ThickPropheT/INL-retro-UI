@@ -72,8 +72,8 @@
 
 //=============================================================================================
 //=============================================================================================
-#define DICT_IO 2
-#include "shared_dict_io.h"
+//#define DICT_IO 2
+//#include "shared_dict_io.h"
 //io dictionary contains commands 
 //Scope of functions contained is intended to be general and generic not specific
 //to the cartridge inserted.  The closest these operations get to being cart/system
@@ -88,8 +88,8 @@
 
 //=============================================================================================
 //=============================================================================================
-#define DICT_NES 3
-#include "shared_dict_nes.h"
+//#define DICT_NES 3
+//#include "shared_dict_nes.h"
 //nes dictionary contains commands 
 //These commands rely on io initialization from io dictionary prior to calling
 //This library is intended to contain all NES related opcodes/commands
@@ -99,8 +99,8 @@
 
 //=============================================================================================
 //=============================================================================================
-#define DICT_SNES 4
-#include "shared_dict_snes.h"
+//#define DICT_SNES 4
+//#include "shared_dict_snes.h"
 //snes dictionary contains commands 
 //These commands rely on io initialization from io dictionary prior to calling
 //This library is intended to contain all SNES related opcodes/commands
@@ -110,8 +110,8 @@
 
 //=============================================================================================
 //=============================================================================================
-#define DICT_BUFFER 5
-#include "shared_dict_buffer.h"
+//#define DICT_BUFFER 5
+//#include "shared_dict_buffer.h"
 //mcu buffer dictionary commands 
 //This library is intended to contain all buffer related opcodes/commands
 //also contains defines for both host and firmware such as buffer status numbers
@@ -121,8 +121,8 @@
 
 //=============================================================================================
 //=============================================================================================
-#define DICT_USB 6
-#include "shared_dict_usb.h"
+//#define DICT_USB 6
+//#include "shared_dict_usb.h"
 //currently no actual dictionary as there are no opcodes.
 //just used to return status of usbfunctions in event of a transfer error. 
 //contains definitions of data transactions between host and firmware
@@ -132,8 +132,8 @@
 
 //=============================================================================================
 //=============================================================================================
-#define DICT_OPER 7
-#include "shared_dict_operation.h"
+//#define DICT_OPER 7
+//#include "shared_dict_operation.h"
 //dictionary used to initialize and control operation_info variables
 //=============================================================================================
 //=============================================================================================

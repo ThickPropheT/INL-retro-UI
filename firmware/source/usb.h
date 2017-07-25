@@ -22,12 +22,13 @@
 //end STM CORE
 
 #include "pinport_al.h"
+#include "types.h"
+#include "shared_usb.h"
+#include "shared_errors.h"
+#include "shared_dictionaries.h"
 
 /*
-#include "shared_dictionaries.h"
-#include "types.h"
 #include "logic.h"
-#include "shared_errors.h"
 #include "pinport.h"
 #include "io.h"
 #include "nes.h"

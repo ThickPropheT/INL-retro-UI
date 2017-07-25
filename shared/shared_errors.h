@@ -1,10 +1,13 @@
-#ifndef _error_codes_h
-#define _error_codes_h
+#ifndef _shared_errors_h
+#define _shared_errors_h
 
 #define SUCCESS 			0
 #define GEN_FAIL 			0xFF
+
+/*
 #define FALSE				0
 #define NILL				0
+*/
 
 //greater than 128 are possible avr return codes
 #define ERR_UNKN_DICTIONARY 		128
@@ -23,6 +26,7 @@
 #define ERR_UNKN_PP_OPCODE_24BOP 	143
 #define ERR_UNKN_PP_OPCODE_8BRV 	144
 
+/*
 #define ERR_UNKN_IO_OPCODE_ONLY 	150
 #define ERR_UNKN_IO_OPCODE_RTN		151
 
@@ -52,5 +56,7 @@
 #define ERR_UNKN_OPER_OPCODE_RV		211
 
 //max error number			255
+
+*/
 
 #endif
