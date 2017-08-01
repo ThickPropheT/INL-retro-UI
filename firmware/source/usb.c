@@ -76,6 +76,16 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 	rv[RETURN_LEN_IDX] = 0; 	//reset to zero, number of bytes in return data (excluding ERR & LEN)
 	//now it's the opcode's responsiblity to update these values
 	//rv[RETURN_DATA] start of return data
+	
+	//fake some return data
+	rv[RETURN_ERR_IDX] = SUCCESS;
+	rv[RETURN_LEN_IDX] = 3;
+	rv[RETURN_DATA] = 0xAA;
+	rv[RETURN_DATA+1] = 0xDE;
+	rv[RETURN_DATA+2] = 0xAD;
+	rv[RETURN_DATA+3] = 0xBE;
+	rv[RETURN_DATA+4] = 0xEF;
+	rv[RETURN_DATA+5] = 0xCC;
 
 	/* (1) Set the global pointer 'usbMsgPtr' to the base of the static RAM data
 	 * block and return the length of the data in 'usbFunctionSetup()'. The driver
@@ -105,7 +115,7 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 
 	switch(spacket->bRequest) {
 		case DICT_PINPORT:
-			switch (spacket->opcode) {
+
 	//Turn on LED
 #ifdef STM_CORE
 	RCC->AHBENR |= (IOP_LED_EN);
@@ -113,6 +123,10 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 //	PCb_OP_EN(LEDbank, LED);
 //	PCb_SET_HI(LEDbank, LED);
 	CTL_IP_PU(LEDbank, LED);
+
+	
+
+			switch (spacket->opcode) {
 				/*
 				case PP_OPCODE_ONLY_MIN ... PP_OPCODE_ONLY_MAX:
 					rv[RV_ERR_IDX] = pinport_opcode_only( spacket->opcode );	
@@ -133,9 +147,9 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 					rv[RV_ERR_IDX] = pinport_opcode_8b_return( spacket->opcode, &rv[RV_DATA0_IDX]);
 					rlen ++;
 					break;
-					*/
 				default:	//pinport opcode min/max definition error 
 					rv[RETURN_ERR_IDX] = ERR_BAD_PP_OP_MINMAX;
+					*/
 			}
 			break; //end of PINPORT
 

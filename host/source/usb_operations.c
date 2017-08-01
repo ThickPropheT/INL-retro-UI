@@ -1,5 +1,7 @@
 #include "usb_operations.h"
 
+static libusb_device_handle *lua_usb_handle = NULL;
+
 //control transfer request types
 //uint8_t libusb_control_setup::bmRequestType
 //Request type.
@@ -183,6 +185,10 @@ libusb_device_handle * open_usb_device( libusb_context *context, int log_level )
 	}
 
 	if (log_level>0) printf("Returning device handle to main\n");
+
+	//set this module's pointer to handle so it can be referenced by lua
+	lua_usb_handle = handle;
+
 	return handle;
 
 error:
@@ -247,7 +253,7 @@ void close_usb(libusb_context *context, libusb_device_handle *handle)
  *	ERROR if unable to transfer USBtransfer's wLength number of bytes
  *	prints libusb_error if there was usb problem
  */
-int usb_transfer( USBtransfer *transfer )
+int usb_vendor_transfer( USBtransfer *transfer )
 {
 	check( transfer->wLength <= MAX_VUSB, "Can't transfer more than %d bytes!", MAX_VUSB);
 	//check( transfer->wLength <= MAX_VUSB_LONGXFR, "Can't transfer more than %d bytes!", MAX_VUSB_LONGXFR);
@@ -263,13 +269,13 @@ int usb_transfer( USBtransfer *transfer )
 	//but all avr operations should have a return value success/error code
 	//one way to control whether those retrun values are read back is endpoint direction
 
-	uint16_t wValue = transfer->wValueMSB;
-	wValue = wValue << 8;
-	wValue |= transfer->wValueLSB;
+	uint16_t wValue = transfer->wValue;
+//	wValue = wValue << 8;
+//	wValue |= transfer->wValueLSB;
 
-	uint16_t wIndex = transfer->wIndexMSB;
-	wIndex = wIndex << 8;
-	wIndex |= transfer->wIndexLSB;
+	uint16_t wIndex = transfer->wIndex;
+//	wIndex = wIndex << 8;
+//	wIndex |= transfer->wIndexLSB;
 
 	debug("reqtype   h: %x \n", ( LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | transfer->endpoint));
 	debug("request   h: %x d: %d", transfer->request, transfer->request);
@@ -303,4 +309,81 @@ int usb_transfer( USBtransfer *transfer )
 
 error:
 	return -1;
+}
+
+
+//	initialize usb transfer based on args passed in from lua and transfer setup packet over USB
+
+int lua_usb_vend_xfr (lua_State *L) {
+/*
+typedef struct USBtransfer {
+	libusb_device_handle *handle;
+	uint8_t		endpoint;
+	uint8_t		request;
+	uint16_t	wValue;
+	uint16_t	wIndex;
+	uint16_t	wLength;
+	unsigned char	*data;
+} USBtransfer;
+*/
+	uint8_t	data_buff[MAX_VUSB];
+	int	i;
+	const	char *lua_out_string;
+	int xfr_count = 0; //return count
+	int rv = 0;		//number of return values
+
+	USBtransfer usb_xfr;
+	usb_xfr.handle = lua_usb_handle;
+	usb_xfr.endpoint	= luaL_checknumber(L, 1); /* get endpoint argument */
+	usb_xfr.request		= luaL_checknumber(L, 2); /* get request argument */
+	usb_xfr.wValue 		= luaL_checknumber(L, 3); /* get wValue argument */
+	usb_xfr.wIndex		= luaL_checknumber(L, 4); /* get wIndex argument */
+	usb_xfr.wLength		= luaL_checknumber(L, 5); /* get wLength argument */
+	check( (usb_xfr.wLength <= MAX_VUSB), "Can't transfer more than %d bytes!", MAX_VUSB);
+	if ( usb_xfr.endpoint == LIBUSB_ENDPOINT_OUT ) {
+		//OUT transfer sending data to device
+		lua_out_string = luaL_checkstring(L, 6); /* get data argument */
+		//2 rules for lua strings in C: don't pop it, and don't modify it!!!
+		//copy lua string over to data buffer
+		for( i=0; i<usb_xfr.wLength; i++) {
+			data_buff[i] = lua_out_string[i];
+		}	
+	} else {
+		//IN transfer, zero out buffer
+		for( i=0; i<MAX_VUSB; i++) {
+			data_buff[i] = 0;
+		}
+
+	}
+	usb_xfr.data = data_buff;
+
+
+	printf("ep %d, req %d\n", usb_xfr.endpoint, usb_xfr.request);
+	printf("wValue %d, wIndex %d\n", usb_xfr.wValue, usb_xfr.wIndex);
+	printf("wLength %d, \n", usb_xfr.wLength);
+	printf("predata: %d, %d, %d, %d, %d, %d \n",  usb_xfr.data[0], usb_xfr.data[1],usb_xfr.data[2],usb_xfr.data[3],usb_xfr.data[4],usb_xfr.data[5]);
+
+	check( lua_usb_handle != NULL, "usb device handle pointer not initialized.\n")
+
+	xfr_count = usb_vendor_transfer( &usb_xfr);
+
+	printf("postdata: %d, %d, %d, %d, %d, %d \n",  usb_xfr.data[0], usb_xfr.data[1],usb_xfr.data[2],usb_xfr.data[3],usb_xfr.data[4],usb_xfr.data[5]);
+	printf("bytes xfrd: %d\n", xfr_count);
+
+	lua_pushnumber(L, xfr_count); /* push first result */
+	rv++;
+
+	if ( usb_xfr.endpoint == LIBUSB_ENDPOINT_IN ) {
+		//push second result if data was read from device
+		lua_pushlstring(L,(const char*) data_buff, xfr_count);
+		rv++;
+	}
+
+	return rv; /* number of results */
+
+error:
+	printf("lua USB transfer went to error\n");
+	lua_pushstring(L, "ERROR"); /* push result */
+	return 1;
+
 }

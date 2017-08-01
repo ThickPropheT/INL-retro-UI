@@ -717,7 +717,7 @@
 	#define _ADDRL(low)	A76bank->ODR = (A76bank->ODR & 0xFCFF) | ((low & 0xC0)<<2);A50bank->ODR = (A50bank->ODR & 0xFF03) | ((low & 0x3F)<<2)
 //clocks must be initialized, Data bus clear
 	#define _ADDRH(high)	_DATA_OP(); _DATA_SET(high); _AHL_CLK(); _DATA_IP();
-	#define _ADDR(hword)	ADDRL(hword); _ADDRH(hword<<8)
+	#define _ADDR(hword)	ADDRL(hword); _ADDRH(hword>>8)
 
 #endif	//STM_ADAPTER
 
@@ -730,6 +730,7 @@
 	#define _ADDRL(low)	GPIOA->PORT = low
 //clocks must be initialized, Data bus clear
 	#define _ADDRH(high)	_DATA_OP(); _DATA_SET(high); _AHL_CLK(); _DATA_IP();
+	#define _ADDR(hword)	ADDRL(hword); _ADDRH(hword>>8)
 
 #endif	//AVR_KAZZO
 

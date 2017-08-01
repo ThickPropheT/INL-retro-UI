@@ -14,7 +14,7 @@
 
 //#include "shared_dictionaries.h"
 #include "usb_operations.h"
-#include "dictionary.h"
+//#include "dictionary.h"
 //#include "write_operations.h"
 //#include "erase.h"
 //#include "test.h"
@@ -194,8 +194,9 @@ int main(int argc, char *argv[])
 	luaL_openlibs(L); //opens the standard libraries
 
 	//register C functions that can be called from Lua
-	lua_pushcfunction(L, lua_dictionary_call);
-	lua_setglobal(L, "dict_call");
+//	lua_pushcfunction(L, lua_dictionary_call);
+	lua_pushcfunction(L, lua_usb_vend_xfr);
+	lua_setglobal(L, "usb_vend_xfr");
 	
 /*
 	//flags about input files only used for writes
@@ -253,7 +254,7 @@ int main(int argc, char *argv[])
 
 	
 	//provide dictionary.c with pointer to transfer so it can update it's local pointer
-	init_dictionary( transfer );
+	//init_dictionary( transfer );
 
 	//usb device is open, pass args and control over to lua
 	if (s_value) {

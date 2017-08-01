@@ -157,8 +157,8 @@
 		
 #define		LED_IP	65
 #define		LED_OP	66
-#define		LED_OFF	67
-#define		LED_ON	68
+#define		LED_OFF	67	// test outRL = 6whee!
+#define		LED_ON	68	// test outRL = 5whee!
 		
 #define		IRQ_IP	69
 #define		IRQ_OP	70

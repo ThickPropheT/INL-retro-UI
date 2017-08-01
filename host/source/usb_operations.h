@@ -8,6 +8,10 @@
 #include <errno.h>
 #include <libusb.h>
 
+#include "lua/lua.h"
+#include "lua/lauxlib.h"
+#include "lua/lualib.h"
+
 //list of included dictionaries for defining request, wValue, and wIndex fields
 #include "shared_dictionaries.h"
 
@@ -89,10 +93,8 @@ typedef struct USBtransfer {
 	libusb_device_handle *handle;
 	uint8_t		endpoint;
 	uint8_t		request;
-	uint8_t		wValueMSB;
-	uint8_t		wValueLSB;
-	uint8_t		wIndexMSB;
-	uint8_t		wIndexLSB;
+	uint16_t	wValue;
+	uint16_t	wIndex;
 	uint16_t	wLength;
 	unsigned char	*data;
 } USBtransfer;
@@ -142,6 +144,7 @@ void close_usb(libusb_context *context, libusb_device_handle *handle);
 	//	LIBUSB_ERROR_PIPE if the control request was not supported by the device 
 	//	LIBUSB_ERROR_NO_DEVICE if the device has been disconnected 
 	//	another LIBUSB_ERROR code on other failures 
-int usb_transfer( USBtransfer *transfer );
+int usb_vendor_transfer( USBtransfer *transfer );
+int lua_usb_vend_xfr(lua_State *L);
 
 #endif
