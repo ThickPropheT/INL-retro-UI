@@ -1,3 +1,7 @@
+#ifndef _avr_gpio_h
+#define _avr_gpio_h
+
+#include <avr/io.h>
 
 #define     __IO    volatile             /*!< Defines 'read / write' permissions */
 
@@ -30,3 +34,4 @@ typedef struct
 //#define GPIO_MODER_MODER0_Msk           (0x3U << GPIO_MODER_MODER0_Pos)        /*!< 0x00000003 */
 //#define GPIO_MODER_MODER0               GPIO_MODER_MODER0_Msk                  
 
+#endif

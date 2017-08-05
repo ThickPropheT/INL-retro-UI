@@ -1,5 +1,6 @@
 
 #include "usb.h"
+#include "io.h"
 
 #ifdef AVR_CORE
 	#include <avr/interrupt.h>
@@ -44,8 +45,6 @@ int main(void)
 	//reconnect to host
 	usbDeviceConnect();
 
-	//intialize i/o and LED to pullup state
-//	io_reset();
 
 	//enable interrupts
 	sei();
@@ -75,6 +74,8 @@ int main(void)
 	//Initialize board/system
 #endif
 
+	//intialize i/o and LED to pullup state
+	io_reset();
 
 	//=================
 	//MAIN LOOP

@@ -4,29 +4,16 @@
 #define SUCCESS 			0
 #define GEN_FAIL 			0xFF
 
-//#define FALSE				0
-//#define NILL				0
 
 //greater than 128 are possible avr return codes
 #define ERR_UNKN_DICTIONARY 		128
-#define ERR_BAD_PP_OP_MINMAX 		129
-#define ERR_BAD_IO_OP_MINMAX 		130
-#define ERR_BAD_NES_OP_MINMAX 		131
-#define ERR_BAD_SNES_OP_MINMAX 		132
-#define ERR_BAD_BUFF_OP_MINMAX 		133
-#define ERR_BUFN_DOES_NOT_EXIST 	134
-#define ERR_BAD_OPER_OP_MINMAX 		135
 
 
-//#define ERR_UNKN_PP_OPCODE_ONLY 	140
-//#define ERR_UNKN_PP_OPCODE_8BOP 	141
-//#define ERR_UNKN_PP_OPCODE_16BOP 	142
-//#define ERR_UNKN_PP_OPCODE_24BOP 	143
-//#define ERR_UNKN_PP_OPCODE_8BRV 	144
-//
-//#define ERR_UNKN_IO_OPCODE_ONLY 	150
-//#define ERR_UNKN_IO_OPCODE_RTN		151
-//
+#define ERR_UNKN_PP_OPCODE		140
+#define ERR_CTL_PIN_NOT_PRESENT		141
+
+#define ERR_UNKN_IO_OPCODE		150
+
 //#define ERR_UNKN_NES_OPCODE_24BOP 	160
 //#define ERR_UNKN_NES_OPCODE_16BOP_8BRV 	161
 //

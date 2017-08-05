@@ -4,24 +4,16 @@
 
 //Define the target core, only define one of these
 //these defines are made in Makefile
-//#define AVR_CORE
-//#define STM_CORE
-
-//== AVR CORE == AVR CORE == AVR CORE == AVR CORE  == AVR CORE
 #ifdef AVR_CORE
-//	#include <avr/io.h>
-
 	#include "usbdrv.h"
 #endif
-//end AVR CORE
 
-//== STM CORE == STM CORE == STM CORE == STM CORE  == STM CORE
 #ifdef STM_CORE
 	#include "..\source_stm_only\usbstm.h"
 #endif
-//end STM CORE
 
-#include "pinport_al.h"
+#include "pinport.h"
+#include "io.h"
 #include "types.h"
 #include "shared_usb.h"
 #include "shared_errors.h"
@@ -29,8 +21,6 @@
 
 /*
 #include "logic.h"
-#include "pinport.h"
-#include "io.h"
 #include "nes.h"
 #include "snes.h"
 #include "buffer.h"

@@ -6,8 +6,7 @@ typedef struct setup_packet{
 	uint8_t		bRequest;	//designates dictionary of opcode
 	uint8_t		opcode;		//wValueLSB (little endian)
 	uint8_t		miscdata;	//wValueMSB 
-	uint8_t		operandLSB;	//wIndexLSB
-	uint8_t		operandMSB;	//wIndexMSB
+	uint16_t	operand;	//16bit operand "wIndex"
 	uint16_t	wLength;
 }setup_packet;
 

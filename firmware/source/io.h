@@ -1,0 +1,15 @@
+#ifndef _io_h
+#define _io_h
+
+#include "pinport.h"
+#include "shared_dictionaries.h"
+#include "shared_errors.h"
+
+uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rdata );
+
+void io_reset();
+void nes_init();
+//void snes_init();
+//void exp0_pullup_test(uint8_t *data);
+
+#endif

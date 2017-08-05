@@ -30,50 +30,16 @@
 #define DICT_PINPORT 1
 #include "shared_dict_pinport.h"
 //pinport dictionary has various commands giving low and mid level access to retro prog's i/o pins.
-//It also contains internal avr registers associated with the avr's io.
-//Access to other internal avr registers should be placed in other associated dictionaries.
-//The opcodes in this dictionary should not have any cyclic effect such as pulsing /ROMSEL
-//low to read data and then disabling taking /ROMSEL high again.  These commands are intended
-//to appear as a single change/edge to cartridge hardware.  Only potential exception to this
-//is AHL/AXL clocking which is used to latch values to FF's, that effectively is only one
-//state change for the cartridge hardware.
-//
-//	Many of the opcodes in the second half of this dictionary have the following rules:
-//
-//	The opcodes that follow operate under some rules that you must adhere to if calling
-//	1) Data bus should be free and clear when possible
-//		-DATA_IP() is default state
-//		-Be cognizant if you're driving the data bus
-//			many of these opcodes use the data bus to function.
-//		-Many of these opcodes will end up driving the data bus
-//			know when that'll happen and free bus when data retreived
-//		
-//		-Flipflops must be initialized
-//			this primarily means CLK pin must be OP and LO ready for CLK command
-//		-output of FF must be enabled to actually feed latched value on cart
-//			final pcb version will enable EXP FF after clocking.
-//			early pcb versions have FF /OE on separate pin not so automatic.
-//
-//		-control pins must be initialized
-//		-enable OP on pins necessary to perform desire of command
-//			ie M2 and /ROMSEL must be OP if you're trying to change them with a command.
-//
-//		-be cognizant of what pins are inputs and which are outputs
-//			ie driving PPU /A13 will be fed back to CIRAM /CE so it needs to be IP
-//		-if in doubt, leave it as input with pull up, atleast that shouldn't break anything
-//
-//		-ADDR_OP is default state, these opcodes assume it to be set as it shouldn't conflict
-//		-/ROMSEL & M2 expected to be set as outputs
-//
-//
+//See abstraction layer port definitions in firmware pinport_al.h file for more details.
+//An effort has been made to make opcodes in this dictionary hardware independent.
 //=============================================================================================
 //=============================================================================================
 
 
 //=============================================================================================
 //=============================================================================================
-//#define DICT_IO 2
-//#include "shared_dict_io.h"
+#define DICT_IO 2
+#include "shared_dict_io.h"
 //io dictionary contains commands 
 //Scope of functions contained is intended to be general and generic not specific
 //to the cartridge inserted.  The closest these operations get to being cart/system
@@ -88,8 +54,8 @@
 
 //=============================================================================================
 //=============================================================================================
-//#define DICT_NES 3
-//#include "shared_dict_nes.h"
+#define DICT_NES 3
+#include "shared_dict_nes.h"
 //nes dictionary contains commands 
 //These commands rely on io initialization from io dictionary prior to calling
 //This library is intended to contain all NES related opcodes/commands

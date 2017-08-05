@@ -77,16 +77,6 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 	//now it's the opcode's responsiblity to update these values
 	//rv[RETURN_DATA] start of return data
 	
-	//fake some return data
-	rv[RETURN_ERR_IDX] = SUCCESS;
-	rv[RETURN_LEN_IDX] = 3;
-	rv[RETURN_DATA] = 0xAA;
-	rv[RETURN_DATA+1] = 0xDE;
-	rv[RETURN_DATA+2] = 0xAD;
-	rv[RETURN_DATA+3] = 0xBE;
-	rv[RETURN_DATA+4] = 0xEF;
-	rv[RETURN_DATA+5] = 0xCC;
-
 	/* (1) Set the global pointer 'usbMsgPtr' to the base of the static RAM data
 	 * block and return the length of the data in 'usbFunctionSetup()'. The driver
 	 * will handle the rest. Or (2) return USB_NO_MSG in 'usbFunctionSetup()'. The
@@ -96,10 +86,7 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 	//buffer. If no return data requested from host rlen = 0, so this wouldn't matter
 	//Some dictionaries/opcodes that want to return larger buffers though
 	//this function will set usbMsgPtr to point to that larger buffer when supported
-	
-	//works on avr, broke on stm:
 	usbMsgPtr = (usbMsgPtr_t)rv;
-	//usbMsgPtr = rv;
 	
 
 #if USB_CFG_LONG_TRANSFERS
@@ -115,48 +102,14 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 
 	switch(spacket->bRequest) {
 		case DICT_PINPORT:
-
-	//Turn on LED
-#ifdef STM_CORE
-	RCC->AHBENR |= (IOP_LED_EN);
-#endif
-//	PCb_OP_EN(LEDbank, LED);
-//	PCb_SET_HI(LEDbank, LED);
-	CTL_IP_PU(LEDbank, LED);
-
-	
-
-			switch (spacket->opcode) {
-				/*
-				case PP_OPCODE_ONLY_MIN ... PP_OPCODE_ONLY_MAX:
-					rv[RV_ERR_IDX] = pinport_opcode_only( spacket->opcode );	
-					break;
-				case PP_OPCODE_8BOP_MIN ... PP_OPCODE_8BOP_MAX:
-					rv[RV_ERR_IDX] = pinport_opcode_8b_operand( 
-					spacket->opcode, spacket->operandLSB );	
-					break;
-				case PP_OPCODE_16BOP_MIN ... PP_OPCODE_16BOP_MAX:
-					rv[RV_ERR_IDX] = pinport_opcode_16b_operand( 
-					spacket->opcode, spacket->operandMSB, spacket->operandLSB );	
-					break;
-				case PP_OPCODE_24BOP_MIN ... PP_OPCODE_24BOP_MAX:
-					rv[RV_ERR_IDX] = pinport_opcode_24b_operand( spacket->opcode,
-					spacket->miscdata, spacket->operandMSB, spacket->operandLSB );	
-					break;
-				case PP_OPCODE_8BRV_MIN ... PP_OPCODE_8BRV_MAX:
-					rv[RV_ERR_IDX] = pinport_opcode_8b_return( spacket->opcode, &rv[RV_DATA0_IDX]);
-					rlen ++;
-					break;
-				default:	//pinport opcode min/max definition error 
-					rv[RETURN_ERR_IDX] = ERR_BAD_PP_OP_MINMAX;
-					*/
-			}
+			rv[RETURN_ERR_IDX] = pinport_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break; //end of PINPORT
 
-/*
 		case DICT_IO:
-			//break; //end of IO
+			rv[RETURN_ERR_IDX] = io_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
+			break; //end of IO
 
+/*
 		case DICT_NES:
 			//break; //end of NES
 

@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 
 
 	//lua script arg to set different LIBUSB debugging options
-	check( !(luaL_loadfile(L, "scripts/usb_device.lua") || lua_pcall(L, 0, 0, 0)),
+	check( !(luaL_loadfile(L, "scripts/app/usb_device.lua") || lua_pcall(L, 0, 0, 0)),
 		"cannot run config. file: %s", lua_tostring(L, -1));
 
 	int libusb_log = LIBUSB_LOG_LEVEL_NONE;	// 0: default no msgs ever printed
