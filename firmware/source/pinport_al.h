@@ -17,7 +17,7 @@
 //There are defines for kazzo version, turns out unique early versions 
 //can be differentiated by solder mask color.
 //Final version is default and doesn't need any defines
-//#define PURPLE_KAZZO
+#define PURPLE_KAZZO
 //#define GREEN_KAZZO	//GREEN needs PURPLE defined at same time
 
 #ifdef GREEN_KAZZO
@@ -848,7 +848,7 @@ void software_AXL_CLK();
 	#ifdef GREEN_KAZZO
 		#define AHL_CLK()      software_AHL_CLK()
 		#define AXL_CLK()      software_AXL_CLK()
-	#elif PURPLE_KAZZO
+	#elif defined PURPLE_KAZZO
 		#define AHL_CLK()      CTL_SET_HI(AHLbank, AHL); CTL_SET_LO(AHLbank, AHL)
 		#define AXL_CLK()      CTL_SET_HI(FREEbank, FREE); CTL_SET_LO(FREEbank, FREE)
 	#else
