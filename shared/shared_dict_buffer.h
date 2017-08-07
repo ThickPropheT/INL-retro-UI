@@ -87,12 +87,6 @@
 //no operands no return value
 #define	RAW_BUFFER_RESET	0x00
 
-//set buffer manager operation value
-//lower operand byte sets value
-//#define SET_BUFFER_OPERATION	0x01
-//moved to shared_dict_operation.h
-
-
 
 //------------------------------------------------------------------------------------------------
 //opcodes in this range have NO RETURN besides error code and DO contain buff# in miscdata byte
@@ -105,6 +99,23 @@
 //operMSB: memory type
 //operLSB: part number
 #define SET_MEM_N_PART		0x30
+	//operand MSB memtype
+	#define PRGROM		0x10
+	#define CHRROM		0x11
+	#define PRGRAM		0x12
+	#define SNESROM		0x13
+	#define SNESRAM		0x14
+
+	//operand LSB
+	//SST 39SF0x0 manf/prod IDs
+	#define SST_MANF_ID	0xBF
+	#define SST_PROD_128	0xB5
+	#define SST_PROD_256	0xB6
+	#define SST_PROD_512	0xB7
+	//SRAM manf/prod ID
+	#define SRAM		0xAA
+	//MASK ROM read only
+	#define MASKROM		0xDD
 
 //set multiple and add multiple
 //miscdata: buffer number
@@ -117,6 +128,32 @@
 //operMSB: mapper
 //operLSB: mapper variant
 #define SET_MAP_N_MAPVAR	0x32
+	//operand MSB mapper
+	#define NROM	0
+	#define MMC1	1
+	#define CNROM	2
+	#define UxROM	3
+	#define MMC3	4
+	#define MMC5	5
+	#define AxROM	7
+	#define MMC2	9
+	#define MMC4	10
+	#define CDREAMS	11
+	#define A53	28
+	#define UNROM512 30
+	#define EZNSF	31
+	#define BxROM	34
+	#define RAMBO	64
+	#define H3001	65	//IREM mapper
+	#define GxROM	66
+	#define SUN3	67
+	#define SUN4	68
+	#define FME7	69	//SUNSOFT-5 with synth
+	#define HDIVER	78
+	#define DxROM	205
+	//	UNKNOWN 255	don't assign to something meaningful
+	//operand LSB mapper variant
+	#define NOVAR	0
 
 //set function
 //miscdata: buffer number
@@ -148,34 +185,47 @@
 
 //return buffer elements
 //misc/data: buffer number
-#define GET_PRI_ELEMENTS	0x50
+#define GET_PRI_ELEMENTS	0x50	//RL=8
 //rv0: success/error code
-//rv1: last_idx
+//rv1: rdatalen = 6
+//rv2: last_idx
 #define BUFF_LASTIDX	1
-//rv2: status
+//rv3: status
 #define BUFF_STATUS	2
-//rv3: cur_byte
+//rv4: cur_byte
 #define BUFF_CURBYTE	3
-//rv4: reload
+//rv5: reload
 #define BUFF_RELOAD	4
-//rv5: id
+//rv6: id
 #define BUFF_ID		5
-//rv76: page_num
-#define BUFF_PGNUM_LSB	6
-#define BUFF_PGNUM_MSB	7
+//rv7: function
+#define BUFF_FUNC	6
 
 
 //return buffer elements
 //misc/data: buffer number
+#define GET_SEC_ELEMENTS	0x51	//RL=8
 //rv0: success/error code
-//rv1: mem_type
-//rv2: part_num
-//rv3: multiple
-//rv4: add_multiple
-//rv5: mapper
-//rv6: mapvar
-//rv7: function
-#define GET_SEC_ELEMENTS	0x51
+//rv1: rdatalen = 6
+//rv2: mem_type
+#define BUFF_MEMTYPE	1
+//rv3: part_num
+#define BUFF_PARTNUM	2
+//rv4: multiple
+#define BUFF_MUL	3
+//rv5: add_multiple
+#define BUFF_ADDMUL	4
+//rv6: mapper
+#define BUFF_MAPPER	5
+//rv7: mapvar
+#define BUFF_MAPVAR	6
+
+//return buffer elements
+//misc/data: buffer number
+#define GET_PAGE_NUM		0x52	//RL=4
+//rv0: success/error code
+//rv1: rdatalen = 2
+//rv3-2: 16bit page number
 
 
 //#define BUFFN_INMISC_MAX	0x5F	//NOTE OVERLAP!!
@@ -190,10 +240,29 @@
 //operandMSB/miscdata: unused
 //operandLSB: raw bank number to retrieve status of
 //return value status of that raw bank (set to bank id if allocated)
-#define RAW_BANK_STATUS		0x60
+#define GET_RAW_BANK_STATUS	0x60	//RL=3
+	//buffer/operation status values
+	#define EMPTY 		0x00
+	#define RESET		0x01
+	#define PROBLEM		0x10
+	#define PREPARING	0x20
+	#define USB_UNLOADING	0x80
+	#define USB_LOADING	0x90
+	#define USB_FULL	0x98
+	#define CHECKING	0xC0
+	#define DUMPING		0xD0
+	#define STARTDUMP	0xD2
+	#define DUMPED		0xD8
+	#define ERASING		0xE0
+	#define FLASHING	0xF0
+	#define STARTFLASH	0xF2
+	#define FLASHED		0xF4
+	#define FLASH_WAIT	0xF8
+	#define STOPPED		0xFE
+	#define UNALLOC 	0xFF
 
 //retrieve cur_buff status
-#define GET_CUR_BUFF_STATUS	0x61
+#define GET_CUR_BUFF_STATUS	0x61	//RL=3
 
 
 

@@ -14,19 +14,15 @@
 
 #include "pinport.h"
 #include "io.h"
+#include "nes.h"
+#include "buffer.h"
 #include "types.h"
 #include "shared_usb.h"
 #include "shared_errors.h"
 #include "shared_dictionaries.h"
 
-/*
-#include "logic.h"
-#include "nes.h"
-#include "snes.h"
-#include "buffer.h"
-*/
+//#include "snes.h"
 
-/*
 #define ENDPOINT_BIT   0x80    //Bit 7 of bmRequest type determines endpoint
 #define ENDPOINT_IN    0x80    //In: device-to-host.
 #define ENDPOINT_OUT   0x00    //Out: host-to-device. 
@@ -38,7 +34,6 @@
 #define STALL 		0xFF
 #define PAYLD_DONE	1
 #define NOT_DONE	0
-*/
 
 
 

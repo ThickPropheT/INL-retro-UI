@@ -2,8 +2,8 @@
 
 all:
 	make -f Make_avr clean hex
-	make -f Make_stm clean 
-	make -f Make_stm 
+	make -f Make_stm_inl6 clean 
+	make -f Make_stm_inl6 
 
 avr:
 	make -f Make_avr clean program

@@ -19,23 +19,6 @@
 
 //	OPCODES with no operand and no return value besides SUCCESS/ERROR_CODE
 
-
-
-
-//=============================================================================================
-//	OPCODES WITH OPERAND and no return value besides SUCCESS/ERROR_CODE
-//=============================================================================================
-//	0x00-0x7F
-//	Detect this opcode/operand setup with opcode between the following defines:
-#define NES_OPCODE_24BOP_MIN	0x00
-#define NES_OPCODE_24BOP_MAX	0x7F
-//
-//=============================================================================================
-//=============================================================================================
-
-
-
-
 //Discrete board PRG-ROM only write, does not write to mapper
 //This is a /WE controlled write with data latched on rising edge EXP0
 //PRG-ROM /WE <- EXP0 w/PU
@@ -57,27 +40,25 @@
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================
-//
-//
-#define NES_OPCODE_16BOP_8BRV_MIN	0x80
-#define NES_OPCODE_16BOP_8BRV_MAX	0xFF
-//
-//=============================================================================================
-//=============================================================================================
 
 //read from NES CPU ADDRESS
 //set /ROMSEL, M2, and PRG R/W
 //read from cartridge just as NES's CPU would
 //nice and slow trying to be more like the NES
-#define EMULATE_NES_CPU_RD		0x80
+#define EMULATE_NES_CPU_RD		0x80	//RL=3
 
 //like the one above but not so slow..
-#define NES_CPU_RD			0x81
+#define NES_CPU_RD			0x81	//RL=3
 
-#define NES_PPU_RD			0x82
+#define NES_PPU_RD			0x82	//RL=3
 
 //doesn't have operands just returns sensed CIRAM A10 mirroring 
-//returns VERT/HORIZ/1SCNA/1SCNB from shared_enums.h
-#define CIRAM_A10_MIRROR		0x83
+#define CIRAM_A10_MIRROR		0x83	//RL=3
+//returns VERT/HORIZ/1SCNA/1SCNB values:
+	#define	MIR_1SCNA	0x10
+	#define	MIR_1SCNB	0x11
+	#define	MIR_VERT	0x12
+	#define	MIR_HORZ	0x13
+
 
 #endif

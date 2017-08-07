@@ -1,6 +1,7 @@
 
 #include "usb.h"
 #include "io.h"
+#include "buffer.h"
 
 #ifdef AVR_CORE
 	#include <avr/interrupt.h>
@@ -102,6 +103,6 @@ int main(void)
 		//+ cpu operations that can't be hid behind flash wait time
 		//another thought would be to call usbPoll mid programming
 		//a few times to prevent incoming data from being delayed too long
-//		update_buffers();
+		update_buffers();
 	}
 }

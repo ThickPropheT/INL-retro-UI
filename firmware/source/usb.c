@@ -109,15 +109,20 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 			rv[RETURN_ERR_IDX] = io_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break; //end of IO
 
-/*
 		case DICT_NES:
-			//break; //end of NES
+			rv[RETURN_ERR_IDX] = nes_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
+			break; //end of NES
 
+
+		case DICT_BUFFER:
+			//just give buffer.c the setup packet and let it figure things out for itself
+			usbMsgPtr = (usbMsgPtr_t)buffer_usb_call( spacket, rv, &rlen );
+			break; //end of BUFFER
+
+/*
 		case DICT_SNES:
 			//break; //end of SNES
 
-		case DICT_BUFFER:
-			//break; //end of BUFFER
 
 		case DICT_USB:
 			//currently just a simple way to read back usbFunctionWrite status SUCCESS/ERROR
@@ -127,13 +132,13 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 			rv[RV_DATA0_IDX+1] = cur_usb_load_buff->last_idx;
 			rlen = 3;
 			break; //end of USB
+			*/
 
 		case DICT_OPER:
 			//just give operation.c the setup packet and let it figure things out for itself
 			usbMsgPtr = (usbMsgPtr_t)operation_usb_call( spacket, rv, &rlen );
 			break; //end of OPER
 		
-*/
 		default:
 			//request (aka dictionary) is unknown
 			rv[RETURN_ERR_IDX] = ERR_UNKN_DICTIONARY;

@@ -233,6 +233,10 @@ typedef struct usbRequest_t{
 #define REQ_RECIP_OTH	0x03
 //4..31 = Reserved
 
+//defined to be same as Vusb
+//not sure this is actually how we want to do things..
+#define USB_NO_MSG	255
+#define usbPoll()	NOP()
 
 #define usbMsgPtr_t uint16_t *
 extern  usbMsgPtr_t usbMsgPtr;

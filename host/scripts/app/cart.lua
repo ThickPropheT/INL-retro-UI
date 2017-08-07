@@ -8,8 +8,11 @@ local nes = require "scripts.app.nes"
 
 -- file constants
 
+-- global variables so other modules can use them
+cart_console = nil
+
 -- local functions
-local function detect( debug )
+local function detect_console( debug )
 
 	print("attempting to detect cartridge...");
 --	//always start with resetting i/o
@@ -24,11 +27,11 @@ local function detect( debug )
 	if nes.jumper_ciramce_ppuA13n(debug) then
 --		//NES with 2 screen mirroring
 		if debug then print("CIRAM /CE is jumpered to PPU /A13") end
---		cart->console = NES_CART;
+		cart_console = "NES"
 	elseif nes.ciramce_inv_ppuA13(debug) then
 --		//some boards including INLXO-ROM boards drive CIRAM /CE with inverse of PPU A13
 		if debug then print("CIRAM /CE is inverse of PPU A13") end
---		cart->console = NES_CART;
+		cart_console = "NES"
 	end
 --	TODO check if CIRAM on cartridge or NT CHR-ROM
 --
@@ -40,7 +43,7 @@ local function detect( debug )
 --	but worst case we detected NES when famicom which isn't big deal..
 	if nes.jumper_famicom_sound(debug) then
 		if debug then print("Famicom audio jumper found") end
---		cart->console = FC_CART;
+		cart_console = "Famicom"
 	end
 
 --	//if couldn't detect NES/FC check for SNES cartridge
@@ -65,8 +68,15 @@ local function detect( debug )
 --	}
 --
 --	//always end with resetting i/o
---	io_reset( transfer );
---
+	dict.io("IO_RESET")	
+
+	if cart_console then
+		print(cart_console, "cartridge detected!")
+		return true
+	else
+		print("unable to detect cartridge type")
+		return false
+	end
 --	switch (cart->console) {
 --		case NES_CART: printf("NES cartridge detected!\n");	
 --			break;
@@ -83,27 +93,17 @@ local function detect( debug )
 --		default:
 --			sentinel("cartridge console element got set to something unsupported.");
 --	}
---
---	return SUCCESS;
---
---error:
---	//always end with resetting i/o
---	io_reset( transfer );
---	return -1;
---
 --}
 
 end
 
-
--- global variables so other modules can use them
 
 
 -- call functions desired to run when script is called/imported
 
 
 -- functions other modules are able to call
-cart.detect = detect
+cart.detect_console = detect_console
 
 -- return the module's table
 return cart

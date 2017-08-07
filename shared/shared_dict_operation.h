@@ -118,7 +118,8 @@ enum operation_elem_nums {	//Each index is numbered by it's name
 
 
 //retrieve buffer manager current operation variable
-#define GET_OPERATION	0x40
+#define GET_OPERATION	0x40		//RL=3
+
 
 
 #endif

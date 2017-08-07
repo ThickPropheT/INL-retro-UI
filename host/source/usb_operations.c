@@ -358,17 +358,17 @@ typedef struct USBtransfer {
 	usb_xfr.data = data_buff;
 
 
-	printf("ep %d, req %d\n", usb_xfr.endpoint, usb_xfr.request);
-	printf("wValue %d, wIndex %d\n", usb_xfr.wValue, usb_xfr.wIndex);
-	printf("wLength %d \n", usb_xfr.wLength);
-	printf("predata: %d, %d, %d, %d, %d, %d, %d, %d \n",  usb_xfr.data[0], usb_xfr.data[1],usb_xfr.data[2],usb_xfr.data[3],usb_xfr.data[4],usb_xfr.data[5], usb_xfr.data[6], usb_xfr.data[7]);
+//	printf("\nep %d, req %d", usb_xfr.endpoint, usb_xfr.request);
+//	printf("wValue %d, wIndex %d", usb_xfr.wValue, usb_xfr.wIndex);
+//	printf("wLength %d \n", usb_xfr.wLength);
+	//printf("predata: %d, %d, %d, %d, %d, %d, %d, %d \n",  usb_xfr.data[0], usb_xfr.data[1],usb_xfr.data[2],usb_xfr.data[3],usb_xfr.data[4],usb_xfr.data[5], usb_xfr.data[6], usb_xfr.data[7]);
 
 	check( lua_usb_handle != NULL, "usb device handle pointer not initialized.\n")
 
 	xfr_count = usb_vendor_transfer( &usb_xfr);
 
-	printf("postdata: %d, %d, %d, %d, %d, %d, %d, %d \n",  usb_xfr.data[0], usb_xfr.data[1],usb_xfr.data[2],usb_xfr.data[3],usb_xfr.data[4],usb_xfr.data[5], usb_xfr.data[6], usb_xfr.data[7]);
-	printf("bytes xfrd: %d\n", xfr_count);
+//	printf("postdata: %d, %d, %d, %d, %d, %d, %d, %d \n",  usb_xfr.data[0], usb_xfr.data[1],usb_xfr.data[2],usb_xfr.data[3],usb_xfr.data[4],usb_xfr.data[5], usb_xfr.data[6], usb_xfr.data[7]);
+//	printf("bytes xfrd: %d\n", xfr_count);
 
 	lua_pushnumber(L, xfr_count); /* push first result */
 	rv++;

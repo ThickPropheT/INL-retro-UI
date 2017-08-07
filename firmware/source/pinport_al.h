@@ -17,7 +17,7 @@
 //There are defines for kazzo version, turns out unique early versions 
 //can be differentiated by solder mask color.
 //Final version is default and doesn't need any defines
-#define PURPLE_KAZZO
+//#define PURPLE_KAZZO
 //#define GREEN_KAZZO	//GREEN needs PURPLE defined at same time
 
 #ifdef GREEN_KAZZO
@@ -832,7 +832,7 @@ void software_AXL_CLK();
 #define CTL_OP(bank, pin)		bank->DDR |=  (1<<pin)	
 #define CTL_SET_LO(bank, pin)		bank->PORT &= ~(1<<pin)
 #define CTL_SET_HI(bank, pin)		bank->PORT |=  (1<<pin)
-#define CTL_RD(bank, pin, val)		val = (bank->PIN & (1<<pin))
+#define CTL_RD(bank, pin, val)		val = (uint16_t) (bank->PIN & (1<<pin))
 
 #define CTL_ENABLE()			//nothing to be done for AVR	
 
@@ -971,6 +971,7 @@ void software_AXL_CLK();
 	#define ADDR_PU()	A76bank->PUPDR |=  (PUPDR_PU_ALL & 0x000F0000); A50bank->PUPDR |=  (PUPDR_PU_ALL & 0x0000FFF0)
 	#define ADDR_IP()	A76bank->MODER &= ~(MODER_OP_ALL & 0x000F0000); A50bank->MODER &= ~(MODER_OP_ALL & 0x0000FFF0) 
 	#define ADDR_OP()	A76bank->MODER |=  (MODER_OP_ALL & 0x000F0000); A50bank->MODER |=  (MODER_OP_ALL & 0x0000FFF0)  
+	//WARNING!!!  Don't use pre/post increment on passed in argument as macro expands to double inc/decrement variable!!!
 	#define ADDRL(low)	A76bank->ODR = (A76bank->ODR & 0xFCFF) | ((low & 0xC0)<<2);A50bank->ODR = (A50bank->ODR & 0xFF03) | ((low & 0x3F)<<2)
 //clocks must be initialized, Data bus clear
 	#define ADDRH(high)	DATA_OP(); DATA_SET(high); AHL_CLK(); DATA_IP()

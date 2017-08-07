@@ -194,9 +194,10 @@ local function pinport( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	if error_code ~= err_codes["SUCCESS"] then
-		print("ERROR!!! device error code:", error_code)
-	end
+	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
+	--if error_code ~= err_codes["SUCCESS"] then
+--		print("ERROR!!! device error code:", error_code)
+--	end
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -247,9 +248,10 @@ local function io( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	if error_code ~= err_codes["SUCCESS"] then
-		print("ERROR!!! device error code:", error_code)
-	end
+	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
+	--if error_code ~= err_codes["SUCCESS"] then
+--		print("ERROR!!! device error code:", error_code)
+--	end
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -265,6 +267,188 @@ local function io( opcode, operand, misc, data )
 
 end
 
+-- external call for nes dictionary
+local function nes( opcode, operand, misc, data )
+
+	if not op_nes[opcode] then
+		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_nes.h")
+		return nil
+	end
+
+	if not operand then 
+		operand = 0 
+	elseif type(operand) == "string" then
+		if not op_nes[operand] then
+			print("ERROR undefined operand:", operand, "must be defined in shared_dict_nes.h")
+			return nil
+		end
+		--decode string operands into 
+		operand = op_nes[operand]
+	end
+	
+	if not misc then misc = 0 end
+
+	local wLength, ep = default_rlen_1_in(op_nes[opcode.."rlen"])
+
+	local count
+	count, data = usb_vend_xfr( 
+	--	ep,	dictionary		wValue[misc:opcode]     wIndex	wLength	 		data
+		ep, dict["DICT_NES"], ( misc<<8 | op_nes[opcode]),	operand,	wLength,	data)
+	--print(count)
+	local error_code, data_len
+	if ep == USB_IN then
+		error_code = data:byte(RETURN_ERR_IDX)
+		data_len =   data:byte(RETURN_LEN_IDX)
+	end
+	--print("error:", error_code, "data_len:",  data_len)
+	
+	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
+	--if error_code ~= err_codes["SUCCESS"] then
+	--	print("ERROR!!! device error code:", error_code)
+	--end
+
+	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
+		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
+	end
+
+	--process the return data string and return it to calling function
+	if data_len then
+		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+	else 
+		return nil
+	end 
+
+
+end
+
+local function buffer_payload_in( wLength, buff_num )
+
+	local opcode = nil
+	local data = nil
+	if not buff_num then 
+		opcode = op_buffer["BUFF_PAYLOAD"] 
+	else
+		opcode = op_buffer["BUFF_PAYLOAD0"] + buff_num 
+	end
+	
+	local count
+	count, data = usb_vend_xfr( 
+		USB_IN, dict["DICT_BUFFER"],	opcode,		0,	wLength,	nil)
+
+	assert ( (count == wLength ), ("ERROR!!! device only sent:"..count.."bytes, expecting:"..wLength))
+
+	--return the retrieved string
+	return data
+
+end
+
+-- external call for buffer dictionary
+local function buffer( opcode, operand, misc, data )
+
+	if not op_buffer[opcode] then
+		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_buffer.h")
+		return nil
+	end
+
+	if not operand then 
+		operand = 0 
+	elseif type(operand) == "string" then
+		if not op_buffer[operand] then
+			print("ERROR undefined operand:", operand, "must be defined in shared_dict_buffer.h")
+			return nil
+		end
+		--decode string operands into 
+		operand = op_buffer[operand]
+	end
+	
+	if not misc then misc = 0 end
+
+	local wLength, ep = default_rlen_1_in(op_buffer[opcode.."rlen"])
+
+	local count
+	count, data = usb_vend_xfr( 
+	--	ep,	dictionary		wValue[misc:opcode]     	wIndex		wLength		data
+		ep, dict["DICT_BUFFER"], ( misc<<8 | op_buffer[opcode]),	operand,	wLength,	data)
+	--print(count)
+	local error_code, data_len
+	if ep == USB_IN then
+		error_code = data:byte(RETURN_ERR_IDX)
+		data_len =   data:byte(RETURN_LEN_IDX)
+	end
+	--print("error:", error_code, "data_len:",  data_len)
+	
+	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
+	--if error_code ~= err_codes["SUCCESS"] then
+--		print("ERROR!!! device error code:", error_code)
+--	end
+
+	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
+		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
+	end
+
+	--process the return data string and return it to calling function
+	if data_len then
+		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+	else 
+		return nil
+	end 
+
+
+end
+
+-- external call for operation dictionary
+local function operation( opcode, operand, misc, data )
+
+	if not op_operation[opcode] then
+		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_operation.h")
+		return nil
+	end
+
+	if not operand then 
+		operand = 0 
+	elseif type(operand) == "string" then
+		if not op_operation[operand] then
+			print("ERROR undefined operand:", operand, "must be defined in shared_dict_operation.h")
+			return nil
+		end
+		--decode string operands into 
+		operand = op_operation[operand]
+	end
+	
+	if not misc then misc = 0 end
+
+	local wLength, ep = default_rlen_1_in(op_operation[opcode.."rlen"])
+
+	local count
+	count, data = usb_vend_xfr( 
+	--	ep,	dictionary		wValue[misc:opcode]     	wIndex		wLength		data
+		ep, dict["DICT_OPER"], ( misc<<8 | op_operation[opcode]),	operand,	wLength,	data)
+	--print(count)
+	local error_code, data_len
+	if ep == USB_IN then
+		error_code = data:byte(RETURN_ERR_IDX)
+		data_len =   data:byte(RETURN_LEN_IDX)
+	end
+	--print("error:", error_code, "data_len:",  data_len)
+	
+	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
+	--if error_code ~= err_codes["SUCCESS"] then
+--		print("ERROR!!! device error code:", error_code)
+--	end
+
+	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
+		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
+	end
+
+	--process the return data string and return it to calling function
+	if data_len then
+		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+	else 
+		return nil
+	end 
+
+
+end
 
 -- Dictionary table definitions
 -- global so other modules can use them
@@ -281,9 +465,9 @@ err_codes = {}
 -- call functions desired to run when script is called
 create_dict_tables( dict, 	"../shared/shared_dictionaries.h")
 create_dict_tables( op_pinport, "../shared/shared_dict_pinport.h")
---create_dict_tables( op_buffer, 	"../shared/shared_dict_buffer.h")
+create_dict_tables( op_buffer, 	"../shared/shared_dict_buffer.h")
 create_dict_tables( op_io,  	"../shared/shared_dict_io.h")
---create_dict_tables( op_operation,  "../shared/shared_dict_operation.h")
+create_dict_tables( op_operation,  "../shared/shared_dict_operation.h")
 create_dict_tables( op_nes,  	"../shared/shared_dict_nes.h")
 --create_dict_tables( op_snes,  	"../shared/shared_dict_snes.h")
 create_dict_tables( err_codes, 	"../shared/shared_errors.h")
@@ -291,6 +475,10 @@ create_dict_tables( err_codes, 	"../shared/shared_errors.h")
 -- functions other modules are able to call
 dict.pinport = pinport
 dict.io = io
+dict.nes = nes
+dict.buffer = buffer
+dict.buffer_payload_in = buffer_payload_in
+dict.operation = operation
 
 -- return the module's table
 return dict

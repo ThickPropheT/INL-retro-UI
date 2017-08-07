@@ -19,11 +19,19 @@
  */
 uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rdata )
 {
+#define	RD_LEN	0
+#define	RD0	1
+#define	RD1	2
+
+#define	BYTE_LEN 1
+#define	HWORD_LEN 2
 	switch (opcode) { 
 		case IO_RESET:	io_reset();	break;
 		case NES_INIT:	nes_init();	break;
 //		case SNES_INIT:	snes_init();	break;
-//		case EXP0_PULLUP_TEST:	exp0_pullup_test(data);	break;
+		case EXP0_PULLUP_TEST:	
+			rdata[RD_LEN] = BYTE_LEN;
+			rdata[RD0] = exp0_pullup_test();	break;
 		default:
 			 //opcode doesn't exist
 			 return ERR_UNKN_IO_OPCODE;
@@ -133,6 +141,8 @@ void nes_init()
 	CSWR_HI();
 
 	//memories are now disabled Data bus should be clear
+	DATA_ENABLE();
+	DATA_IP_PU();
 
 
 	//now meet conditions to call other macros
@@ -187,40 +197,66 @@ void snes_init()
 	ADDRX_SET(0x00);
 
 }
+*/
 
 //Test starts by verifying EXP0 can be driven low, if not, will return one byte of AUX_PIN
 //followed by alternating 0xAA, 0x55, 0xAA...
 //This test pulls up EXP0 and then reads AUX_PIN 6 times in rapid succession returning error code
 //plus 6 bytes of read data.  If pull up works but is just slow, should see that in return data.
 //data[0] marks bit where EXP0 resisdes to provide host with bitmask for EXP0
-void	exp0_pullup_test(uint8_t *data)
+uint8_t	exp0_pullup_test()
 {
+	uint16_t temp0, temp1, temp2, temp3, temp4, temp5;
 
 	//first verify EXP0 can be driven low
-	_EXP0_LO();	//sets O/P and low
+	EXP0_LO();	//sets O/P and low
+	EXP0_OP();
 	NOP();		//give some time to settle
-	data[1] = AUX_IN;	//port where EXP0 resides
-	_EXP0_FLT();	//sets I/P w/o pullup
+		
+	EXP0_RD(temp0);
+	//data[1] = AUX_IN;	//port where EXP0 resides
+	EXP0_IP_FL();	//sets I/P w/o pullup
 
-	if ( (data[1] & data[0]) == data[0]) {
+	//if ( (data[1] & data[0]) == data[0]) {
+	if (temp0) {
 		//EXP0 was high, couldn't drive EXP0 low
-		data[2] = data[4] = data[6] = 0xAA;
-		data[3] = data[5] = 0x55;
+		//data[2] = data[4] = data[6] = 0xAA;
+		//data[3] = data[5] = 0x55;
 		//return this signature as indication EXP0 failed to drive low
-		return;
+		return EXP0_STUCK_HI;
 	}
 
 	//Driving EXP0 low was successful, now pullup and read back
-	_EXP0_PU();
-	data[1] = AUX_IN;
-	data[2] = AUX_IN;
-	data[3] = AUX_IN;
-	data[4] = AUX_IN;
-	data[5] = AUX_IN;
-	data[6] = AUX_IN;
+	EXP0_IP_PU();
+	EXP0_RD(temp0);
+	EXP0_RD(temp1);
+	NOP();
+	EXP0_RD(temp2);	//3cycles
+	NOP();
+	NOP();
+	EXP0_RD(temp3);	//6cycles
+	NOP();
+	NOP();
+	NOP();
+	EXP0_RD(temp4);	//10cycles
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	EXP0_RD(temp5);	//15cycles
 
 	//return EXP0 to floating
-	_EXP0_FLT();
+	EXP0_IP_FL();
+
+	//return the number of cycles it took for EXP0 to go high
+	if (temp0) return 0;
+	if (temp1) return 1;
+	if (temp2) return 3;
+	if (temp3) return 6;
+	if (temp4) return 10;
+	if (temp5) return 15;
+	else	 return CANNOT_PULLUP_EXP0;
+
+	
 
 }
-*/

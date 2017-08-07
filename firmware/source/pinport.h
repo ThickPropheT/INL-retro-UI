@@ -9,7 +9,7 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 
 
 // used for a very short delay
-//#define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
+#define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
 
 
 //PIN MACROS
@@ -112,7 +112,7 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 #define	CIA10_OP()	CTL_OP(CIA10bank, CIA10)
 #define CIA10_LO()	CTL_SET_LO(CIA10bank, CIA10)
 #define CIA10_HI()	CTL_SET_HI(CIA10bank, CIA10)
-#define CIA10_RD(val)	CTL_RD(CIA10bank, CIA10, val
+#define CIA10_RD(val)	CTL_RD(CIA10bank, CIA10, val)
 
 //     PC12 "BL" 
 

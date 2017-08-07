@@ -124,40 +124,135 @@ local function jumper_famicom_sound (debug)
 	return true
 end
 
--- global variables so other modules can use them
 
+-- Desc:Run through supported mapper mirroring modes to help detect mapper.
+-- Pre: 
+-- Post:cart mirroring set to found mirroring
+-- Rtn: SUCCESS if nothing bad happened, neg if error with kazzo etc
+local function detect_mapper_mirroring (debug)
 
--- call functions desired to run when script is called/imported
+	local rv
 
-
--- functions other modules are able to call
-nes.jumper_ciramce_ppuA13n = jumper_ciramce_ppuA13n
-nes.ciramce_inv_ppuA13 = ciramce_inv_ppuA13 
-nes.jumper_famicom_sound = jumper_famicom_sound
-
--- return the module's table
-return nes
-
--- old C file:
+	print("attempting to detect NES/FC mapper via mirroring...");
+--		//TODO call mmc3 detection function
 --
---/* Desc:PRG-ROM flash manf/prod ID sense test
--- *	Using EXP0 /WE writes 
--- *	Only senses SST flash ID's
--- *	Assumes that isn't getting tricked by having manf/prodID at $8000/8001
--- *	could add check and increment read address to ensure doesn't get tricked..
+--		//TODO call mmc1 detection function
+--
+--		//fme7 and many other ASIC mappers
+--
+--		//none of ASIC mappers passed, assume fixed/discrete style mirroring
+		rv = dict.nes("CIRAM_A10_MIRROR")
+		if (rv == op_nes["MIR_VERT"]) then
+			if debug then print("vertical mirroring sensed") end
+		elseif rv == op_nes["MIR_HORZ"] then
+			if debug then print("horizontal mirroring sensed") end
+		elseif rv == op_nes["MIR_1SCNA"] then
+			if debug then print("1screen A mirroring sensed") end
+		elseif rv == op_nes["MIR_1SCNB"] then
+			if debug then print("1screen B mirroring sensed") end
+		end
+
+		-- Rtn: VERT/HORIZ/1SCNA/1SCNB
+	return true
+end
+
+-- Desc:CHR-ROM flash manf/prod ID sense test
+--	Only senses SST flash ID's
+--	Does not make CHR bank writes so A14-A13 must be made valid outside of this funciton
+--	An NROM board does this by tieing A14:13 to A12:11
+--	Other mappers will pass this function if PT0 has A14:13=01, PT1 has A14:13=10
+--	Assumes that isn't getting tricked by having manf/prodID at $0000/0001
+--	could add check and increment read address to ensure doesn't get tricked..
+-- Pre: nes_init() been called to setup i/o
+-- Post:memory manf/prod ID set to read values if passed
+--	memory wr_dict and wr_opcode set if successful
+--	Software mode exited if entered successfully
+-- Rtn: SUCCESS if flash sensed, GEN_FAIL if not, neg if error 
+local function read_flashID_chrrom_8K (debug)
+	
+	local rv
+	--enter software mode
+	--NROM has A13 tied to A11, and A14 tied to A12.
+	--So only A0-12 needs to be valid
+	--A13 needs to be low to address CHR-ROM
+	--	    15 14 13 12
+	-- 0x5 = 0b  0  1  0  1	-> $1555
+	-- 0x2 = 0b  0  0  1  0	-> $0AAA
+	dict.nes("NES_PPU_WR", 0x1555, 0xAA)
+	dict.nes("NES_PPU_WR", 0x0AAA, 0x55)
+	dict.nes("NES_PPU_WR", 0x1555, 0x90)
+	--read manf ID
+	rv = dict.nes("NES_PPU_RD", 0x0000)
+	if debug then print("attempted read CHR-ROM manf ID:", string.format("%X", rv)) end
+--	if ( rv[RV_DATA0_IDX] != SST_MANF_ID ) {
+--		return GEN_FAIL;
+--		//no need for software exit since failed to enter
+--	}
+--
+	--read prod ID
+	rv = dict.nes("NES_PPU_RD", 0x0001)
+	if debug then print("attempted read CHR-ROM prod ID:", string.format("%X", rv)) end
+--	if ( (rv[RV_DATA0_IDX] == SST_PROD_128)
+--	||   (rv[RV_DATA0_IDX] == SST_PROD_256)
+--	||   (rv[RV_DATA0_IDX] == SST_PROD_512) ) {
+--		//found expected manf and prod ID
+--		flash->manf = SST_MANF_ID;
+--		flash->part = rv[RV_DATA0_IDX];
+--		flash->wr_dict = DICT_NES;
+--		flash->wr_opcode = NES_PPU_WR;
+--	}
+--
+	--exit software
+	dict.nes("NES_PPU_WR", 0x0000, 0xF0)
+
+	--return true
+end
+
+
+--/* Desc:Simple CHR-RAM sense test
+-- *	A more thourough test should be implemented in firmware
+-- *	This one simply tests one address in PPU address space
 -- * Pre: nes_init() been called to setup i/o
--- *	exp0 pullup test must pass
--- *	if ROM A14 is mapper controlled it must be low when CPU A14 is low
--- *	controlling A14 outside of this function acts as a means of bank size detection
--- * Post:memory manf/prod ID set to read values if passed
--- *	memory wr_dict and wr_opcode set if successful
--- *	Software mode exited if entered successfully
--- * Rtn: SUCCESS if flash sensed, GEN_FAIL if not, neg if error 
+-- * Post:
+-- * Rtn: SUCCESS if ram sensed, GEN_FAIL if not, neg if error 
 -- */
---int read_flashID_prgrom_exp0( USBtransfer *transfer, memory *flash ) {
---
---	uint8_t rv[RV_DATA0_IDX];
---
+--int ppu_ram_sense( USBtransfer *transfer, uint16_t addr ) {
+local function ppu_ram_sense( addr, debug )
+	local rv
+	--write 0xAA to addr 
+	dict.nes("NES_PPU_WR", addr, 0xAA)
+	--try to read it back
+	if (dict.nes("NES_PPU_RD", addr) ~= 0xAA) then
+		if debug then print("could not write 0xAA to PPU $", string.format("%X", addr)) end
+		return false
+	end
+	--write 0x55 to addr 
+	dict.nes("NES_PPU_WR", addr, 0x55)
+	--try to read it back
+	if (dict.nes("NES_PPU_RD", addr) ~= 0x55) then
+		if debug then print("could not write 0x55 to PPU $", string.format("%X", addr)) end
+		return false
+	end
+
+	if debug then print("detected RAM @ PPU $", string.format("%X", addr)) end
+	return true
+end
+
+-- Desc:PRG-ROM flash manf/prod ID sense test
+--	Using EXP0 /WE writes 
+--	Only senses SST flash ID's
+--	Assumes that isn't getting tricked by having manf/prodID at $8000/8001
+--	could add check and increment read address to ensure doesn't get tricked..
+-- Pre: nes_init() been called to setup i/o
+--	exp0 pullup test must pass
+--	if ROM A14 is mapper controlled it must be low when CPU A14 is low
+--	controlling A14 outside of this function acts as a means of bank size detection
+-- Post:memory manf/prod ID set to read values if passed
+--	memory wr_dict and wr_opcode set if successful
+--	Software mode exited if entered successfully
+-- Rtn: SUCCESS if flash sensed, GEN_FAIL if not, neg if error 
+local function read_flashID_prgrom_exp0 (debug)
+	local rv
 	--enter software mode
 	--ROMSEL controls PRG-ROM /OE which needs to be low for flash writes
 	--So unlock commands need to be addressed below $8000
@@ -165,15 +260,12 @@ return nes
 	--	    15 14 13 12
 	-- 0x5 = 0b  0  1  0  1	-> $5555
 	-- 0x2 = 0b  0  0  1  0	-> $2AAA
---	dictionary_call( transfer, DICT_NES, 	DISCRETE_EXP0_PRGROM_WR,	0x5555,		0xAA,	
---									USB_IN,		NULL,	1);
---	dictionary_call( transfer, DICT_NES, 	DISCRETE_EXP0_PRGROM_WR,	0x2AAA,		0x55,	
---									USB_IN,		NULL,	1);
---	dictionary_call( transfer, DICT_NES, 	DISCRETE_EXP0_PRGROM_WR,	0x5555,		0x90,	
---									USB_IN,		NULL,	1);
+	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xAA)
+	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x2AAA, 0x55)
+	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0x90)
 	--read manf ID
---	dictionary_call( transfer, DICT_NES, 	NES_CPU_RD,			0x8000,		NILL,	
---								USB_IN,		rv,	RV_DATA0_IDX+1);
+	rv = dict.nes("NES_CPU_RD", 0x8000)
+	if debug then print("attempted read PRG-ROM manf ID:", string.format("%X", rv)) end
 --	debug("manf id: %x", rv[RV_DATA0_IDX]);
 --	if ( rv[RV_DATA0_IDX] != SST_MANF_ID ) {
 --		return GEN_FAIL;
@@ -181,9 +273,8 @@ return nes
 --	}
 --
 	--read prod ID
---	dictionary_call( transfer, DICT_NES, 	NES_CPU_RD,			0x8001,		NILL,	
---								USB_IN,		rv,	RV_DATA0_IDX+1);
---	debug("prod id: %x", rv[RV_DATA0_IDX]);
+	rv = dict.nes("NES_CPU_RD", 0x8001)
+	if debug then print("attempted read PRG-ROM prod ID:", string.format("%X", rv)) end
 --	if ( (rv[RV_DATA0_IDX] == SST_PROD_128)
 --	||   (rv[RV_DATA0_IDX] == SST_PROD_256)
 --	||   (rv[RV_DATA0_IDX] == SST_PROD_512) ) {
@@ -195,16 +286,35 @@ return nes
 --	}
 --
 	--exit software
---	dictionary_call( transfer, DICT_NES, 	DISCRETE_EXP0_PRGROM_WR,	0x8000,		0xF0,	
---									USB_IN,		NULL,	1);
---
+	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x8000, 0xF0)
 	--verify exited
-	--dictionary_call( transfer, DICT_NES, 	NES_CPU_RD,			0x8000,		NILL,	
-	--							USB_IN,		rv,	RV_DATA0_IDX+1);
-	--debug("prod id: %x", rv[RV_DATA0_IDX]);
+--	rv = dict.nes("NES_CPU_RD", 0x8001)
+--	if debug then print("attempted read PRG-ROM prod ID:", string.format("%X", rv)) end
+	
+	return true
+end
+
+
+-- global variables so other modules can use them
+
+
+-- call functions desired to run when script is called/imported
+
+
+-- functions other modules are able to call
+nes.jumper_ciramce_ppuA13n = jumper_ciramce_ppuA13n
+nes.ciramce_inv_ppuA13 = ciramce_inv_ppuA13 
+nes.jumper_famicom_sound = jumper_famicom_sound
+nes.detect_mapper_mirroring = detect_mapper_mirroring
+nes.ppu_ram_sense = ppu_ram_sense
+nes.read_flashID_chrrom_8K = read_flashID_chrrom_8K
+nes.read_flashID_prgrom_exp0 = read_flashID_prgrom_exp0
+
+-- return the module's table
+return nes
+
+-- old C file:
 --
---	return SUCCESS;
---}
 --
 --
 --/* Desc:PRG-ROM flash manf/prod ID sense test
@@ -280,123 +390,4 @@ return nes
 --	debug("prod id: %x", rv[RV_DATA0_IDX]);
 --
 --	return SUCCESS;
---}
---
---
---/* Desc:CHR-ROM flash manf/prod ID sense test
--- *	Only senses SST flash ID's
--- *	Does not make CHR bank writes so A14-A13 must be made valid outside of this funciton
--- *	An NROM board does this by tieing A14:13 to A12:11
--- *	Other mappers will pass this function if PT0 has A14:13=01, PT1 has A14:13=10
--- *	Assumes that isn't getting tricked by having manf/prodID at $0000/0001
--- *	could add check and increment read address to ensure doesn't get tricked..
--- * Pre: nes_init() been called to setup i/o
--- * Post:memory manf/prod ID set to read values if passed
--- *	memory wr_dict and wr_opcode set if successful
--- *	Software mode exited if entered successfully
--- * Rtn: SUCCESS if flash sensed, GEN_FAIL if not, neg if error 
--- */
---int read_flashID_chrrom_8K( USBtransfer *transfer, memory *flash ) {
---
---	uint8_t rv[RV_DATA0_IDX];
---
-	--enter software mode
-	--NROM has A13 tied to A11, and A14 tied to A12.
-	--So only A0-12 needs to be valid
-	--A13 needs to be low to address CHR-ROM
-	--	    15 14 13 12
-	-- 0x5 = 0b  0  1  0  1	-> $1555
-	-- 0x2 = 0b  0  0  1  0	-> $0AAA
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	0x1555,		0xAA,	
---									USB_IN,		NULL,	1);
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	0x0AAA,		0x55,	
---									USB_IN,		NULL,	1);
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	0x1555,		0x90,	
---									USB_IN,		NULL,	1);
-	--read manf ID
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	0x0000,		NILL,	
---							USB_IN,		rv,	RV_DATA0_IDX+1);
---	debug("manf id: %x", rv[RV_DATA0_IDX]);
---	if ( rv[RV_DATA0_IDX] != SST_MANF_ID ) {
---		return GEN_FAIL;
---		//no need for software exit since failed to enter
---	}
---
-	--read prod ID
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	0x0001,		NILL,	
---							USB_IN,		rv,	RV_DATA0_IDX+1);
---	debug("prod id: %x", rv[RV_DATA0_IDX]);
---	if ( (rv[RV_DATA0_IDX] == SST_PROD_128)
---	||   (rv[RV_DATA0_IDX] == SST_PROD_256)
---	||   (rv[RV_DATA0_IDX] == SST_PROD_512) ) {
---		//found expected manf and prod ID
---		flash->manf = SST_MANF_ID;
---		flash->part = rv[RV_DATA0_IDX];
---		flash->wr_dict = DICT_NES;
---		flash->wr_opcode = NES_PPU_WR;
---	}
---
-	--exit software
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	0x0000,		0xF0,	
---									USB_IN,		NULL,	1);
---
-	--verify exited
-	--dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	0x0000,		NILL,	
-	--							USB_IN,		rv,	RV_DATA0_IDX+1);
-	--debug("prod id: %x", rv[RV_DATA0_IDX]);
---
---	return SUCCESS;
---}
---
---/* Desc:Simple CHR-RAM sense test
--- *	A more thourough test should be implemented in firmware
--- *	This one simply tests one address in PPU address space
--- * Pre: nes_init() been called to setup i/o
--- * Post:
--- * Rtn: SUCCESS if ram sensed, GEN_FAIL if not, neg if error 
--- */
---int ppu_ram_sense( USBtransfer *transfer, uint16_t addr ) {
---
---	uint8_t rv[RV_DATA0_IDX];
---
-	--write 0xAA to addr 
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	addr,		0xAA,	
---									USB_IN,		NULL,	1);
-	--try to read it back
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	addr,		NILL,	
---							USB_IN,		rv,	RV_DATA0_IDX+1);
---	debug("reading back 0xAA: %x", rv[RV_DATA0_IDX]);
---	if ( rv[RV_DATA0_IDX] != 0xAA ) {
---		return GEN_FAIL;
---	} 
---
-	--write 0x55 to addr 
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_WR,	addr,		0x55,	
---									USB_IN,		NULL,	1);
-	--try to read it back
---	dictionary_call( transfer, DICT_NES, 	NES_PPU_RD,	addr,		NILL,	
---							USB_IN,		rv,	RV_DATA0_IDX+1);
---	debug("reading back 0x55: %x", rv[RV_DATA0_IDX]);
---	if ( rv[RV_DATA0_IDX] != 0x55 ) {
---		return GEN_FAIL;
---	}
---
---	return SUCCESS;
---}
---
---
---/* Desc:Just calls CIRAM_A10_MIRROR opcode and returns result.
--- *	result will be return value of opcode
--- * Pre: nes_init() been called to setup i/o
--- * Post:address bus left assigned
--- * Rtn: VERT/HORIZ/1SCNA/1SCNB
--- */
---int ciram_A10_mirroring( USBtransfer *transfer )
---{
---	uint8_t rv[RV_DATA0_IDX];
---
---	dictionary_call( transfer, DICT_NES, 	CIRAM_A10_MIRROR,	NILL,		NILL,	
---							USB_IN,		rv,	RV_DATA0_IDX+1);
---	debug("mirroring detected: %x", rv[RV_DATA0_IDX]);
---	return rv[RV_DATA0_IDX];
 --}
