@@ -8,8 +8,7 @@
 #include "operation.h"
 #include "usb.h"
 #include "dump.h"
-
-//#include "flash.h"
+#include "flash.h"
 
 #define FALSE  0x00 //TODO remove this junk!
 

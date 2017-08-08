@@ -342,6 +342,45 @@ local function buffer_payload_in( wLength, buff_num )
 
 end
 
+local function buffer_payload_out( num_bytes, data, buff_num )
+
+	local opcode = nil
+
+	local wLength = 0
+	if num_bytes == 256 then
+		--2B in setup packet
+		operand = string.unpack("B", data ,1) | (string.unpack("B", data ,2)<<8)
+--		print(string.format("%04X ", operand))
+		--operand = string.sub(data, 1, 2)
+		wLength = 254
+		if not buff_num then 
+			opcode = op_buffer["BUFF_OUT_PAYLOAD_2B_INSP"] 
+			buff_num = 0
+		else
+			opcode = op_buffer["BUFF_OUT_PAYLOADN_2B_INSP"]
+		end
+	else	--don't stuff data in setup packet
+		wLength = num_bytes
+		operand = 0
+		if not buff_num then 
+			opcode = op_buffer["BUFF_PAYLOAD"] 
+			buff_num = 0
+		else
+			opcode = op_buffer["BUFF_PAYLOAD0"] + buff_num 
+			buff_num = 0	--these opcodes don't put buff num in miscdata, but should update them to do so.
+		end
+	end
+
+	local count
+	count, data = usb_vend_xfr( 
+		USB_OUT, ((buff_num<<8) | dict["DICT_BUFFER"]),	opcode,		operand,	wLength,	data:sub(3,-1))
+
+	assert ( (count == wLength ), ("ERROR!!! host only sent:"..count.."bytes, expecting:"..wLength))
+
+	return 
+
+end
+
 -- external call for buffer dictionary
 local function buffer( opcode, operand, misc, data )
 
@@ -478,6 +517,7 @@ dict.io = io
 dict.nes = nes
 dict.buffer = buffer
 dict.buffer_payload_in = buffer_payload_in
+dict.buffer_payload_out = buffer_payload_out
 dict.operation = operation
 
 -- return the module's table

@@ -9,6 +9,8 @@ function main ()
 	local cart = require "scripts.app.cart"
 	local nes = require "scripts.app.nes"
 	local dump = require "scripts.app.dump"
+	local erase = require "scripts.app.erase"
+	local flash = require "scripts.app.flash"
 
 	local rv
 --	rv = dict.pinport( "CTL_ENABLE" )
@@ -61,6 +63,20 @@ function main ()
 			--set rom types and sizes
 			--perform desired operation
 
+
+			--FLASHING:
+			--erase cart
+			erase.erase_nes( true )
+			--open file
+			local file 
+			file = assert(io.open("flash.bin", "rb"))
+			--determine if auto-doubling, deinterleaving, etc, 
+			--needs done to make board compatible with rom
+			--flash cart
+			flash.flash_nes( file, true )
+			--close file
+			assert(file:close())
+
 			--DUMPING:
 			--create new file
 			local file 
@@ -70,15 +86,6 @@ function main ()
 
 			--close file
 			assert(file:close())
-
-			--FLASHING:
-			--open file
-			--erase cart
-			--determine if auto-doubling, deinterleaving, etc, 
-			--needs done to make board compatible with rom
-			--flash cart
-			--close file
-
 
 
 			dict.io("IO_RESET")	

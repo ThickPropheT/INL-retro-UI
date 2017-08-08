@@ -215,7 +215,7 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 // w/o  checks: 512KByte = 17.9sec = 28.5KBps
 // w/o  checks: using 8bit rlen = 17.5sec = 29.2KBps
 // with checks: using 8bit rlen = 18sec   = 28.3KBps
-//#define MAKECHECKS	0
+//#define MAKECHECKS
 
 #ifdef AVR_CORE
 USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
@@ -224,7 +224,6 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 uint8_t usbFunctionWrite(uint8_t *data, uint8_t len) {
 #endif
 
-/*
 	//defined and controled by buffer.c
 	extern buffer *cur_usb_load_buff;
 	extern uint8_t incoming_bytes_remain;
@@ -280,7 +279,5 @@ uint8_t usbFunctionWrite(uint8_t *data, uint8_t len) {
 		return NOT_DONE;
 	}
 
-	*/
-	return 0;
 }
 

@@ -12,8 +12,10 @@ typedef struct setup_packet{
 
 
 //write function pointers
-typedef	void	(*write_funcptr) 	( uint8_t addrH, uint8_t addrL, uint8_t data );
-typedef	uint8_t	(*read_funcptr)		( uint8_t addrH, uint8_t addrL );
+//typedef	void	(*write_funcptr) 	( uint8_t addrH, uint8_t addrL, uint8_t data );
+//typedef	uint8_t	(*read_funcptr)		( uint8_t addrH, uint8_t addrL );
+typedef	void	(*write_funcptr) 	( uint16_t addr, uint8_t data );
+typedef	uint8_t	(*read_funcptr)		( uint16_t addr );
 
 
 //~16 bytes per buffer...

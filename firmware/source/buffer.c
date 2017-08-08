@@ -166,6 +166,7 @@ uint8_t	* buffer_usb_call( setup_packet *spacket, uint8_t *rv, uint8_t *rlen)
 		break;
 
 		//opcodes which include designation of which buffer is being called in lower bits of opcode
+		//TODO get rid of these opcodes, and just always put buffer number in miscdata!!
 		case BUFF_OPCODE_BUFN_MIN ... BUFF_OPCODE_BUFN_MAX:
 			//mask out last three bits to detect buffer being called based on opcode number
 			switch ( (spacket->opcode) & 0x07) {
@@ -298,13 +299,11 @@ uint8_t * buffer_payload( setup_packet *spacket, buffer *buff, uint8_t hostsetbu
 	//now only thing left to do is stuff 2 bytes from setup packet into the buffer if designated by the opcode
 	if ( (cur_buff->status == USB_LOADING) &&
 	     ((spacket->opcode == BUFF_OUT_PAYLOAD_2B_INSP)||(spacket->opcode == BUFF_OUT_PAYLOADN_2B_INSP)) ) {
-	//operandMSB:LSB actually contains first 2 bytes
+	//operandLSB:MSB actually contains first 2 bytes
 	//these two bytes don't count as part of transfer OUT byte count
 	//but they do count as part of buffer's byte count.
-//		cur_usb_load_buff->data[0] = spacket->operandMSB;
-		cur_usb_load_buff->data[0] = (spacket->operand)>>8;
-//		cur_usb_load_buff->data[1] = spacket->operandLSB;
-		cur_usb_load_buff->data[1] = spacket->operand;
+		cur_usb_load_buff->data[0] = spacket->operand;
+		cur_usb_load_buff->data[1] = (spacket->operand)>>8;
 		cur_usb_load_buff->cur_byte += 2;
 	}
 
@@ -670,7 +669,7 @@ void update_buffers()
 			
 			last_buff->status = FLASHING;
 			//last_buff->cur_byte = 0;
-//TODO CALL FLASHBUFF			result = flash_buff( last_buff );
+			result = flash_buff( last_buff );
 			if (result != SUCCESS) {
 				last_buff->status = result;
 			} else {
