@@ -268,7 +268,7 @@ uint8_t	nes_ppu_rd( uint16_t addr )
 
 	//addr with PPU /A13
 	if (addr < 0x2000) { //below $2000 A13 clear, /A13 set
-		addr |= PPU_A13N_BYTE;
+		addr |= PPU_A13N_WORD;
 	} //above PPU $1FFF, A13 set, /A13 clear 
 
 	ADDR_SET( addr );
@@ -398,8 +398,7 @@ uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	}
 
 	//set lower address bits
-	//ADDR_OUT = first;	//doing this prior to entry and right after latching
-	ADDRL(first);
+	ADDRL(first);		//doing this prior to entry and right after latching
 				//gives longest delay between address out and latching data
 	for( i=0; i<=len; i++ ) {
 		//testing shows that having this if statement doesn't affect overall dumping speed
@@ -410,7 +409,6 @@ uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 			usbPoll();	//Call usbdrv.h usb polling while waiting for data
 		}
 		//latch data
-		//data[i] = DATA_IN;
 		DATA_RD(data[i]);
 		//set lower address bits
 		//ADDRL(++first);	THIS broke things, on stm adapter because macro expands it twice!
@@ -442,7 +440,10 @@ uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	uint8_t i;
 
 	if (addrH < 0x20) { //below $2000 A13 clear, /A13 set
-		ADDRH(addrH | PPU_A13N_WORD);
+		//ADDRH(addrH | PPU_A13N_BYTE); 
+		//Don't do weird stuff like above!  logic inside macro expansions can have weird effects!!
+		addrH |= PPU_A13N_BYTE;
+		ADDRH(addrH);
 	} else { //above PPU $1FFF, A13 set, /A13 clear 
 		ADDRH(addrH);
 	}
@@ -451,8 +452,8 @@ uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	CSRD_LO();
 
 	//set lower address bits
-	//ADDR_OUT = first;	//doing this prior to entry and right after latching
-	ADDRL(first);		//gives longest delay between address out and latching data
+	ADDRL(first);		//doing this prior to entry and right after latching
+				//gives longest delay between address out and latching data
 
 	for( i=0; i<=len; i++ ) {
 		//couple more NOP's waiting for data
@@ -463,11 +464,10 @@ uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 			usbPoll();
 		}
 		//latch data
-		//data[i] = DATA_IN;
 		DATA_RD(data[i]);
 		//set lower address bits
-		//ADDR_OUT = ++first;
-		ADDRL(++first);
+		first ++;
+		ADDRL(first);
 	}
 
 	//return bus to default

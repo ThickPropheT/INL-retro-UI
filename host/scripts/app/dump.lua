@@ -45,19 +45,12 @@ local function dump_nes( file, debug )
 --
 --	//setup buffers and manager
 --	//reset buffers first
---	check(! reset_buffers( transfer ), "Unable to reset device buffers");
---test	print (dict.buffer("GET_RAW_BANK_STATUS", 0))
---test	print (dict.buffer("GET_RAW_BANK_STATUS", 1))
---test	print (dict.buffer("GET_RAW_BANK_STATUS", 2))
 	dict.buffer("RAW_BUFFER_RESET")
---test	print (dict.buffer("GET_RAW_BANK_STATUS", 0))
---test	print (dict.buffer("GET_RAW_BANK_STATUS", 1))
---test	print (dict.buffer("GET_RAW_BANK_STATUS", 2))
+
 --	//need to allocate some buffers for dumping
 --	//2x 128Byte buffers
 	local num_buffers = 2
 	local buff_size = 128	
---	check(! allocate_buffers( transfer, num_buffers, buff_size ), "Unable to allocate buffers");
 	print("allocating buffers")
 	assert(buffers.allocate( num_buffers, buff_size ), "fail to allocate buffers")
 
@@ -69,18 +62,13 @@ local function dump_nes( file, debug )
 --	check(! set_mem_n_part( transfer, buff0, PRGROM, MASKROM ), "Unable to set mem_type and part");
 	print("setting map n part")
 	dict.buffer("SET_MEM_N_PART", (op_buffer["PRGROM"]<<8 | op_buffer["MASKROM"]), buff0 )
---	return dictionary_call( transfer,	DICT_BUFFER,	SET_MEM_N_PART,	
---				( (mem_type<<8) | (part_num) ),		buff_num,	USB_IN,	NULL,	1);
---	check(! set_mem_n_part( transfer, buff1, PRGROM, MASKROM ), "Unable to set mem_type and part");
 	dict.buffer("SET_MEM_N_PART", (op_buffer["PRGROM"]<<8 | op_buffer["MASKROM"]), buff1 )
 --	//set multiple and add_mult only when flashing
 --	//set mapper, map_var, and function to designate read/write algo
 --
 --	//just dump visible NROM memory to start
---	check(! set_map_n_mapvar( transfer, buff0, NROM, NILL ), "Unable to set mapper and map_var");
 	print("setting map n mapvar")
 	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer["NROM"]<<8 | op_buffer["NOVAR"]), buff0 )
---	check(! set_map_n_mapvar( transfer, buff1, NROM, NILL ), "Unable to set mapper and map_var");
 	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer["NROM"]<<8 | op_buffer["NOVAR"]), buff1 )
 --
 --	//tell buffers what function to use for dumping
@@ -105,10 +93,8 @@ local function dump_nes( file, debug )
 --	check(! set_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
 	dict.operation("SET_OPERATION", op_buffer["STARTDUMP"] )
 --
---//	get_operation( transfer );
+	--need these calls to delay things a bit to let first buffer dump complete..
 	dict.operation("GET_OPERATION" )
---//	get_buff_elements( transfer, buff0 );
---//	get_buff_elements( transfer, buff1 );
 	dict.buffer("GET_PRI_ELEMENTS", nil, buff0 )
 	dict.buffer("GET_PRI_ELEMENTS", nil, buff1 )
 --	//manager updates buffer status' so they'll start dumping
@@ -117,32 +103,19 @@ local function dump_nes( file, debug )
 --	//buffer updates it's elements and goes off to dump next page
 --
 	print("starting first payload");
---//	check(! payload_in( transfer, data, buff_size ), "Error with payload IN");
 	--dict.buffer("BUFF_PAYLOAD")
---//	check(! append_to_file( rom, data, buff_size ), "Error with file append");
 	--file:write("HELLO FILE!")
 --	file:write( dict.buffer_payload_in( buff_size ))
---//
 --	print("first payload done");
---//	get_operation( transfer );
---//	get_buff_elements( transfer, buff0 );
---//	get_buff_elements( transfer, buff1 );
---//
+--
 --	print("second payload");
 --	file:write( dict.buffer_payload_in( buff_size ))
---//	check(! payload_in( transfer, data, buff_size ), "Error with payload IN");
---//	check(! append_to_file( rom, data, buff_size ), "Error with file append");
---//
---//	get_operation( transfer );
---//	get_buff_elements( transfer, buff0 );
---//	get_buff_elements( transfer, buff1 );
+--
 --	clock_t tstart, tstop;
 --	tstart = clock();
 --
 --	//now just need to call series of payload IN transfers to retrieve data
---	//for( i=0; i<(512*KByte/buff_size); i++) {
 	--for i=1, (1024*1024/buff_size) do
---	for( i=0; i<(32*KByte/buff_size); i++) {
 	for i=1, (32*1024/buff_size) do
 
 --		//ensure cur_buff is DUMPED prior to requsting data
@@ -177,31 +150,32 @@ local function dump_nes( file, debug )
 --	//tell buffer manager when to stop
 --	// or not..?  just reset buffers and start next memory or quit
 --	//reset buffers and setup to dump CHR-ROM
---
---	check(! reset_buffers( transfer ), "Unable to reset device buffers");
---	check(! allocate_buffers( transfer, num_buffers, buff_size ), "Unable to allocate buffers");
---	check(! set_mem_n_part( transfer, buff0, CHRROM, MASKROM ), "Unable to set mem_type and part");
---	check(! set_mem_n_part( transfer, buff1, CHRROM, MASKROM ), "Unable to set mem_type and part");
---	check(! set_map_n_mapvar( transfer, buff0, NROM, NILL ), "Unable to set mapper and map_var");
---	check(! set_map_n_mapvar( transfer, buff1, NROM, NILL ), "Unable to set mapper and map_var");
---
---	debug("\n\nsetting operation STARTDUMP");
---	check(! set_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
---
---	for( i=0; i<(8*KByte/buff_size); i++) {
---		//ensure cur_buff is DUMPED prior to requsting data
---		check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
---		while (cur_buff_status != DUMPED ) {
---			//debug("cur_buff->status: %x ", cur_buff_status);
---			check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
---		}
---		//payload transfer in and append to file
---		if ( i % 256 == 0 ) debug("payload in #%d", i);
---		check(! payload_in( transfer, data, buff_size ), "Error with payload IN");
---		if (i==0) printf("first byte: %x\n", data[0]);
---		check(! append_to_file( rom, data, buff_size ), "Error with file append");
---	}
---	debug("payload done");
+	--Can't get things to work without resetting all the buffers for some reason..
+	--Think the issue is need to get the buffer status needs reset
+	dict.buffer("RAW_BUFFER_RESET")
+	print("reallocate buffers")
+	assert(buffers.allocate( num_buffers, buff_size ), "fail to allocate buffers")
+	dict.buffer("SET_MEM_N_PART", (op_buffer["CHRROM"]<<8 | op_buffer["MASKROM"]), buff0 )
+	dict.buffer("SET_MEM_N_PART", (op_buffer["CHRROM"]<<8 | op_buffer["MASKROM"]), buff1 )
+	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer["NROM"]<<8 | op_buffer["NOVAR"]), buff0 )
+	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer["NROM"]<<8 | op_buffer["NOVAR"]), buff1 )
+	dict.operation("SET_OPERATION", op_buffer["STARTDUMP"] )
+	--dict.operation("GET_OPERATION" )
+	--dict.buffer("GET_PRI_ELEMENTS", nil, buff0 )
+	--dict.buffer("GET_PRI_ELEMENTS", nil, buff1 )
+	
+	for i=1, (8*1024/buff_size) do
+		--cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
+		--while (cur_buff_status ~= op_buffer["DUMPED"]) do
+--		--while (cur_buff_status != DUMPED ) {
+		--	print("cur_buff->status: ", cur_buff_status)
+		--	cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
+--		--	check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+--		--}
+		--end
+		file:write( dict.buffer_payload_in( buff_size ))
+	end
+	print("payload done");
 --
 --	//close file in main
 --
@@ -209,7 +183,6 @@ local function dump_nes( file, debug )
 	dict.buffer("RAW_BUFFER_RESET")
 
 	return true
-
 end
 
 
