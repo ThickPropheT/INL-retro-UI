@@ -52,6 +52,59 @@ uint8_t	write_page( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_
 
 } 
 
+uint8_t	write_page_chr( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
+{
+	uint16_t cur = buff->cur_byte;
+	uint8_t	n = buff->cur_byte;
+	uint8_t read;
+//	extern operation_info *oper_info;
+
+	while ( cur <= buff->last_idx ) {
+		//write unlock sequence
+		//need to make address and unlock data variable
+		//best for host to communcate these values
+		//actual value is part mapper dependent and part flash dependent
+		//mapper controlled address bits dictate where split is
+		//32KB banking A14-0 NES ctl, A15+ mapper ctl "bank" NROM, BNROM, ANROM
+		//addrH_dmask   = 0b0111 1111 directly addressable addrH bits
+		//page2bankshft = A14->A8 = 7 shifts (equal to number of set bits in addrH_mask
+		//16KB banking A13-0 NES ctl, A14+ mapper ctl "bank" UxROM, MMC1
+		//addrH_dmask   = 0b0011 1111
+		//page2bankshft = A13->A8 = 6 shifts
+		// 8KB banking A12-0 NES ctl, A13+ mapper ctl "bank" MMC3, FME7
+		//addrH_dmask   = 0b0001 1111
+		//page2bankshft = A12->A8 = 5 shifts
+		// 4KB banking A11-0 NES ctl, A12+ mapper ctl "bank" ezNSF
+		//addrH_dmask   = 0b0000 1111
+		//page2bankshft = A11->A8 = 4 shifts
+		wr_func( 0x1555, 0xAA );
+//		wr_func( oper_info->unlock1_AH, oper_info->unlock1_AL, oper_info->unlock1_data );
+		wr_func( 0x0AAA, 0x55 );
+//		wr_func( oper_info->unlock2_AH, oper_info->unlock2_AL, oper_info->unlock2_data );
+		wr_func( 0x1555, 0xA0 );
+//		wr_func( oper_info->command_AH, oper_info->command_AL, oper_info->command1_data );
+		wr_func( ((addrH<<8)| n), buff->data[n] );
+		//wr_func( ((addrH<<8)| n), buff->page_num );
+		//wr_func( ((addrH<<8)| n),  addrH);
+	
+		do {
+			usbPoll();
+			read = rd_func((addrH<<8)|n);
+	
+		} while( read != rd_func((addrH<<8)|n) );
+		//TODO verify byte is value that was trying to be flashed
+		//move on to next byte
+		n++;
+		cur++;
+
+	}
+
+	buff->cur_byte = n;
+
+	return SUCCESS;
+
+} 
+
 /* Desc:Flash buffer contents on to cartridge memory
  * Pre: buffer elements must be updated to designate how/where to flash
  * 	buffer's cur_byte must be cleared or set to where to start flashing
@@ -80,7 +133,7 @@ uint8_t flash_buff( buffer *buff ) {
 			write_page( 0, (0x80 | addrH), buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
 			break;
 		case CHRROM:		//$0000
-	//TODO		write_page( 0, addrH, buff, nes_ppu_wr, nes_ppu_rd );
+			write_page_chr( 0, addrH, buff, nes_ppu_wr, nes_ppu_rd );
 			break;
 		case PRGRAM:
 			//addrH |= 0x60;	//$6000

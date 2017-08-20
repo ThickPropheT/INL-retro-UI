@@ -53,6 +53,7 @@ local function flash_nes( file, debug )
 --	
 --	//start operation at reset	
 --	check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
+	dict.operation("SET_OPERATION", op_buffer["RESET"] )
 --
 --	//setup buffers and manager
 --	//reset buffers first
@@ -90,21 +91,22 @@ local function flash_nes( file, debug )
 	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer["NROM"]<<8 | op_buffer["NOVAR"]), buff1 )
 --
 --	//debugging print out buffer elements
-	print("\nget operation:")
-	dict.operation("GET_OPERATION" )
-	print("\n\ngetting cur_buff status")
-	dict.buffer("GET_CUR_BUFF_STATUS" )
-	print("\n\ngetting elements")
-	print(dict.buffer("GET_PRI_ELEMENTS", nil, buff0 ))
-	print(dict.buffer("GET_PRI_ELEMENTS", nil, buff1 ))
-	print(dict.buffer("GET_SEC_ELEMENTS", nil, buff0 ))
-	print(dict.buffer("GET_SEC_ELEMENTS", nil, buff1 ))
-	print(dict.buffer("GET_PAGE_NUM", nil, buff0 )    )
-	print(dict.buffer("GET_PAGE_NUM", nil, buff1 )    )
+	--print("\nget operation:")
+	--dict.operation("GET_OPERATION" )
+	--print("\n\ngetting cur_buff status")
+	--dict.buffer("GET_CUR_BUFF_STATUS" )
+	--print("\n\ngetting elements")
+	--print(dict.buffer("GET_PRI_ELEMENTS", nil, buff0 ))
+	--print(dict.buffer("GET_PRI_ELEMENTS", nil, buff1 ))
+	--print(dict.buffer("GET_SEC_ELEMENTS", nil, buff0 ))
+	--print(dict.buffer("GET_SEC_ELEMENTS", nil, buff1 ))
+	--print(dict.buffer("GET_PAGE_NUM", nil, buff0 )    )
+	--print(dict.buffer("GET_PAGE_NUM", nil, buff1 )    )
 
 	print("\n\nsetting operation STARTFLASH");
 --	//inform buffer manager to start dumping operation now that buffers are initialized
 	dict.operation("SET_OPERATION", op_buffer["STARTFLASH"] )
+	--print("set operation STARTFLASH");
 
 --	clock_t tstart, tstop;
 --	tstart = clock();
@@ -144,13 +146,117 @@ local function flash_nes( file, debug )
 --	//The device doesn't have a good way to respond if the last buffer is flashing
 --	//and the current one is full.  We can only send a payload if the current buffer
 --	//is empty.
---	waste some time for now..
-	print(dict.buffer("GET_PRI_ELEMENTS", nil, buff0 ))
-	print(dict.buffer("GET_PRI_ELEMENTS", nil, buff1 ))
-	print(dict.buffer("GET_SEC_ELEMENTS", nil, buff0 ))
-	print(dict.buffer("GET_SEC_ELEMENTS", nil, buff1 ))
-	print(dict.buffer("GET_PAGE_NUM", nil, buff0 )    )
-	print(dict.buffer("GET_PAGE_NUM", nil, buff1 )    )
+	
+	-- wait till all buffers are done
+	--while flashing buffer manager updates from USB_FULL -> FLASHING -> FLASHED
+	--then next time a USB_FULL buffer comes it it updates the last buffer (above) to EMPTY
+	--the next payload opcode updates from EMPTY -> USB_LOADING
+	--so when complete, buff0 should be EMPTY, and buff1 should be FLASHED
+	--just pass the possible status to exit wait, and buffer numbers we're waiting on
+	buffers.status_wait({buff0, buff1}, {"EMPTY","FLASHED"}) 
+
+--	//start operation at reset	
+--	check(! set_operation( transfer, RESET ), "Unable to set buffer operation");
+	dict.operation("SET_OPERATION", op_buffer["RESET"] )
+--
+--	//setup buffers and manager
+--	//reset buffers first
+	dict.buffer("RAW_BUFFER_RESET")
+--	//need to allocate some buffers for flashing
+--	//2x 256Byte buffers
+	num_buffers = 2
+	buff_size = 256	
+	print("allocating buffers")
+	assert(buffers.allocate( num_buffers, buff_size ), "fail to allocate buffers")
+--
+--	//tell buffers what function to use for flashing
+--	//load operation elements into buff0 and then copy buff0 to oper_info
+--	load_oper_info_elements( transfer, cart );
+--	get_oper_info_elements( transfer );
+--
+--	//setup buffers and manager
+--	//reset buffers first
+--	check(! reset_buffers( transfer ), "Unable to reset device buffers");
+--	//need to allocate some buffers for flashing
+--	//2x 256Byte buffers
+--	check(! allocate_buffers( transfer, num_buffers, buff_size ), "Unable to allocate buffers");
+--
+--	//set mem_type and part_num to designate how to get/write data
+	print("setting map n part")
+	dict.buffer("SET_MEM_N_PART", (op_buffer["CHRROM"]<<8 | op_buffer["MASKROM"]), buff0 )
+	dict.buffer("SET_MEM_N_PART", (op_buffer["CHRROM"]<<8 | op_buffer["MASKROM"]), buff1 )
+--	//set multiple and add_mult only when flashing
+--	//TODO
+--	//set mapper, map_var, and function to designate read/write algo
+--
+--	//just dump visible NROM memory to start
+	print("setting map n mapvar")
+	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer["NROM"]<<8 | op_buffer["NOVAR"]), buff0 )
+	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer["NROM"]<<8 | op_buffer["NOVAR"]), buff1 )
+--
+--	//debugging print out buffer elements
+	--print("\nget operation:")
+	--dict.operation("GET_OPERATION" )
+	--print("\n\ngetting cur_buff status")
+	--dict.buffer("GET_CUR_BUFF_STATUS" )
+	--print("\n\ngetting elements")
+	--print(dict.buffer("GET_PRI_ELEMENTS", nil, buff0 ))
+	--print(dict.buffer("GET_PRI_ELEMENTS", nil, buff1 ))
+	--print(dict.buffer("GET_SEC_ELEMENTS", nil, buff0 ))
+	--print(dict.buffer("GET_SEC_ELEMENTS", nil, buff1 ))
+	--print(dict.buffer("GET_PAGE_NUM", nil, buff0 )    )
+	--print(dict.buffer("GET_PAGE_NUM", nil, buff1 )    )
+
+	print("\n\nsetting operation STARTFLASH");
+--	//inform buffer manager to start dumping operation now that buffers are initialized
+	dict.operation("SET_OPERATION", op_buffer["STARTFLASH"] )
+
+--	clock_t tstart, tstop;
+--	tstart = clock();
+--
+--	//now just need to call series of payload IN transfers to retrieve data
+--	
+--	for( i=0; i<(32*KByte/buff_size); i++) {
+	local i = 1
+	local nak = 0
+	for bytes in file:lines(buff_size) do
+		dict.buffer_payload_out( buff_size, bytes )
+		--for i = 1, #bytes do
+		--	local b = string.unpack("B", bytes, i)
+		--	io.write(string.format("%02X ", b))
+		--end
+--		io.write(string.rep(" ", blocksize - #bytes))
+--		bytes = string.gsub(bytes, "%c", ".")
+--		io.write(" ", bytes, "\n")
+--		break
+--		while (cur_buff_status != EMPTY ) {
+--			//debug("cur_buff->status: %x ", cur_buff_status);
+--			check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+--		}
+		cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
+		while (cur_buff_status ~= op_buffer["EMPTY"]) do
+			nak = nak +1
+			--print(nak, "cur_buff->status: ", cur_buff_status)
+			cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
+--			check(! get_cur_buff_status( transfer, &cur_buff_status ), "Error retrieving cur_buff->status");
+--		}
+		end
+		if ( i == 8*1024/buff_size) then break end 
+		i = i + 1
+	end
+	print("number of naks", nak)
+--	
+--	//The device doesn't have a good way to respond if the last buffer is flashing
+--	//and the current one is full.  We can only send a payload if the current buffer
+--	//is empty.
+	
+	-- wait till all buffers are done
+	--while flashing buffer manager updates from USB_FULL -> FLASHING -> FLASHED
+	--then next time a USB_FULL buffer comes it it updates the last buffer (above) to EMPTY
+	--the next payload opcode updates from EMPTY -> USB_LOADING
+	--so when complete, buff0 should be EMPTY, and buff1 should be FLASHED
+	--just pass the possible status to exit wait, and buffer numbers we're waiting on
+	buffers.status_wait({buff0, buff1}, {"EMPTY","FLASHED"}) 
 --	
 --		//Read next chunk from file
 --		check(! read_from_file( rom, data, buff_size ), "Error with file read");
@@ -251,6 +357,9 @@ local function flash_nes( file, debug )
 --	io_reset( transfer );
 --
 --	return SUCCESS;
+	dict.operation("SET_OPERATION", op_buffer["RESET"] )
+	dict.buffer("RAW_BUFFER_RESET")
+	dict.io("IO_RESET")
 
 end
 

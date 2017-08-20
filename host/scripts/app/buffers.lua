@@ -91,6 +91,32 @@ local function allocate( num_buffers, buff_size )
 
 end
 
+-- pass in table buffer numbers would like to wait on
+-- pass in table of status waiting on for all buffers
+local function status_wait( buff_nums, end_status )
+
+
+	local rv = nil
+	for key_buff, buff in pairs(buff_nums) do
+		rv = nil
+		print("buffer wait:", key_buff, buff)
+		while rv ~= "EXIT" do
+			for key_stat, stat in pairs(end_status) do
+				rv = (dict.buffer("GET_PRI_ELEMENTS", nil, buff, nil, true ))
+				--status is the second byte of return data
+				rv = string.unpack("B", rv, 2)
+				if rv == op_buffer[stat] then 
+					print("buffer", buff, rv, "matched", stat)
+					rv = "EXIT"
+					break
+				else
+					print("buffer", buff, "is", rv, "not", stat)
+				end
+			end
+		end
+
+	end
+end
 
 -- global variables so other modules can use them
 
@@ -100,6 +126,7 @@ end
 
 -- functions other modules are able to call
 buffers.allocate = allocate
+buffers.status_wait = status_wait
 
 -- return the module's table
 return buffers

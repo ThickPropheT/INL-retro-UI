@@ -382,7 +382,7 @@ local function buffer_payload_out( num_bytes, data, buff_num )
 end
 
 -- external call for buffer dictionary
-local function buffer( opcode, operand, misc, data )
+local function buffer( opcode, operand, misc, data, stringout )
 
 	if not op_buffer[opcode] then
 		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_buffer.h")
@@ -426,7 +426,9 @@ local function buffer( opcode, operand, misc, data )
 	end
 
 	--process the return data string and return it to calling function
-	if data_len then
+	if stringout then
+		return data:sub(RETURN_DATA, data_len+RETURN_DATA)
+	elseif data_len then
 		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
 	else 
 		return nil

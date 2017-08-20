@@ -586,6 +586,8 @@ static void control_xfr_in(){
 //flag and value, since can't change address until after STATUS stage, must use this value
 //to denote that the USB device address needs updated after the status stage.
 static uint8_t new_address = 0;	
+static uint8_t reqtype = 0;
+static uint8_t reqdir = 0;
 
 
 //return number of bytes expected
@@ -724,6 +726,10 @@ static void control_xfr_init( usbRequest_t *spacket ) {
  * of this function for more information. If you just want to ignore the data
  * sent by the host, return 0 in 'usbFunctionSetup()'.
  */
+	//set request type so it can be keyed from for subsequent IN/OUT data transfers
+	reqtype = (spacket->bmRequestType & REQ_TYPE);
+	reqdir =  (spacket->bmRequestType & REQ_DIR);
+
 	//setup packets not handled by standard requests sent to usbFunctionSetup (just like Vusb)
 	if ((spacket->bmRequestType & REQ_TYPE) != REQ_TYPE_STD) {
 		//function must set usbMsgPtr to point to return data for IN transfers
@@ -891,10 +897,14 @@ void USB_IRQHandler(void)
 			control_xfr_init( setup_packet );
 			
 		} else { //OUT packet
+			if ((reqtype == REQ_TYPE_VEND) & (reqdir == REQ_DIR_OUT)) { 
+				//have to key off of reqdir so OUT status packets don't call usbFunctionWrite
 //			if ( log >= LOG_COUNT) { DEBUG_HI(); DEBUG_LO(); }
 		//number of bytes received is denoted in USB_COUNTn_RX buffer table
 			//control_xfr_out();
 			usbFunctionWrite((uint8_t*) &usb_buff[EP0_RX_BASE], (usb_buff[USB_COUNT0_RX] & RX_COUNT_MSK));
+			USB_EP0R_RX_VALID();
+			}
 		}
 	
 

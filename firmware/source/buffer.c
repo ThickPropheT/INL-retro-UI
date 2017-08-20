@@ -584,6 +584,16 @@ void update_buffers()
 		cur_buff = &buff0;
 		//now we can get_next_buff by passing cur_buff
 
+		//also need to reset buffer status' incase they're now outdated
+		//from previous operation
+		//for ( result=0; result<num_buff; result++ ) {
+		//	cur_buff->status = EMPTY;
+		//	cur_buff = get_next_buff( cur_buff, num_buff );
+		//}
+
+		//go back to buff0
+		//cur_buff = &buff0;
+
 	}
 	if (get_operation() == STARTDUMP) {
 		//prepare both buffers to dump
