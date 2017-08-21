@@ -113,6 +113,10 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 			rv[RETURN_ERR_IDX] = nes_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break; //end of NES
 
+		case DICT_SNES:
+			rv[RETURN_ERR_IDX] = snes_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
+			break; //end of NES
+
 
 		case DICT_BUFFER:
 			//just give buffer.c the setup packet and let it figure things out for itself
@@ -120,10 +124,6 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 			break; //end of BUFFER
 
 /*
-		case DICT_SNES:
-			//break; //end of SNES
-
-
 		case DICT_USB:
 			//currently just a simple way to read back usbFunctionWrite status SUCCESS/ERROR
 			//if there are future status' to read back may have to create some functions

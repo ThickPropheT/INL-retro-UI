@@ -18,8 +18,8 @@
 //
 ////reserved libusb erro			165
 //
-//#define ERR_UNKN_SNES_OPCODE		170
-//
+#define ERR_UNKN_SNES_OPCODE		170
+
 #define ERR_UNKN_BUFF_OPCODE		180
 #define ERR_BUFN_DOES_NOT_EXIST		181
 

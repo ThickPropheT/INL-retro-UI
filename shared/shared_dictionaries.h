@@ -65,8 +65,8 @@
 
 //=============================================================================================
 //=============================================================================================
-//#define DICT_SNES 4
-//#include "shared_dict_snes.h"
+#define DICT_SNES 4
+#include "shared_dict_snes.h"
 //snes dictionary contains commands 
 //These commands rely on io initialization from io dictionary prior to calling
 //This library is intended to contain all SNES related opcodes/commands

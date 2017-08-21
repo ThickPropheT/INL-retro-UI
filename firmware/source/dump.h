@@ -5,6 +5,7 @@
 #include "types.h"
 #include "buffer.h"
 #include "nes.h"
+#include "snes.h"
 #include "shared_dictionaries.h"
 #include "shared_errors.h"
 

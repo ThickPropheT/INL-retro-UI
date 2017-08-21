@@ -78,6 +78,7 @@
 //	PC8  "EXP0" 	NES EXP0, cart-console /RESET
 	#define	C8_		8
 	#define	EXP0_		8
+	#define	SNES_RST_	8
 //	PC9  "LED" 	kazzos tied this to NES EXP9, INL6 connects to CIC CLK
 	#define	C9_		9
 	#define	LED_		9
@@ -169,5 +170,13 @@
 #define EXP_DISABLE_	19
 #define EXP_SET_	20
 
+//============================
+//HIGH ADDR PORT 8bit WIDE ACCESS
+//opcode: type of operation
+//operand: value to place on bus
+//============================
+#define HADDR_ENABLE_	21
+#define HADDR_DISABLE_	22
+#define HADDR_SET_	23
 
 #endif

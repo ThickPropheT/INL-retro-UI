@@ -32,6 +32,15 @@ uint8_t dump_buff( buffer *buff ) {
 								buff->last_idx, ~FALSE );
 			break;
 		case SNESROM:
+			addrH |= 0x80;	//$8000 LOROM space
+			//need to split page_num
+			//A14-8 page_num[7-0]
+			//A15 high (LOROM)
+			//A23-16 page_num[14-8]
+			HADDR_SET( (buff->page_num)>>7 );
+			buff->cur_byte = snes_rom_page_rd_poll( buff->data, addrH, buff->id, 
+								//id contains MSb of page when <256B buffer
+								buff->last_idx, ~FALSE );
 		case SNESRAM:
 //warn			addrX = ((buff->page_num)>>8);
 			break;

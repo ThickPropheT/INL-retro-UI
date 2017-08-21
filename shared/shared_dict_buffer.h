@@ -155,6 +155,10 @@
 	//operand LSB mapper variant
 	#define NOVAR	0
 
+
+	#define LOROM	0
+	#define HIROM	1
+
 //set function
 //miscdata: buffer number
 //operMSB: (might be needed if this is a ponter..?)  or might need more than one function def..

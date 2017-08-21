@@ -478,10 +478,11 @@ void software_AXL_CLK();
 */
 
 
-#define RCC_AHBENR_CTL	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIODEN)
-#define RCC_AHBENR_ADDR	 RCC_AHBENR_GPIOCEN
-#define RCC_AHBENR_DATA	 RCC_AHBENR_GPIOBEN
-#define RCC_AHBENR_EXP	(RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOBEN)
+#define RCC_AHBENR_CTL		(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIODEN)
+#define RCC_AHBENR_ADDR	 	 RCC_AHBENR_GPIOCEN
+#define RCC_AHBENR_HADDR 	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
+#define RCC_AHBENR_DATA	 	 RCC_AHBENR_GPIOBEN
+#define RCC_AHBENR_EXP		(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
 
 
 #endif //STM_INL6
@@ -979,7 +980,7 @@ void software_AXL_CLK();
 
 	#define ADDR_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_ADDR
 	#define ADDR_EN_FF()	CTL_OP(AHLbank, AHL); CTL_SET_LO(AHLbank, AHL)
-	#define ADDR_ENABLE()	ADDR_EN_CLK(); ADDR_EN_FF(); ADDR_OP()
+	#define ADDR_ENABLE()	DATA_ENABLE(); ADDR_EN_CLK(); ADDR_EN_FF(); ADDR_OP()
 
 #endif	//STM_ADAPTER
 
@@ -998,7 +999,7 @@ void software_AXL_CLK();
 	#define ADDR_SET(hword)	ADDRL(hword); ADDRH(hword>>8)
 
 	#define ADDR_EN_FF()	CTL_OP(AHLbank, AHL); CTL_SET_LO(AHLbank, AHL)
-	#define ADDR_ENABLE()	ADDR_EN_FF(); ADDR_OP();
+	#define ADDR_ENABLE()	DATA_ENABLE(); ADDR_EN_FF(); ADDR_OP();
 
 #endif	//AVR_KAZZO
 
@@ -1046,7 +1047,7 @@ void software_AXL_CLK();
 	#define EXP_ENABLE()	ADDR_EN_CLK(); EXP_OP()
 	#define EXP_DISABLE()	EXP_PU(); EXP_IP()
 
-//STM_INL6
+//end STM_INL6
 #else	//AVR_KAZZO or STM_ADAPTER
 
 
@@ -1067,6 +1068,57 @@ void software_AXL_CLK();
 
 #endif	//AVR_KAZZO or STM_ADAPTER
 
+
+//	---------------------------------------------------------------------------------------
+//	HIGH ADDRESS PORT 8bits A16-23
+//	
+//	This port is present on all devices
+//	Restrictions: CANNOT be used when EXPANSION PORT is enabled
+//		CIRAM_A10 & CIRAM /CE cannot be used on CONTROL PORT
+//	Directionality: All pins are forced output 
+//	Driver: All pins are push-pull
+//	Write/Output: Byte access only, no bit accesses
+//	Read/Input: Not supported
+//
+//	INL6 dual purposes A22-23 for CIRAM_A10 & CIRAM_CE respectively
+//		EXP1-5, & 7 are mapped to A16-21 respectively
+//
+//	AVR_KAZZO & STM_ADATPER use dual purpose the EXPANSION PORT for this PORT
+//		EXP1-8 map to A16-23 respectively
+//
+//	---------------------------------------------------------------------------------------
+
+#ifdef STM_INL6
+
+	//A16-21 are on PB10-15	these also map to EXP1-5, & 7
+	//A22-23 are on PA9-10 these also map to CIRAM A10 & CIRAM /CE respectively
+	#define A16_21bank	GPIOB 
+	#define A22_23bank 	GPIOA 
+
+	#define HADDR_PU()	A16_21bank->PUPDR |= (PUPDR_PU_ALL & 0xFFF00000); A22_23bank->PUPDR |= (PUPDR_PU_ALL & 0x0003C000)
+	#define HADDR_IP()	A16_21bank->MODER &=~(MODER_OP_ALL & 0xFFF00000); A22_23bank->MODER &=~(MODER_OP_ALL & 0x0003C000)
+	#define HADDR_OP()	A16_21bank->MODER |= (MODER_OP_ALL & 0xFFF00000); A22_23bank->MODER |= (MODER_OP_ALL & 0x0003C000)
+
+	#define HADDR_SET(val)	A16_21bank->ODR = ((A16_21bank->ODR&0x03FF) | (val<<10 & 0xFC00)); A22_23bank->ODR = ((A22_23bank->ODR & 0xF9FF) | (val<<3 & 0x0600))
+
+	#define HADDR_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_HADDR
+	#define HADDR_ENABLE()	HADDR_EN_CLK(); HADDR_OP()
+	#define HADDR_DISABLE()	HADDR_PU(); HADDR_IP()
+
+//end STM_INL6
+#else	//AVR_KAZZO or STM_ADAPTER
+
+
+	// ADDR16-23 are behind AXL flipflop
+
+	//clocks must be initialized, Data bus clear
+	#define HADDR_SET(val)	EXP_SET(val)
+
+	#define HADDR_EN_FF()	EXP_EN_FF()
+	#define HADDR_ENABLE()	EXP_ENABLE()
+	#define	HADDR_DISABLE()	EXP_DISABLE()
+
+#endif	//AVR_KAZZO or STM_ADAPTER
 
 
 #endif

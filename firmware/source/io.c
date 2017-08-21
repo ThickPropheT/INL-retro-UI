@@ -28,7 +28,7 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 	switch (opcode) { 
 		case IO_RESET:	io_reset();	break;
 		case NES_INIT:	nes_init();	break;
-//		case SNES_INIT:	snes_init();	break;
+		case SNES_INIT:	snes_init();	break;
 		case EXP0_PULLUP_TEST:	
 			rdata[RD_LEN] = BYTE_LEN;
 			rdata[RD0] = exp0_pullup_test();	break;
@@ -152,11 +152,10 @@ void nes_init()
 
 }
 
-/*
 
 //SNES cartridge interfacing setup
 //set outputs as required
-//latch address of $000000
+//latch address of $00:0000
 //disable cart memories
 //reset high disables SRAM and puts INL carts in PRGM mode
 //Excersize extreme caution calling this while NES/FC cart inserted
@@ -176,28 +175,26 @@ void snes_init()
 	CSWR_OP();
 	CSWR_HI();
 
-	//disable SRAM and put cart in PRGM mode
+	//disable SRAM and put cart in PLAY mode
 	EXP0_OP();
 	EXP0_HI();
 
 	//other control pins are inputs or unused, leave as IP pullup from reset
 
 	//memories are now disabled Data bus should be clear
-
-	//setup AHL FF
-	AHL_OP();
-	AHL_CLK();
-	//setup AXL FF
-	AXL_OP();
-	AXL_CLK();
+	DATA_ENABLE();
+	DATA_IP_PU();
 
 	//now meet conditions to call other macros
-	//setup address $000000
+	//setup address $0000
+	ADDR_ENABLE();
 	ADDR_SET(0x0000);
-	ADDRX_SET(0x00);
+
+	//setup HIGH ADDR with bank $00
+	HADDR_ENABLE();
+	HADDR_SET(0x00);
 
 }
-*/
 
 //Test starts by verifying EXP0 can be driven low, if not, will return one byte of AUX_PIN
 //followed by alternating 0xAA, 0x55, 0xAA...

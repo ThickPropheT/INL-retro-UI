@@ -5,6 +5,7 @@ local cart = {}
 -- import required modules
 local dict = require "scripts.app.dict"
 local nes = require "scripts.app.nes"
+local snes = require "scripts.app.snes"
 
 -- file constants
 
@@ -48,14 +49,26 @@ local function detect_console( debug )
 
 --	//if couldn't detect NES/FC check for SNES cartridge
 --	//want to keep from outputting on EXP bus if NES cart was found
---	if ( cart->console == UNKNOWN ) {
---		//only way I can think of is if memory is enabled by certain addresses and control signals
---		snes_init( transfer );
---		if ( snes_mem_visible( transfer, 0x00, 0xFFFC )) {
---			//CHECK for memory visible near NES reset vector
---			debug("SNES memories detected");
---			cart->console = SNES_CART;
---		}
+	if cart_console == nil then
+
+		--currently detect SNES cartridge by reading reset vector
+		--ensuring it's valid by range and differing between banks
+		dict.io("SNES_INIT")	
+
+		local bank0vect = snes.read_reset_vector( 0, debug ) --actual reset vector
+		local bank1vect = snes.read_reset_vector( 1, debug )
+		--bank 0 and bank 1 would have same reset vector on a NES cart
+		--these probably differ on a SNES if there's more than 32/64KB of ROM.
+
+		if bank0vect ~= bank1vect then
+			if (bank0vect >= 0x8000) and (bank0vect < 0xFFFA) then
+				if debug then print("valid SNES reset vector found that differs between bank0 & bank1") end
+				cart_console = "SNES"
+			end
+		else
+			if debug then print("invalid SNES reset vector or same vector found on bank0 & bank1") end
+		end
+
 --		//now it's possible that rom is there, but data is 0xFF so above test would fail
 --		//one option would be to drive bus low for short period and see if bus can be
 --		//driven low.  This could damage pin drivers though, best to create command in 
@@ -66,6 +79,7 @@ local function detect_console( debug )
 --
 --		//playable SNES carts should have data somewhere in reset vector...
 --	}
+	end
 --
 --	//always end with resetting i/o
 	dict.io("IO_RESET")	

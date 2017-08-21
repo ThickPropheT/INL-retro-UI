@@ -383,6 +383,15 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 		case EXP_DISABLE_:	EXP_DISABLE();		break;
 		case EXP_SET_:		EXP_SET(operand);	break;
 
+		//============================
+		//HIGH ADDR PORT 8bit WIDE ACCESS
+		//opcode: type of operation
+		//operand: value to place on bus
+		//============================
+		case HADDR_ENABLE_:	HADDR_ENABLE();		break;
+		case HADDR_DISABLE_:	HADDR_DISABLE();	break;
+		case HADDR_SET_:	HADDR_SET(operand);	break;
+
 		default:
 			 //macro doesn't exist or isn't on this PCB version
 			 return ERR_UNKN_PP_OPCODE;
