@@ -8,6 +8,7 @@ function main ()
 	local dict = require "scripts.app.dict"
 	local cart = require "scripts.app.cart"
 	local nes = require "scripts.app.nes"
+	local snes = require "scripts.app.snes"
 	local dump = require "scripts.app.dump"
 	local erase = require "scripts.app.erase"
 	local flash = require "scripts.app.flash"
@@ -29,12 +30,12 @@ function main ()
 		print(string.format("%X", rv))
 	end
 
-	print(dict.io("EXP0_PULLUP_TEST"))	
+--	print(dict.io("EXP0_PULLUP_TEST"))	
 
 --	debug = true
 --	rv = cart.detect(debug)
 
-	if cart.detect_console() then
+	if cart.detect_console(true) then
 		if cart_console == "NES" or cart_console == "Famicom" then
 			dict.io("IO_RESET")	
 			dict.io("NES_INIT")	
@@ -91,6 +92,47 @@ function main ()
 			dict.io("IO_RESET")	
 
 		elseif cart_console == "SNES" then
+			dict.io("IO_RESET")	
+			dict.io("SNES_INIT")	
+
+			--SNES detect HiROM or LoROM 
+			--nes.detect_mapper_mirroring(true)
+			local snes_mapping = "LOROM"
+			--SNES detect if there's save ram and size
+
+			--SNES detect if able to read flash ID's
+			snes.read_flashID(true)
+
+
+
+			--FLASHING:
+			--erase cart
+		--	erase.erase_snes( false )
+			--open file
+			local file 
+		      	file = assert(io.open("flash.bin", "rb"))
+			--determine if auto-doubling, deinterleaving, etc, 
+			--needs done to make board compatible with rom
+			--flash cart
+			flash.flash_snes( file, true )
+			--close file
+			assert(file:close())
+
+			--DUMPING:
+			--create new file
+			local file 
+			file = assert(io.open("snesdump.bin", "wb"))
+			--dump cart into file
+			dump.dump_snes( file, snes_mapping, true )
+
+			--close file
+			assert(file:close())
+
+
+		--trick to do this at end while debugging so don't have to wait for it before starting
+			erase.erase_snes( false )
+
+			dict.io("IO_RESET")	
 
 		elseif cart_console == "SegaGen" then
 

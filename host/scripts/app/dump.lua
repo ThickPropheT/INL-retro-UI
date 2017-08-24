@@ -190,7 +190,7 @@ local function dump_nes( file, debug )
 --	check(! set_operation( transfer, STARTDUMP ), "Unable to set buffer operation");
 	dict.operation("SET_OPERATION", op_buffer["STARTDUMP"] )
 --
---	tstop = clock();
+--	tstop = os.clock();
 --	float timediff = ( (float)(tstop-tstart) / CLOCKS_PER_SEC);
 --	printf("total time: %fsec, speed: %fKBps", timediff, (512/timediff));
 --	//TODO flush file from time to time..?
@@ -280,34 +280,59 @@ local function dump_snes( file, mapping, debug )
 --	//tell buffers what function to use for dumping
 --	//TODO when start implementing other mappers
 
-	--debugging print out buffer elements
-	--print("\nget operation:")
-	--dict.operation("GET_OPERATION" )
-	--print("\n\ngetting cur_buff status")
-	--dict.buffer("GET_CUR_BUFF_STATUS" )
-	--print("\n\ngetting elements")
-	--dict.buffer("GET_PRI_ELEMENTS", nil, buff0 )
-	--dict.buffer("GET_PRI_ELEMENTS", nil, buff1 )
-	--dict.buffer("GET_SEC_ELEMENTS", nil, buff0 )
-	--dict.buffer("GET_SEC_ELEMENTS", nil, buff1 )
-	--dict.buffer("GET_PAGE_NUM", nil, buff0 )
-	--dict.buffer("GET_PAGE_NUM", nil, buff1 )
-	
 	print("\n\nsetting operation STARTDUMP");
 	--inform buffer manager to start dumping operation now that buffers are initialized
 	dict.operation("SET_OPERATION", op_buffer["STARTDUMP"] )
 
 	--need these calls to delay things a bit to let first buffer dump complete..
 	--wait for first buffer to finish dumping before calling payload
-	buffers.status_wait({buff0}, {"DUMPED"}) 
+	--buffers.status_wait({buff0}, {"DUMPED"}) 
+
+	local tstart = os.clock();
+	local tlast = tstart
 
 	print("starting first payload");
 	--now just need to call series of payload IN transfers to retrieve data
-	for i=1, (2048*1024/buff_size) do
+	for i=1, (2048*1024/buff_size) do	--dump next buff
+	--for i=1, (1024*1024/buff_size) do	--dump buff0 then buff1
+	--for i=1, (32*1024/buff_size) do	--dump buff0 then buff1
+		--stm adapter had trouble dumping
+		--same buffer was getting sent twice, so I think 
+		--buffer mangager wasn't getting enough time to update
+		--to point to next buffer and last buffer was redumped
+		--that doesn't quite make sense, but something like that is going on
+		--need to setup buffer manager to nak anytime something like this happens
+		--the following setup slows down everything due to status waits..
+--		buffers.status_wait({buff0}, {"DUMPED"}) 
+--		file:write( dict.buffer_payload_in( buff_size ))
+--		buffers.status_wait({buff1}, {"DUMPED"}) 
+
+		--stm adapter having issues with race situation..
+		--can't dump as fast as host is requesting
+		--and driver doesn't nak until ready to send data
+		cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
+		while (cur_buff_status ~= op_buffer["DUMPED"]) do
+		--	nak = nak +1
+			--print(nak, "cur_buff->status: ", cur_buff_status)
+			cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
+		end
 		file:write( dict.buffer_payload_in( buff_size ))
+	--	print("dumped page:", i)
+		
+		if ( (i % (1024*1024/buff_size/16)) == 0) then
+			local tdelta = os.clock() - tlast
+			print("time delta:", tdelta, "seconds, speed:", (1024/16/tdelta), "KBps");
+			print("dumped part:", i/1024, "of 16 \n") 
+			tlast = os.clock();
+		end
 	end
 
-	print("payload done");
+	print("DUMPING DONE")
+
+	tstop = os.clock()
+	timediff = ( tstop-tstart)
+	print("total time:", timediff, "seconds, average speed:", (2048/timediff), "KBps")
+
 	--buffer manager updates from USB_UNLOADING -> DUMPING -> DUMPED
 	--while one buffer is unloading, it sends next buffer off to dump
 	--payout opcode updates from DUMPED -> USB_LOADING

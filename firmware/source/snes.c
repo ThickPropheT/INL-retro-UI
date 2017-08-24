@@ -89,7 +89,7 @@ uint8_t	snes_rom_rd( uint16_t addr )
 /* Desc:SNES ROM Write
  * 	/ROMSEL always set low
  * 	EXP0/RESET unaffected
- * 	read value from currently selected bank
+ * 	write value to currently selected bank
  * Pre: snes_init() setup of io pins
  * Post:data latched by anything listening on the bus
  * 	address left on bus
@@ -104,22 +104,75 @@ void	snes_rom_wr( uint16_t addr, uint8_t data )
 	DATA_OP();
 	DATA_SET(data);
 
-	//PRG R/W LO
-	ROMSEL_LO();
+	//set /WR low first as this sets direction of 
+	//level shifter on v3.0 boards
 	CSWR_LO();
+	//Then set romsel as this enables output of level shifter
+	ROMSEL_LO();
+	//Doing the other order creates bus conflict between ROMSEL low -> WR low
 
 	//give some time
 	NOP();
 	NOP();
+	NOP();		//3x total NOPs fails ~2Bytes per 2MByte on v3.0 proto and inl6
+	//swaping /WR /ROMSEL order above helped greatly
+	//but still had 2 byte fails adding NOPS
+	NOP();		//4x total NOPs passed all bytes v3.0 SNES and inl6
+	//NOP();
+	//NOP();	//6x total NOPs passed all bytes
+	
 
 	//latch data to cart memory/mapper
-	ROMSEL_HI();
 	CSWR_HI();
+	ROMSEL_HI();
 
 	//Free data bus
 	DATA_IP();
 }
 
+/* Desc:SNES ROM Write to current address
+ * 	/ROMSEL always set low
+ * 	EXP0/RESET unaffected
+ * 	write value to currently selected bank, and current address
+ * 	Mostly used when address is don't care
+ * Pre: snes_init() setup of io pins
+ * Post:data latched by anything listening on the bus
+ * 	address left on bus
+ * Rtn:	None
+ */
+void	snes_rom_wr_cur_addr( uint8_t data )
+{
+
+//	ADDR_SET(addr);
+
+	//put data on bus
+	DATA_OP();
+	DATA_SET(data);
+
+	//set /WR low first as this sets direction of 
+	//level shifter on v3.0 boards
+	CSWR_LO();
+	//Then set romsel as this enables output of level shifter
+	ROMSEL_LO();
+	//Doing the other order creates bus conflict between ROMSEL low -> WR low
+
+	//give some time
+	NOP();
+	NOP();
+	NOP();		//3x total NOPs fails ~2Bytes per 2MByte on v3.0 proto and inl6
+	//swaping /WR /ROMSEL order above helped greatly
+	//but still had 2 byte fails adding NOPS
+	NOP();		//4x total NOPs passed all bytes v3.0 SNES and inl6
+	//NOP();
+	//NOP();	//6x total NOPs passed all bytes
+
+	//latch data to cart memory/mapper
+	CSWR_HI();
+	ROMSEL_HI();
+
+	//Free data bus
+	DATA_IP();
+}
 /* Desc:SNES ROM Page Read with optional USB polling
  * 	/ROMSEL always low, EXP0/RESET unaffected
  *	if poll is true calls usbdrv.h usbPoll fuction

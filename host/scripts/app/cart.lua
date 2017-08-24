@@ -60,6 +60,9 @@ local function detect_console( debug )
 		--bank 0 and bank 1 would have same reset vector on a NES cart
 		--these probably differ on a SNES if there's more than 32/64KB of ROM.
 
+		--fake cart detection of erased board for now
+		cart_console = "SNES"
+
 		if bank0vect ~= bank1vect then
 			if (bank0vect >= 0x8000) and (bank0vect < 0xFFFA) then
 				if debug then print("valid SNES reset vector found that differs between bank0 & bank1") end

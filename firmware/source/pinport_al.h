@@ -8,6 +8,7 @@
 
 #ifdef AVR_CORE
 	#include "avr_gpio.h"
+	#include <avr/wdt.h>
 #elif STM_CORE
 	#include <stm32f0xx.h>
 #endif

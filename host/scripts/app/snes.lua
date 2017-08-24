@@ -54,6 +54,10 @@ local function read_flashID( debug )
 	dict.snes("SNES_ROM_WR", 0x0AAA, 0xAA)
 	dict.snes("SNES_ROM_WR", 0x0555, 0x55)
 	dict.snes("SNES_ROM_WR", 0x0AAA, 0x90)
+
+	--exit program mode
+	dict.pinport("CTL_SET_HI", "SNES_RST")
+
 	--read manf ID
 	rv = dict.snes("SNES_ROM_RD", 0x0000)
 	if debug then print("attempted read SNES ROM manf ID:", string.format("%X", rv)) end
@@ -79,13 +83,15 @@ local function read_flashID( debug )
 --		flash->wr_opcode = NES_PPU_WR;
 --	}
 --
+	--put cart in program mode
+	dict.pinport("CTL_SET_LO", "SNES_RST")
+
 	--exit software
---	dict.nes("NES_PPU_WR", 0x0000, 0xF0)
 	dict.snes("SNES_ROM_WR", 0x0000, 0xF0)
---
-	
+
 	--exit program mode
 	dict.pinport("CTL_SET_HI", "SNES_RST")
+	
 
 	--return true
 

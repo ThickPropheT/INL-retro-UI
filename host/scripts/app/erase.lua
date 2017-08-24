@@ -54,6 +54,55 @@ local function erase_nes()
 end
 
 
+-- local functions
+local function erase_snes(debug)
+
+	local rv = nil
+
+	print("erasing SNES takes about 30sec");
+
+	dict.io("IO_RESET")
+	dict.io("SNES_INIT")
+	
+	--WR $AAA:AA $555:55 $AAA:AA
+	dict.snes("SNES_SET_BANK", 0x00)
+
+	--put cart in program mode
+	dict.pinport("CTL_SET_LO", "SNES_RST")
+
+	dict.snes("SNES_ROM_WR", 0x0AAA, 0xAA)
+	dict.snes("SNES_ROM_WR", 0x0555, 0x55)
+	dict.snes("SNES_ROM_WR", 0x0AAA, 0x80)
+	dict.snes("SNES_ROM_WR", 0x0AAA, 0xAA)
+	dict.snes("SNES_ROM_WR", 0x0555, 0x55)
+	dict.snes("SNES_ROM_WR", 0x0AAA, 0x10)
+
+	--exit program mode
+	dict.pinport("CTL_SET_HI", "SNES_RST")
+
+	rv = dict.snes("SNES_ROM_RD", 0x0000)
+
+	local i = 0
+
+	while ( rv ~= 0xFF ) do
+		rv = dict.snes("SNES_ROM_RD", 0x0000)
+		i = i + 1
+		if debug then print(" ", i,":", string.format("%x",rv)) end
+	end
+	print(i, " done erasing snes.\n");
+
+	--put cart in program mode
+	dict.pinport("CTL_SET_LO", "SNES_RST")
+
+	--reset flash
+	dict.snes("SNES_ROM_WR", 0x0000, 0xF0)
+
+	--return to PLAY mode
+	dict.pinport("CTL_SET_HI", "SNES_RST")
+
+end
+
+
 -- global variables so other modules can use them
 
 
@@ -62,6 +111,7 @@ end
 
 -- functions other modules are able to call
 erase.erase_nes = erase_nes
+erase.erase_snes = erase_snes
 
 -- return the module's table
 return erase
