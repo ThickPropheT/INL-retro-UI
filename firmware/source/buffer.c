@@ -649,10 +649,10 @@ void update_buffers()
 			if (result != SUCCESS) {
 				cur_buff->status = result;
 			} else {
-				cur_buff->status = DUMPED;
 				//increment page_num so everything is ready for next dump
 				//TODO make buffer_update function to handle everything
 				cur_buff->page_num += cur_buff->reload;
+				cur_buff->status = DUMPED;
 			}
 		}
 		
