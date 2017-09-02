@@ -8,11 +8,14 @@
 //greater than 128 are possible avr return codes
 #define ERR_UNKN_DICTIONARY 		128
 
+#define ERR_UNKN_SWIM_OPCODE		130
+
 
 #define ERR_UNKN_PP_OPCODE		140
 #define ERR_CTL_PIN_NOT_PRESENT		141
 
 #define ERR_UNKN_IO_OPCODE		150
+#define ERR_UNKN_SWIM_LANE		151
 
 #define ERR_UNKN_NES_OPCODE		160
 //

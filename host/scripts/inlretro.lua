@@ -31,11 +31,26 @@ function main ()
 	end
 
 --	print(dict.io("EXP0_PULLUP_TEST"))	
+--
+	dict.io("IO_RESET")	
+
+	dict.io("SNES_INIT")	
+	dict.io("SWIM_INIT", "SWIM_ON_EXP0")	
+	dict.swim("SWIM_ACTIVATE")	
+
+	--write 0A0h to SWIM_CSR
+	--bit 5: allows entire memory range to be read & swim reset to be accessed
+	--bit 7: masks internal reset sources (like WDT..?)
+--	dict.swim("WOTF", 0xA0)	
+
+	dict.io("IO_RESET")	
 
 --	debug = true
 --	rv = cart.detect(debug)
 
-	if cart.detect_console(true) then
+	local force_cart = true
+
+	if (force_cart or cart.detect_console(true)) then
 		if cart_console == "NES" or cart_console == "Famicom" then
 			dict.io("IO_RESET")	
 			dict.io("NES_INIT")	
@@ -95,6 +110,7 @@ function main ()
 			dict.io("IO_RESET")	
 			dict.io("SNES_INIT")	
 
+
 			--SNES detect HiROM or LoROM 
 			--nes.detect_mapper_mirroring(true)
 			local snes_mapping = "LOROM"
@@ -107,7 +123,7 @@ function main ()
 
 			--FLASHING:
 			--erase cart
-		--	erase.erase_snes( false )
+	--		erase.erase_snes( false )
 			--open file
 			local file 
 		      	file = assert(io.open("flash.bin", "rb"))
@@ -130,7 +146,7 @@ function main ()
 
 
 		--trick to do this at end while debugging so don't have to wait for it before starting
-			erase.erase_snes( false )
+--			erase.erase_snes( false )
 
 			dict.io("IO_RESET")	
 

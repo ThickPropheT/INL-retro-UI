@@ -17,6 +17,7 @@
 #include "nes.h"
 #include "snes.h"
 #include "buffer.h"
+#include "swim.h"
 #include "types.h"
 #include "shared_usb.h"
 #include "shared_errors.h"

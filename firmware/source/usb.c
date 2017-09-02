@@ -103,19 +103,23 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 	switch(spacket->bRequest) {
 		case DICT_PINPORT:
 			rv[RETURN_ERR_IDX] = pinport_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
-			break; //end of PINPORT
+			break;
 
 		case DICT_IO:
 			rv[RETURN_ERR_IDX] = io_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
-			break; //end of IO
+			break;
 
 		case DICT_NES:
 			rv[RETURN_ERR_IDX] = nes_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
-			break; //end of NES
+			break;
 
 		case DICT_SNES:
 			rv[RETURN_ERR_IDX] = snes_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
-			break; //end of NES
+			break;
+
+		case DICT_SWIM:
+			rv[RETURN_ERR_IDX] = swim_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
+			break;
 
 
 		case DICT_BUFFER:

@@ -26,9 +26,12 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 #define	BYTE_LEN 1
 #define	HWORD_LEN 2
 	switch (opcode) { 
-		case IO_RESET:	io_reset();	break;
-		case NES_INIT:	nes_init();	break;
-		case SNES_INIT:	snes_init();	break;
+		case IO_RESET:	io_reset();			break;
+		case NES_INIT:	nes_init();			break;
+		case SNES_INIT:	snes_init();			break;
+		case SWIM_INIT:	
+			return swim_init(operand);		break;
+
 		case EXP0_PULLUP_TEST:	
 			rdata[RD_LEN] = BYTE_LEN;
 			rdata[RD0] = exp0_pullup_test();	break;
@@ -194,6 +197,37 @@ void snes_init()
 	HADDR_ENABLE();
 	HADDR_SET(0x00);
 
+}
+
+//Initialization of SWIM "single wire interface module" communications
+//the SWIM pin depends on INL board design.
+//dict call must provide the "swim_lane"
+//that swim lane will be used for all subsequent communications.
+//TODO setup to control SWIM pin as (psuedo) open drain.
+//if swim lane is unknown or other problem return error, else return SUCCESS
+uint8_t swim_init( uint8_t swim_lane ) 
+{
+	switch (swim_lane) {
+		case SWIM_ON_A0:	//Most NES & Famicom carts
+			break;
+		case SWIM_ON_EXP0:	//SNES carts	
+			//set to define used by shared_dict_pinport.h 
+			//that way we can call pinport_call(opcode, null, swim_pin, null)
+			CTL_ENABLE();
+			EXP0_IP_PU();	//this enables pullup for stm
+			#ifdef STM_CORE
+				EXP0_OD();	//set type to open drain
+				EXP0_HI();	//set output high (deasserted)
+				EXP0_OP();	//enable as output to have above take effect
+			#endif
+			swim_pin = EXP0_;	
+			break;
+		case SWIM_ON_D0:	//NES/FC carts with CICOprocesor
+			break;
+		default: 
+			return ERR_UNKN_SWIM_LANE;
+	}
+	return SUCCESS;
 }
 
 //Test starts by verifying EXP0 can be driven low, if not, will return one byte of AUX_PIN

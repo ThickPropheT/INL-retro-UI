@@ -90,6 +90,11 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 #define EXP0_HI()	CTL_SET_HI(EXP0bank, EXP0)
 #define EXP0_RD(val)	CTL_RD(EXP0bank, EXP0, val)
 
+#ifdef STM_CORE
+	#define	EXP0_OD()	CTL_OD(EXP0bank, EXP0)
+	#define	EXP0_PP()	CTL_PP(EXP0bank, EXP0)
+#endif
+
 //     PC9  "LED" 
 #define	LED_IP_PU()	CTL_IP_PU(LEDbank, LED)
 #define	LED_IP_FL()	CTL_IP_FL(LEDbank, LED)

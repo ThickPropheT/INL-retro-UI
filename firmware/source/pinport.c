@@ -192,6 +192,24 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 				default: return ERR_CTL_PIN_NOT_PRESENT;
 			}
 			break;
+		#ifdef STM_CORE
+		//AVR Doesn't have open drain mode, it must be simulated by
+		//toggling between input with pullup and output push-pull
+		case CTL_OD_:
+			switch ( operand ) {
+				//currently only defining pins which utilize open drain function
+				//C8 -> EXP0 (SNES /RESET)
+				case 8:  CTL_OD(C8bank, C8);  break;
+				default: return ERR_CTL_PIN_NOT_PRESENT;
+			}
+			break;
+		case CTL_PP_:
+			switch ( operand ) {
+				case 8:  CTL_PP(C8bank, C8);  break;
+				default: return ERR_CTL_PIN_NOT_PRESENT;
+			}
+			break;
+		#endif
 		case CTL_SET_LO_:
 			switch ( operand ) {
 				case 0:  CTL_SET_LO(C0bank, C0);  break;

@@ -260,6 +260,9 @@ void software_AXL_CLK();
 //  1- Open Drain
 //  N/A when MODER is set to "00" INPUT
 //  we can generally just ignore this register and use pushpull as AVR does
+//  but using open drain mode makes things like SWIM much simpler to control
+//#define	OTYPER_PP	0x00
+#define	OTYPER_OD	0x01
 //
 //  GPIOx->OSPEEDR[1:0] 32bit registers control pin driver speed/slew
 //  x0- Low speed (default reset state, except SWD-PA13 default High Spd) 
@@ -818,6 +821,8 @@ void software_AXL_CLK();
 #define CTL_IP_PU(bank, pin)		bank->MODER &= ~(MODER_OP<<(pin*2)); bank->PUPDR |=  (PUPDR_PU<<(pin*2))
 #define CTL_IP_FL(bank, pin)		bank->MODER &= ~(MODER_OP<<(pin*2)); bank->PUPDR &= ~(PUPDR_PU<<(pin*2))
 #define CTL_OP(bank, pin)		bank->MODER |=  (MODER_OP<<(pin*2))
+#define CTL_OD(bank, pin)		bank->OTYPER |=  (OTYPER_OD<<(pin))	//open drain has no effect when pin is input
+#define CTL_PP(bank, pin)		bank->OTYPER &= ~(OTYPER_OD<<(pin))
 #define CTL_SET_LO(bank, pin)		bank->BRR = 1<<pin 
 #define CTL_SET_HI(bank, pin)		bank->BSRR = 1<<pin
 #define CTL_RD(bank, pin, val)		val = (bank->IDR & (1<<pin))

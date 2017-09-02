@@ -50,6 +50,8 @@
 #define	CTL_SET_LO_	4
 #define	CTL_SET_HI_	5
 #define	CTL_RD_		6	//RL=4	(error code, data length, LSB, MSB)
+#define	CTL_OD_		24
+#define	CTL_PP_		25
 	//operands
 //	PC0  "MCO"	mcu clock out M2/phi2, Sysclk, etc
 	#define	C0_		0

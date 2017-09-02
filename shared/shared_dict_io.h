@@ -36,6 +36,18 @@
 //reset high disables SRAM and puts INL carts in PRGM mode
 #define SNES_INIT	2
 
+
+//SWIM protocol init
+//"single wire interface module"
+//different INL boards have this signal on different pins
+//So initialization must provide pin to perform all subsequent
+//communications with
+#define SWIM_INIT	3
+	//	don't define    0x00 to protect from forgetting to pass swim lane
+	#define	SWIM_ON_A0	0x01	//NES & Famicom carts
+	#define	SWIM_ON_EXP0	0x02	//SNES carts
+	#define	SWIM_ON_D0	0x03	//NES discrete CICOprocessor
+
 //Test EXP0 drive with pull up 
 //This is an important test if reling on pulling up EXP0 pin to drive the cart's pin.
 //EXP0 is used for various things and may have pull up/down of it's own or significant load

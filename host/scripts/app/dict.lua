@@ -194,10 +194,7 @@ local function pinport( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
-	--if error_code ~= err_codes["SUCCESS"] then
---		print("ERROR!!! device error code:", error_code)
---	end
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -240,18 +237,14 @@ local function io( opcode, operand, misc, data )
 	count, data = usb_vend_xfr( 
 	--	ep,	dictionary		wValue[misc:opcode]     wIndex	wLength	 		data
 		ep, dict["DICT_IO"], ( misc<<8 | op_io[opcode]),	operand,	wLength,	data)
-	--print(count)
+
 	local error_code, data_len
 	if ep == USB_IN then
 		error_code = data:byte(RETURN_ERR_IDX)
 		data_len =   data:byte(RETURN_LEN_IDX)
 	end
-	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
-	--if error_code ~= err_codes["SUCCESS"] then
---		print("ERROR!!! device error code:", error_code)
---	end
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -302,10 +295,7 @@ local function nes( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
-	--if error_code ~= err_codes["SUCCESS"] then
-	--	print("ERROR!!! device error code:", error_code)
-	--end
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -357,10 +347,7 @@ local function snes( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
-	--if error_code ~= err_codes["SUCCESS"] then
-	--	print("ERROR!!! device error code:", error_code)
-	--end
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -375,6 +362,58 @@ local function snes( opcode, operand, misc, data )
 
 
 end
+
+-- external call for swim dictionary
+local function swim( opcode, operand, misc, data )
+
+	if not op_swim[opcode] then
+		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_swim.h")
+		return nil
+	end
+
+	if not operand then 
+		operand = 0 
+	elseif type(operand) == "string" then
+		if not op_swim[operand] then
+			print("ERROR undefined operand:", operand, "must be defined in shared_dict_swim.h")
+			return nil
+		end
+		--decode string operands into 
+		operand = op_swim[operand]
+	end
+	
+	if not misc then misc = 0 end
+
+	local wLength, ep = default_rlen_1_in(op_swim[opcode.."rlen"])
+
+	local count
+	count, data = usb_vend_xfr( 
+	--	ep,	dictionary		wValue[misc:opcode]     wIndex	wLength	 		data
+		ep, dict["DICT_SWIM"], ( misc<<8 | op_swim[opcode]),	operand,	wLength,	data)
+	--print(count)
+	local error_code, data_len
+	if ep == USB_IN then
+		error_code = data:byte(RETURN_ERR_IDX)
+		data_len =   data:byte(RETURN_LEN_IDX)
+	end
+	--print("error:", error_code, "data_len:",  data_len)
+	
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+
+	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
+		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
+	end
+
+	--process the return data string and return it to calling function
+	if data_len then
+		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+	else 
+		return nil
+	end 
+
+
+end
+
 
 local function buffer_payload_in( wLength, buff_num )
 
@@ -471,10 +510,7 @@ local function buffer( opcode, operand, misc, data, stringout )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
-	--if error_code ~= err_codes["SUCCESS"] then
---		print("ERROR!!! device error code:", error_code)
---	end
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -527,10 +563,7 @@ local function operation( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "ERROR!!! device error code:", error_code)
-	--if error_code ~= err_codes["SUCCESS"] then
---		print("ERROR!!! device error code:", error_code)
---	end
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -555,6 +588,7 @@ op_io = {}
 op_operation = {}
 op_nes = {}
 op_snes = {}
+op_swim = {}
 err_codes = {}
 
 -- Dictionary table definitions initialized by calling parser
@@ -566,6 +600,7 @@ create_dict_tables( op_io,  	"../shared/shared_dict_io.h")
 create_dict_tables( op_operation,  "../shared/shared_dict_operation.h")
 create_dict_tables( op_nes,  	"../shared/shared_dict_nes.h")
 create_dict_tables( op_snes,  	"../shared/shared_dict_snes.h")
+create_dict_tables( op_swim,  	"../shared/shared_dict_swim.h")
 create_dict_tables( err_codes, 	"../shared/shared_errors.h")
 
 -- functions other modules are able to call
@@ -573,6 +608,7 @@ dict.pinport = pinport
 dict.io = io
 dict.nes = nes
 dict.snes = snes
+dict.swim = swim
 dict.buffer = buffer
 dict.buffer_payload_in = buffer_payload_in
 dict.buffer_payload_out = buffer_payload_out
