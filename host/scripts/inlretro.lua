@@ -41,8 +41,42 @@ function main ()
 	--write 0A0h to SWIM_CSR
 	--bit 5: allows entire memory range to be read & swim reset to be accessed
 	--bit 7: masks internal reset sources (like WDT..?)
---	dict.swim("WOTF", 0xA0)	
+	print("wotf SWIM_CSR:", dict.swim("WOTF", 0x7F80, 0xA0))	
 
+	--now the SRST command is available, whole memory range available, and internal resets disabled
+	--by default there is now a breakpoint set at reset vector
+	
+	--reset the STM8 core
+	print("wotf SRST:", dict.swim("SWIM_SRST"))	
+
+	--the STM8 core is now stalled @ reset vector
+	--can read/write to any address on STM8 core
+	--if CIC ROP bit is set, we can only r/w to periph & SRAM
+
+	--bit 2: SWIM is reset (exits active mode) when chip reset
+	--this forces successful SWIM entry on each execution of script
+	print("wotf SWIM_CSR:", dict.swim("WOTF", 0x7F80, 0xA4))	
+
+	--test by blinking LED via periph register access
+	--v2 board has LED on hi_lo_sel PA2
+	print("wotf LED PA_CR1:", dict.swim("WOTF", 0x5003, 0xFF))	--default is input w/o pullup, now pullups enabled
+	--LED should be dimly lit
+	--set pin to pushpull
+	print("wotf LED PA_DDR:", dict.swim("WOTF", 0x5002, 0x04))	--PA2 is output CR1 set above makes pushpull
+	--LED is push/pull, ODR default to 0, so LED OFF
+	print("wotf LED PA_ODR:", dict.swim("WOTF", 0x5000, 0x04))	--PA2 output set LED ON!
+	print("wotf LED PA_ODR:", dict.swim("WOTF", 0x5000, 0x00))	--PA2 output set LED OFF!
+
+
+	--holds SWIM pin low for 16usec+ to reset SWIM comms incase of error
+	dict.swim("SWIM_RESET")	
+
+	--reset the chip, if bit2 set in CSR the SWIM exits active mode with this reset
+	print("wotf SRST:", dict.swim("SWIM_SRST"))	
+	--SWIM is now inactive chip is executing it's program code
+
+	--indicate to logic analyzer that test sequence above is complete
+	dict.pinport("CTL_SET_LO", "EXP0")
 	dict.io("IO_RESET")	
 
 --	debug = true

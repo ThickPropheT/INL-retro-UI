@@ -179,8 +179,8 @@ void snes_init()
 	CSWR_HI();
 
 	//disable SRAM and put cart in PLAY mode
-	EXP0_OP();
 	EXP0_HI();
+	EXP0_OP();
 
 	//other control pins are inputs or unused, leave as IP pullup from reset
 
@@ -221,6 +221,8 @@ uint8_t swim_init( uint8_t swim_lane )
 				EXP0_OP();	//enable as output to have above take effect
 			#endif
 			swim_pin = EXP0_;	
+			swim_base = EXP0bank;
+			swim_mask = 1<<EXP0;
 			break;
 		case SWIM_ON_D0:	//NES/FC carts with CICOprocesor
 			break;

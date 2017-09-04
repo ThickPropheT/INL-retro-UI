@@ -26,13 +26,16 @@
 #define	SWIM_RESET	1
 
 //SWIM commands
-#define	SWIM_SRST	2	//reset device	
+#define	SWIM_SRST	2	//reset device	RL=3 (error, len, NAK/ACK)
 
-#define	ROTF		0x11	//read on the fly only one byte
+#define	ROTF		0x11	//read on the fly only one byte RL=3 (error, len, data)
 //#define	ROTF_8B		0x18	//read on the fly RL=8
 //#define	ROTF_128B	0x1F	//read on the fly RL=128 (current max due to 254B limit)
 
-#define	WOTF		0x21	//write on the fly only one byte
+//write on the fly only one byte
+//operand = address (extended addr always 0)
+//miscdata = data to write @ address
+#define	WOTF		0x21	//RL=3 (error code, data len, 0-NAK 1-ACK) 
 //#define	WOTF_8B		0x28	//write 8Bytes on the fly
 //#define	WOTF_128B	0x2F	//write 128Bytes on the fly
 

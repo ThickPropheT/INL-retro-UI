@@ -28,12 +28,10 @@ uint8_t swim_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 	switch (opcode) { 
 		case SWIM_ACTIVATE:	swim_activate();	break;
 		case SWIM_RESET:	swim_reset();		break;
-		case SWIM_SRST:			
-			rdata[RD_LEN] = BYTE_LEN;
-			rdata[RD0] = swim_out( 0x0000, 4);	break;
+//		case SWIM_SRST:		swim_srst();		break;
 		case WOTF:		
 			rdata[RD_LEN] = BYTE_LEN;
-			rdata[RD0] = swim_woft(operand, miscdata);	break;
+			rdata[RD0] = swim_woft(operand);	break;
 //		case ROTF:	
 //				rdata[RD_LEN] = BYTE_LEN;
 //				rdata[RD0] = swim_roft();	break;
@@ -131,7 +129,7 @@ void swim_reset()
 	//pinport_call( CTL_OP_, 0, swim_pin, 0);
 
 	//pulse low for 16usec  spec says 16usec
-	//but looking at working programmers they do very long resets 
+	//but looking at working programmers they do twice the delays below
 	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
 	delay(16);
 	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
@@ -152,9 +150,6 @@ void swim_reset()
 #define pp_swim()		__asm volatile 	("strh r6, [%[mmio], #0x04]" : : [mmio] "r" (swim_base))
 #define od_swim()		__asm volatile 	("strh r7, [%[mmio], #0x04]" : : [mmio] "r" (swim_base))
 
-#define NO_RESP	0xFF
-#define ACK	0x01
-#define NAK	0x00
 /* Desc:Transfer SWIM bit stream
  * 	Always outputs '0' as first bit for header "from host"
  * 	Will output len number of bits plus one for header
@@ -163,13 +158,13 @@ void swim_reset()
  * 	pairity bit must be last bit in stream sequence bit[15-len+1]
  * 	ie bit7 contains pairity bit for 8bit data stream
  * Post:STM8 mcu SWIM active
- * Rtn: 0xFF if no response, 0-NAK, 1-ACK.
+ * Rtn: 0xFF if no response, 0-NAK, non-zero non-0xFF if ACK.
  */
-uint8_t swim_out(uint16_t stream, uint8_t len)//, GPIO_TypeDef *base)
+uint16_t swim_out(uint16_t stream, uint8_t len)//, GPIO_TypeDef *base)
 {
-//__asm("swim_out_begin:\n\t");
+__asm("swim_out:\n\t");
 
-	uint8_t return_val;
+	uint16_t return_val;
 
 	uint16_t pushpull = swim_base->OTYPER & ~swim_mask;
 	uint16_t opendrain = swim_base->OTYPER |  swim_mask;
@@ -186,8 +181,7 @@ uint8_t swim_out(uint16_t stream, uint8_t len)//, GPIO_TypeDef *base)
 	//shift the stream left so the current transfer bit is in bit position 31
 	//15 -> 30 is 15bit shifts, this leaves header zero in bit position 31
 	//store stream in r4
-	__asm volatile ("mov r4, %[val]" : : [val] "r" (stream) : "r4" );
-	__asm volatile ("lsl r4, #15" : : : "r4", "cc" );
+	__asm volatile ("lsl r4, %[val], #15" : : [val] "r" (stream) : "r4", "cc" );
 
 	//NOTE!  cortex M0 only supports 'S' versions of lsl, sub, and, etc type
 	//opcodes.  I get compiler error for including the 's' at end of instruction
@@ -254,10 +248,7 @@ __asm("stream_end:\n\t");
 	od_swim();
 
 	//delay until time to latch ACK/NAK from device
-	NOP(); NOP(); NOP(); NOP(); NOP(); NOP(); NOP(); NOP();	
-	//8x NOP's misread at times...
-	//6x NOP's always misread, so must be too early
-	NOP();	//9x NOP's and we're getting stable reads
+	NOP(); NOP(); NOP(); NOP(); NOP();
 
 	//first need to ensure device is actually responding
 	//sample when output should be low for a 1 or 0
@@ -266,130 +257,162 @@ __asm("stream_end:\n\t");
 
 	//latch SWIM pin value from IDR 0x10
 	__asm volatile ("ldrh r3, [%[mmio], #0x10]" : : [mmio] "r" (swim_base) : "r3");
-	__asm volatile ("and  r3, r0"	       : : : "r3", "cc" );
+	__asm volatile ("and  r3, r0"	       : : : "r3" );
 	
 	//if it wasn't low, then the device didn't respond, so return error designating that
-	//__asm volatile ("bne no_response\n\t");
+	__asm volatile ("bne no_response\n\t");
 
-	__asm ("mov %[rv], r3" : [rv] "=r" (return_val) );
-	if (return_val != 0) {
-		return NO_RESP;
-	}
+	//if (return_val != 0) {
+//		goto no_response;
+//	}
 
 	//now delay until ~half way through bit transfer to sense 1-ACK or 0-NAK
 	NOP(); NOP(); NOP(); NOP(); NOP(); NOP(); NOP(); NOP();
 	NOP(); NOP(); NOP(); NOP(); NOP(); NOP(); NOP(); NOP();
-	//sampling 1.35usec into bit transfer (~half way)
-	NOP(); NOP(); NOP(); NOP(); NOP(); NOP(); NOP(); NOP();
-	//sampling 2.00usec into bit transfer oscope shows 2.7volts on stmad w/open drain
 
 	//debug set low to denote when swim pin is being sampled with logic anaylzer
 	//str_r0_bres();
-	//pp_swim();
+	//sampling 1.35usec into bit transfer (~half way)
 
 	//latch SWIM pin value from IDR 0x10
-	__asm volatile ("ldr  r3, [%[mmio], #0x10]" : : [mmio] "r" (swim_base) : "r3");
-	__asm volatile ("and  r3, r0"	       : : : "r3", "cc" );
+	__asm volatile ("ldrh r3, [%[mmio], #0x10]" : : [mmio] "r" (swim_base) : "r3");
 
 	//move r3 to return val reg
-	__asm volatile ("mov %[rv], r3" : [rv] "=r" (return_val) );
+	__asm ("mov %[rv], r3" : [rv] "=r" (return_val) );
 	//mask out swim pin so return value is 0 or non-zero based on device output
-	//return_val &= swim_mask;
+	return_val &= swim_mask;
 
-	if (return_val == 0x00) {
-		return NAK;
-	} 
-
-	//made it to here then we got an ACK
-	return ACK;
-}
-	
-/* Function to get parity of number n. It returns 0
- * if n has odd parity, and returns 0xFF if n has even
- * parity */
-uint16_t append_pairity(uint8_t n)
-{
-	//shift incoming data to upper byte
-	uint16_t data_pb = (n<<8);
-	uint8_t parity = 0;
-
-	while (n) {
-		parity = ~parity;
-		n = n & (n - 1);
-	}        
-
-	if ( parity ) {
-		return (data_pb | 0x80);
-	} else {
-		return data_pb;
+	if (return_val != 0xFF) {
+		//dummy check that keeps labels below available
+		//because inline assembly is pissing me off
+		goto return_response;
 	}
+
+__asm("no_response:\n\t");
+	//return "fail to respond"
+	return_val = 0xFF;
+
+return_response:
+	//return ACK/NAK from device
+	return return_val;
+
+//	__asm("bkpt");
+	//BSRR 0x18
+	//BRR  0x28
+	//OTYPER 0x04
+//	__asm 		("mov  r0, %[mask]" : : [mask] "r" (swim_mask) : "r0" );
+//	__asm volatile 	("strh r0, [%[mmio], #0x28]" : : [mmio] "r" (swim_base));
+//	__asm volatile ("nop");
+//	__asm volatile ("nop");
+//	__asm volatile 	("strh r0, [%[mmio], #0x18]" : : [mmio] "r" (swim_base));
+//	__asm volatile ("nop");
+//	__asm volatile ("nop");
+//	__asm volatile 	("strh r0, [%[mmio], #0x28]" : : [mmio] "r" (swim_base));
+//	__asm volatile ("nop");
+//	__asm volatile ("nop");
+//	__asm volatile 	("strh r0, [%[mmio], #0x18]" : : [mmio] "r" (swim_base));
+//	__asm volatile ("nop");
+//	__asm volatile ("nop");
+//	__asm volatile 	("strh r0, [%[mmio], #0x28]" : : [mmio] "r" (swim_base));
+//	__asm volatile ("nop");
+//	__asm volatile ("nop");
+//	__asm volatile 	("strh r0, [%[mmio], #0x18]" : : [mmio] "r" (swim_base));
+//	__asm volatile ("nop");
+//	__asm volatile ("nop");
+//	__asm volatile 	("strh r0, [%[mmio], #0x28]" : : [mmio] "r" (swim_base));
+//	//__asm volatile ("nop");
+//	//__asm volatile ("nop");
+//	__asm volatile 	("strh r0, [%[mmio], #0x04]" : : [mmio] "r" (swim_base));
+//	__asm volatile 	("strh r0, [%[mmio], #0x18]" : : [mmio] "r" (swim_base));
+
+//	__asm volatile ("strh %[val], [%[mmio], #0x28]" : [val] "=l" (swim_mask) : [mmio] "l" (swim_base));
+////	__asm volatile ("nop");
+//	__asm volatile ("strh %[val], [%[mmio], #0x18]" : [val] "=l" (swim_mask) : [mmio] "l" (swim_base));
+////	__asm volatile ("nop");
+//	__asm volatile ("strh %[val], [%[mmio], #0x28]" : [val] "=l" (swim_mask) : [mmio] "l" (swim_base));
+////	__asm volatile ("nop");
+//	__asm volatile ("strh %[val], [%[mmio], #0x18]" : [val] "=l" (swim_mask) : [mmio] "l" (swim_base));
+//
+//	//for some reason this last store writes a different value to the mmio register!  WTF!!!!
+//	//8000800:       851a            strh    r2, [r3, #40]   ; 0x28^M
+//	//8000802:       831a            strh    r2, [r3, #24]^M
+//	//8000804:       851a            strh    r2, [r3, #40]   ; 0x28^M
+//	//8000806:       831a            strh    r2, [r3, #24]^M
+//	//8000808:       851a            strh    r2, [r3, #40]   ; 0x28^M
+//	//800080a:       831a            strh    r2, [r3, #24]^M
+//	//800080c:       851a            strh    r2, [r3, #40]   ; 0x28^M
+//	//800080e:       831a            strh    r2, [r3, #24]^M
+//	//8000810:       8319            strh    r1, [r3, #24]^M
+//	__asm volatile ("strh %[val], [%[mmio], #0x18]" : [val] "=l" (swim_mask) : [mmio] "l" (swim_base));
+
+//	__asm volatile ("nop");
+//	__asm("bkpt");
+	
+
+//	NOP();
+//	NOP();
+//	//delay(1);
+//	EXP0_HI();
+//	NOP();
+//	NOP();
+//	NOP();
+//	NOP();
+//	delay(10);
+//	EXP0_LO();
+//	NOP();
+//	NOP();
+//	NOP();
+//	NOP();
+//	NOP();
+//	EXP0_HI();
+
+
+	
+//	asm (
+//		"TST LR, #0x40\n\t"
+//		"BEQ from_nonsecure\n\t"
+//		"from_secure:\n\t"
+//		"TST LR, #0x04\n\t"
+//		"ITE EQ\n\t"
+//		"MRSEQ R0, MSP\n\t"
+//		"MRSNE R0, PSP\n\t"
+//		"B hard_fault_handler_c\n\t"
+//		"from_nonsecure:\n\t"
+//		"MRS R0, CONTROL_NS\n\t"
+//		"TST R0, #2\n\t"
+//		"ITE EQ\n\t"
+//		"MRSEQ R0, MSP_NS\n\t"
+//		"MRSNE R0, PSP_NS\n\t"
+//		"B hard_fault_handler_c\n\t"
+//	);
+
+	
+	//output bit stream from bit15 to bit15-len
+	
+
 }
+
 
 /* Desc:write byte to SWIM
  * Pre: swim must be activated
  * Post:
  * Rtn: 0-NAK, 1-ACK beware, no response looks like ACK!
  */
-uint8_t swim_woft(uint16_t addr, uint8_t data)
+uint8_t swim_woft(uint8_t data)
 {
-	uint16_t data_pb;
-	uint8_t ack;
-	uint8_t	len = 0;
 	//bit sequence:
 	//1bit header "0" Host comm
 	//3bit command b2-1-0 "010" WOTF
 	//1bit pairity xor of cmd "1"
 	//1bit ACK "1" or NAK "0" from device
 	// 0b0_0101
-	data_pb = 0x5000;
-//	data_pb = 0x4000;	//test wrong pairity
-	len = 4;		//data + pairity ( '0' header not included)
-	ack = swim_out( data_pb, len);
+	return swim_out( 0x5000, 4);
+	
+	//1bit header "0" from host
+	//8bits data7:0
+	//1bit parity of data
+	//1bit ACK "1" or NAK "0" from device
+	// 0b0-data-pb
+	//swim_out( data<<8, 9);//, EXP0bank, EXP0 );
 
-	if (ack == NO_RESP) {
-		return NO_RESP;
-	} else if (ack == NAK) {
-		return NAK;
-		//wait and resend WOFT command
-	}
-
-	//write N "number of bytes for WOTF"
-	data_pb = 0x0180;
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) return NO_RESP; 
-
-	//write @E extended address of write
-	//always 0x00 since targetting stm8s003 which only has one section
-	data_pb = 0x0000;
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) return NO_RESP; 
-
-	//write @H high address of write
-	data_pb = append_pairity( addr>>8 );
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) return NO_RESP; 
-
-	//write @L high address of write
-	data_pb = append_pairity( addr );
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) return NO_RESP; 
-
-	//write DATA portion of write
-	data_pb = append_pairity( data );
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	//More bytes can be written 
-	//any time NAK is recieved must resend byte
-
-	return ack;
 }
-
