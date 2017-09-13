@@ -22,6 +22,7 @@ uint8_t swim_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 #define	RD_LEN	0
 #define	RD0	1
 #define	RD1	2
+	uint16_t *ret_hword = (uint16_t*) &rdata[1];
 
 #define	BYTE_LEN 1
 #define	HWORD_LEN 2
@@ -33,10 +34,13 @@ uint8_t swim_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 			rdata[RD0] = swim_out( 0x0000, 4);	break;
 		case WOTF:		
 			rdata[RD_LEN] = BYTE_LEN;
-			rdata[RD0] = swim_woft(operand, miscdata);	break;
-//		case ROTF:	
-//				rdata[RD_LEN] = BYTE_LEN;
-//				rdata[RD0] = swim_roft();	break;
+			rdata[RD0] = swim_woft( operand, miscdata );	break;
+		case ROTF:	
+			rdata[RD_LEN] = HWORD_LEN;
+			//this assignment actually undoes the byte swap
+			//first index of data includes NAK/ACK just like write routines which only return ACK/NAK
+			//second index of data includes actual byte read back
+			*ret_hword = swim_roft( operand );	break;
 		default:
 			 //opcode doesn't exist
 			 return ERR_UNKN_SWIM_OPCODE;
@@ -325,10 +329,84 @@ uint16_t append_pairity(uint8_t n)
 	}
 }
 
+/* Desc:read byte from SWIM
+ * Pre: swim must be activated
+ * Post:
+ * Rtn: should return success/error and value read
+ */
+
+//must match swim.s .equ statements!!!
+#define SWIM_RD_LS	0x01
+#define SWIM_WR_LS	0x02
+#define SWIM_RD_HS	0x11
+#define SWIM_WR_HS	0x12
+
+uint16_t swim_roft(uint16_t addr)
+{
+	//If >24Mhz SYSCLK, must add wait state to flash
+	//can also enable prefetch buffer
+	FLASH->ACR = FLASH_ACR_PRFTBE | 0x0001;	
+	//switch to 48Mhz
+	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_PLL;
+
+	uint16_t data_pb;
+	uint32_t ack_data;
+	uint32_t spddir_len;
+	//bit sequence:
+	//1bit header "0" Host comm
+	//3bit command b2-1-0 "001" ROTF
+	//1bit pairity xor of cmd "1"
+	//1bit ACK "1" or NAK "0" from device
+	// 0b0_0011
+	data_pb = 0x3000;
+	spddir_len = (SWIM_WR_LS<<16) | 4; //data + pairity ( '0' header not included)
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write N "number of bytes for ROTF"
+	data_pb = 0x0180;
+	spddir_len = (SWIM_WR_LS<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @E extended address of write
+	//always 0x00 since targetting stm8s003 which only has one section
+	data_pb = 0x0000;
+	spddir_len = (SWIM_WR_LS<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @H high address of write
+	data_pb = append_pairity( addr>>8 );
+	spddir_len = (SWIM_WR_LS<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @L high address of write
+	data_pb = append_pairity( addr );
+	//this is a read xfr because device will output data immediately after 
+	//writting last byte of command info
+	spddir_len = (SWIM_RD_LS<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+
+	//read DATA portion of write
+
+	//More bytes can be written 
+	//any time NAK is recieved must resend byte
+end_swim:
+
+	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSE;
+	//Don't need wait states or prefetch buffer anymore
+	FLASH->ACR = 0x0000;	
+	return ack_data;
+
+}
+
+
 /* Desc:write byte to SWIM
  * Pre: swim must be activated
  * Post:
- * Rtn: 0-NAK, 1-ACK beware, no response looks like ACK!
+ * Rtn: 0-NAK, 1-ACK, 0xFF no response
  */
 uint8_t swim_woft(uint16_t addr, uint8_t data)
 {

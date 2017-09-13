@@ -23,6 +23,7 @@ BASE=.
 
 # Compiler & Linker
 CC=arm-none-eabi-gcc
+ASM=arm-none-eabi-as
 CXX=arm-none-eabi-g++
 OBJCOPY=arm-none-eabi-objcopy
 SIZE=arm-none-eabi-size
@@ -31,7 +32,7 @@ SIZE=arm-none-eabi-size
 ARCH_FLAGS=-mthumb -mcpu=cortex-m$(CORTEX_M)
 
 # Startup code
-STARTUP=$(BASE)/include_stm/startup_ARM$(CORE).S
+STARTUP=$(BASE)/include_stm/startup_ARM$(CORE).S 
 
 # -Os -flto -ffunction-sections -fdata-sections to compile for code size
 CFLAGS=$(ARCH_FLAGS) $(STARTUP_DEFS) -Os -flto -ffunction-sections -fdata-sections -g
@@ -61,9 +62,10 @@ DEFINE+=\
 INCLUDE=-I ./include_stm
 CFLAGS+= $(DEFINE) $(INCLUDE) 
 
-#SOURCES=$(wildcard source/**/*.c source/*.c)
 SOURCES=$(wildcard source/*.c source_stm_only/*.c)
 OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
+
+ASM_SRC=$(wildcard source/asm_stm/*.s)
 
 #all: dir shared $(BUILD)/$(PROJ).axf $(BUILD)/$(PROJ).elf $(BUILD)/$(PROJ).hex $(BUILD)/$(PROJ).bin size 
 all: dir shared $(BUILD)/$(PROJ).elf $(BUILD)/$(PROJ).hex $(BUILD)/$(PROJ).bin size 
@@ -71,11 +73,12 @@ all: dir shared $(BUILD)/$(PROJ).elf $(BUILD)/$(PROJ).hex $(BUILD)/$(PROJ).bin s
 #build axf file output (basically elf with DWARF debug info)
 # $@ is shortcut for the target, $^ is shortcut for prereqs
 #             TARGET: PREREQS
+
 $(BUILD)/$(PROJ).axf: $(STARTUP) $(OBJECTS)
-	$(CC) $^ $(CFLAGS) $(LFLAGS) -o $@
+	$(CC) $^ $(ASM_SRC) $(CFLAGS) $(LFLAGS) -o $@
 
 $(BUILD)/$(PROJ).elf: $(STARTUP) $(OBJECTS)
-	$(CC) $^ $(CFLAGS) $(LFLAGS) -o $@
+	$(CC) $^ $(ASM_SRC) $(CFLAGS) $(LFLAGS) -o $@
 
 $(BUILD)/$(PROJ).hex: $(BUILD)/$(PROJ).elf
 	$(OBJCOPY) -O ihex $^ $@

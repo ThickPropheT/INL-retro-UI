@@ -38,9 +38,24 @@ function main ()
 	dict.io("SWIM_INIT", "SWIM_ON_EXP0")	
 	dict.swim("SWIM_ACTIVATE")	
 
+	--holds SWIM pin low for 16usec+ to reset SWIM comms incase of error
+      	dict.swim("SWIM_RESET")	
+
+
 	--write 0A0h to SWIM_CSR
 	--bit 5: allows entire memory range to be read & swim reset to be accessed
 	--bit 7: masks internal reset sources (like WDT..?)
+	print("wotf SWIM_CSR:", dict.swim("WOTF", 0x7F80, 0xA0))	
+
+	--read SWIM_CSR
+	print("rotf SWIM_CSR:", string.format("%X  %X", dict.swim("ROTF", 0x7F80)))
+	print("rotf SWIM_CSR:", string.format("%X  %X", dict.swim("ROTF", 0x7F80)))
+	print("rotf SWIM_CSR:", string.format("%X  %X", dict.swim("ROTF", 0x7F80)))
+	print("rotf SWIM_CSR:", string.format("%X  %X", dict.swim("ROTF", 0x7F80)))
+	print("rotf SWIM_CSR:", string.format("%X  %X", dict.swim("ROTF", 0x7F80)))
+      	dict.swim("SWIM_RESET")	
+
+	print("wotf SRST:", dict.swim("SWIM_SRST"))	
 	print("wotf SWIM_CSR:", dict.swim("WOTF", 0x7F80, 0xA0))	
 
 	--now the SRST command is available, whole memory range available, and internal resets disabled

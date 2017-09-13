@@ -28,7 +28,7 @@
 //SWIM commands
 #define	SWIM_SRST	2	//reset device	RL=3 (error, len, NAK/ACK)
 
-#define	ROTF		0x11	//read on the fly only one byte RL=3 (error, len, data)
+#define	ROTF		0x11	//read on the fly only one byte RL=4 (usberror, len, swimerror, data)
 //#define	ROTF_8B		0x18	//read on the fly RL=8
 //#define	ROTF_128B	0x1F	//read on the fly RL=128 (current max due to 254B limit)
 

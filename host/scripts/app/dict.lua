@@ -405,8 +405,13 @@ local function swim( opcode, operand, misc, data )
 	end
 
 	--process the return data string and return it to calling function
+RETURN_ACK_IDX = 3
+RETURN_DAT_IDX = 4
 	if data_len then
-		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+		--return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+		error_code = data:byte(RETURN_ACK_IDX)
+		data_len =   data:byte(RETURN_DAT_IDX)
+		return error_code, data_len
 	else 
 		return nil
 	end 

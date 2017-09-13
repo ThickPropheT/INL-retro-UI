@@ -122,6 +122,8 @@ void init_clock()
 	//at startup HSI is selected SW = 00
 	RCC->CFGR |= RCC_CFGR_SW_HSE;
 
+	//TODO poll RCC->CFGR SWS bits to ensure sysclk switched over
+
 	//Now the SYSCLK is running directly off the HSE 16Mhz xtal
 
 	/* (1) Test if PLL is used as System clock */
