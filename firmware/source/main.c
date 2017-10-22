@@ -57,6 +57,13 @@ int main(void)
 	//Default clock is in operation
 	//Change system clock as needed
 	init_clock();
+
+//trying to move to 48Mhz clock for all STM32 cores
+	//If >24Mhz SYSCLK, must add wait state to flash
+	//can also enable prefetch buffer
+	FLASH->ACR = FLASH_ACR_PRFTBE | 0x0001;	
+	//switch to 48Mhz
+	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_PLL;
 	
 	//Initialize periphery clocks as needed
 	init_usb_clock();
@@ -73,6 +80,7 @@ int main(void)
 
 	init_usb();
 	//Initialize board/system
+	
 #endif
 
 	//intialize i/o and LED to pullup state

@@ -147,7 +147,7 @@ libusb_device_handle * open_usb_device( libusb_context *context, int log_level )
 			//Getting here means the device was opened because it matched V-USB
 			//VID/PID, but it wasn't a compatible device.	
 			//Can't use this device, so close it
-			if (log_level>0) printf("VID/PID matched, but manf/prod didn't match, closing device\n");
+			if (log_level>0) printf("VID/PID matched, but manf/prod didn't match, closing device.\n It's likely that the drivers haven't been installed...\n");
 			libusb_close(handle);
 			handle = NULL;	//Don't want to try and reclose
 		}

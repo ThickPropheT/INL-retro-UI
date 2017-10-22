@@ -215,10 +215,15 @@ uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcpt
 
 		//retry if write failed
 		//this helped but still seeing similar fails to dumps
-	//	if (read == buff->data[n]) {
+		if (read == buff->data[n]) {
 			n++;
 			cur++;
-	//	}
+			LED_IP_PU();	
+			LED_LO();
+		} else {
+			LED_OP();
+			LED_HI();
+		}
 
 	}
 

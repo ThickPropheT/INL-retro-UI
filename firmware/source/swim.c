@@ -9,6 +9,10 @@
 //
 //=================================================================================================
 
+uint8_t swim_pin;
+uint16_t swim_mask;
+GPIO_TypeDef *swim_base;
+
 /* Desc:Function takes an opcode which was transmitted via USB
  * 	then decodes it to call designated function.
  * 	shared_dict_swim.h is used in both host and fw to ensure opcodes/names align
@@ -31,16 +35,26 @@ uint8_t swim_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 		case SWIM_RESET:	swim_reset();		break;
 		case SWIM_SRST:			
 			rdata[RD_LEN] = BYTE_LEN;
-			rdata[RD0] = swim_out( 0x0000, 4);	break;
+			//assumes low speed
+			rdata[RD0] = swim_xfr( 0x0000, ((SWIM_WR<<16) | 4), swim_base, swim_mask);	break;
 		case WOTF:		
 			rdata[RD_LEN] = BYTE_LEN;
-			rdata[RD0] = swim_woft( operand, miscdata );	break;
+			rdata[RD0] = swim_wotf( SWIM_LS, operand, miscdata );	break;
+		case WOTF_HS:		
+			rdata[RD_LEN] = BYTE_LEN;
+			rdata[RD0] = swim_wotf( SWIM_HS, operand, miscdata );	break;
 		case ROTF:	
 			rdata[RD_LEN] = HWORD_LEN;
 			//this assignment actually undoes the byte swap
 			//first index of data includes NAK/ACK just like write routines which only return ACK/NAK
 			//second index of data includes actual byte read back
-			*ret_hword = swim_roft( operand );	break;
+			*ret_hword = swim_rotf( SWIM_LS, operand );	break;
+		case ROTF_HS:	
+			rdata[RD_LEN] = HWORD_LEN;
+			//this assignment actually undoes the byte swap
+			//first index of data includes NAK/ACK just like write routines which only return ACK/NAK
+			//second index of data includes actual byte read back
+			*ret_hword = swim_rotf( SWIM_HS, operand );	break;
 		default:
 			 //opcode doesn't exist
 			 return ERR_UNKN_SWIM_OPCODE;
@@ -50,9 +64,6 @@ uint8_t swim_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 
 }
 
-uint8_t swim_pin;
-uint16_t swim_mask;
-GPIO_TypeDef *swim_base;
 
 void delay( uint16_t delay )
 {
@@ -82,7 +93,7 @@ void swim_activate()
 	//pulse low for 16usec  spec says 16usec
 	//but looking at working programmers they do twice the delays below
 	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
-	delay(16);
+	delay(3*16);
 	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
 
 	//toggle high->low T=1msec 4x
@@ -91,22 +102,22 @@ void swim_activate()
 	//TODO move this timed code into a timer to make timing more stable
 	//between boards, pinport.c code, etc....
 #ifdef STM_INL6
-	delay(719);
+	delay(3*719);
 #endif
 #ifdef STM_ADAPTER
-	delay(720);
+	delay(3*720);
 #endif
 	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
-	delay(718);
+	delay(3*718);
 	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
 	}
 
 	//toggle high->low T=0.5msec 4x
 	for( i = 0; i < 4; i++) {
 	//STM adapter 358 = 256usec
-	delay(356);
+	delay(3*356);
 	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
-	delay(355);
+	delay(3*355);
 	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
 	}
 
@@ -137,7 +148,7 @@ void swim_reset()
 	//pulse low for 16usec  spec says 16usec
 	//but looking at working programmers they do very long resets 
 	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
-	delay(16);
+	delay(3*16);
 	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
 
 }
@@ -159,6 +170,146 @@ void swim_reset()
 #define NO_RESP	0xFF
 #define ACK	0x01
 #define NAK	0x00
+	
+/* Function to get parity of number n. It returns 0
+ * if n has odd parity, and returns 0xFF if n has even
+ * parity */
+uint16_t append_pairity(uint8_t n)
+{
+	//shift incoming data to upper byte
+	uint16_t data_pb = (n<<8);
+	uint8_t parity = 0;
+
+	while (n) {
+		parity = ~parity;
+		n = n & (n - 1);
+	}        
+
+	if ( parity ) {
+		return (data_pb | 0x80);
+	} else {
+		return data_pb;
+	}
+}
+
+/* Desc:read byte from SWIM
+ * Pre: swim must be activated
+ * Post:
+ * Rtn: should return success/error and value read
+ */
+uint16_t swim_rotf(uint8_t speed, uint16_t addr)
+{
+	uint32_t ack_data = 0;
+#ifdef STM_CORE
+
+	uint16_t data_pb;
+	uint32_t spddir_len;
+	//bit sequence:
+	//1bit header "0" Host comm
+	//3bit command b2-1-0 "001" ROTF
+	//1bit pairity xor of cmd "1"
+	//1bit ACK "1" or NAK "0" from device
+	// 0b0_0011
+	data_pb = 0x3000;
+	spddir_len = ((SWIM_WR|speed)<<16) | 4; //data + pairity ( '0' header not included)
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write N "number of bytes for ROTF"
+	data_pb = 0x0180;
+	spddir_len = ((SWIM_WR|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @E extended address of write
+	//always 0x00 since targetting stm8s003 which only has one section
+	data_pb = 0x0000;
+	spddir_len = ((SWIM_WR|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @H high address of write
+	data_pb = append_pairity( addr>>8 );
+	spddir_len = ((SWIM_WR|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @L high address of write
+	data_pb = append_pairity( addr );
+	//this is a read xfr because device will output data immediately after 
+	//writting last byte of command info
+	spddir_len = ((SWIM_RD|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+
+	//read DATA portion of write
+
+	//More bytes can be written 
+	//any time NAK is recieved must resend byte
+end_swim:
+
+#endif
+	return ack_data;
+
+
+}
+
+uint8_t swim_wotf(uint8_t speed, uint16_t addr, uint8_t data)
+{
+	uint32_t ack_data = 0;
+#ifdef STM_CORE
+	uint16_t data_pb;
+	uint32_t spddir_len;
+	//bit sequence:
+	//1bit header "0" Host comm
+	//3bit command b2-1-0 "010" WOTF
+	//1bit pairity xor of cmd "1"
+	//1bit ACK "1" or NAK "0" from device
+	// 0b0_0101
+	data_pb = 0x5000;
+	spddir_len = ((SWIM_WR|speed)<<16) | 4; //data + pairity ( '0' header not included)
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write N "number of bytes for ROTF"
+	data_pb = 0x0180;
+	spddir_len = ((SWIM_WR|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @E extended address of write
+	//always 0x00 since targetting stm8s003 which only has one section
+	data_pb = 0x0000;
+	spddir_len = ((SWIM_WR|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @H high address of write
+	data_pb = append_pairity( addr>>8 );
+	spddir_len = ((SWIM_WR|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	if (ack_data != ACK) goto end_swim; 
+
+	//write @L high address of write
+	data_pb = append_pairity( addr );
+	//writting last byte of command info
+	spddir_len = ((SWIM_WR|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+
+	//DATA portion of write
+	data_pb = append_pairity( data );
+	spddir_len = ((SWIM_WR|speed)<<16) | 9;
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+
+	//More bytes can be written 
+	//any time NAK is recieved must resend byte
+end_swim:
+
+#endif
+	return ack_data;
+
+
+}
+
 /* Desc:Transfer SWIM bit stream
  * 	Always outputs '0' as first bit for header "from host"
  * 	Will output len number of bits plus one for header
@@ -169,10 +320,12 @@ void swim_reset()
  * Post:STM8 mcu SWIM active
  * Rtn: 0xFF if no response, 0-NAK, 1-ACK.
  */
+/*
 uint8_t swim_out(uint16_t stream, uint8_t len)//, GPIO_TypeDef *base)
 {
 //__asm("swim_out_begin:\n\t");
 
+#ifdef STM_CORE
 	uint8_t return_val;
 
 	uint16_t pushpull = swim_base->OTYPER & ~swim_mask;
@@ -304,170 +457,8 @@ __asm("stream_end:\n\t");
 		return NAK;
 	} 
 
+#endif
 	//made it to here then we got an ACK
 	return ACK;
 }
-	
-/* Function to get parity of number n. It returns 0
- * if n has odd parity, and returns 0xFF if n has even
- * parity */
-uint16_t append_pairity(uint8_t n)
-{
-	//shift incoming data to upper byte
-	uint16_t data_pb = (n<<8);
-	uint8_t parity = 0;
-
-	while (n) {
-		parity = ~parity;
-		n = n & (n - 1);
-	}        
-
-	if ( parity ) {
-		return (data_pb | 0x80);
-	} else {
-		return data_pb;
-	}
-}
-
-/* Desc:read byte from SWIM
- * Pre: swim must be activated
- * Post:
- * Rtn: should return success/error and value read
- */
-
-//must match swim.s .equ statements!!!
-#define SWIM_RD_LS	0x01
-#define SWIM_WR_LS	0x02
-#define SWIM_RD_HS	0x11
-#define SWIM_WR_HS	0x12
-
-uint16_t swim_roft(uint16_t addr)
-{
-	//If >24Mhz SYSCLK, must add wait state to flash
-	//can also enable prefetch buffer
-	FLASH->ACR = FLASH_ACR_PRFTBE | 0x0001;	
-	//switch to 48Mhz
-	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_PLL;
-
-	uint16_t data_pb;
-	uint32_t ack_data;
-	uint32_t spddir_len;
-	//bit sequence:
-	//1bit header "0" Host comm
-	//3bit command b2-1-0 "001" ROTF
-	//1bit pairity xor of cmd "1"
-	//1bit ACK "1" or NAK "0" from device
-	// 0b0_0011
-	data_pb = 0x3000;
-	spddir_len = (SWIM_WR_LS<<16) | 4; //data + pairity ( '0' header not included)
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
-	if (ack_data != ACK) goto end_swim; 
-
-	//write N "number of bytes for ROTF"
-	data_pb = 0x0180;
-	spddir_len = (SWIM_WR_LS<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
-	if (ack_data != ACK) goto end_swim; 
-
-	//write @E extended address of write
-	//always 0x00 since targetting stm8s003 which only has one section
-	data_pb = 0x0000;
-	spddir_len = (SWIM_WR_LS<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
-	if (ack_data != ACK) goto end_swim; 
-
-	//write @H high address of write
-	data_pb = append_pairity( addr>>8 );
-	spddir_len = (SWIM_WR_LS<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
-	if (ack_data != ACK) goto end_swim; 
-
-	//write @L high address of write
-	data_pb = append_pairity( addr );
-	//this is a read xfr because device will output data immediately after 
-	//writting last byte of command info
-	spddir_len = (SWIM_RD_LS<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
-
-	//read DATA portion of write
-
-	//More bytes can be written 
-	//any time NAK is recieved must resend byte
-end_swim:
-
-	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSE;
-	//Don't need wait states or prefetch buffer anymore
-	FLASH->ACR = 0x0000;	
-	return ack_data;
-
-}
-
-
-/* Desc:write byte to SWIM
- * Pre: swim must be activated
- * Post:
- * Rtn: 0-NAK, 1-ACK, 0xFF no response
- */
-uint8_t swim_woft(uint16_t addr, uint8_t data)
-{
-	uint16_t data_pb;
-	uint8_t ack;
-	uint8_t	len = 0;
-	//bit sequence:
-	//1bit header "0" Host comm
-	//3bit command b2-1-0 "010" WOTF
-	//1bit pairity xor of cmd "1"
-	//1bit ACK "1" or NAK "0" from device
-	// 0b0_0101
-	data_pb = 0x5000;
-//	data_pb = 0x4000;	//test wrong pairity
-	len = 4;		//data + pairity ( '0' header not included)
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) {
-		return NO_RESP;
-	} else if (ack == NAK) {
-		return NAK;
-		//wait and resend WOFT command
-	}
-
-	//write N "number of bytes for WOTF"
-	data_pb = 0x0180;
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) return NO_RESP; 
-
-	//write @E extended address of write
-	//always 0x00 since targetting stm8s003 which only has one section
-	data_pb = 0x0000;
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) return NO_RESP; 
-
-	//write @H high address of write
-	data_pb = append_pairity( addr>>8 );
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) return NO_RESP; 
-
-	//write @L high address of write
-	data_pb = append_pairity( addr );
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	if (ack == NO_RESP) return NO_RESP; 
-
-	//write DATA portion of write
-	data_pb = append_pairity( data );
-	len = 9;
-	ack = swim_out( data_pb, len);
-
-	//More bytes can be written 
-	//any time NAK is recieved must resend byte
-
-	return ack;
-}
-
+*/

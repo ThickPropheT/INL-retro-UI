@@ -312,7 +312,16 @@ poll_header:
 
 	//; seemed to be a little early at times..
 	swim_pp
+	nop
 	swim_od
+
+	//; adding delay to extend header bit which always seems 250nsec longer than it should be
+	nop	//; 1x NOP fails pretty hard header errors @ slow speed
+	//; moved second NOP between pp->od to try and reduce header errors @ low speed
+//;	nop	//; 2x NOP seems pretty good, sometimes fails in slow speed, but pretty good @ high speed
+	//; can usually get 1 out of 12 low speed to fail, and sometimes HS will fail hard
+//;	nop	//; 3x NOP seems more likely to fail @ low speed than 3x
+	//; hard to say if 3x NOP is actually better, it might succeed more on reads, but switching to HS seems to fail more often
 	b read_next_bit
 	
 .p2align 4
@@ -385,6 +394,11 @@ always_send_ack:
 	bl	delay_r0	
 	swim_hi
 	swim_od
+
+	//; check that SWIM is actually high
+	//; if device failed it's possible pairity still passed
+	//; but device sensed reset condition due to lack of legit pullup
+	//; in which case it would likely be outputing low now for 16usec
 
 	//; organize return data
 	//; MSB NAK/NORESP from last write

@@ -59,30 +59,17 @@ local function read_flashID( debug )
 	dict.pinport("CTL_SET_HI", "SNES_RST")
 
 	--read manf ID
-	rv = dict.snes("SNES_ROM_RD", 0x0000)
-	if debug then print("attempted read SNES ROM manf ID:", string.format("%X", rv)) end
---	if ( rv[RV_DATA0_IDX] != SST_MANF_ID ) {
---		return GEN_FAIL;
---		//no need for software exit since failed to enter
---	}
---
+	local manf_id = dict.snes("SNES_ROM_RD", 0x0000)
+	if debug then print("attempted read SNES ROM manf ID:", string.format("%X", manf_id)) end
+
 	--read prod ID
-	rv = dict.snes("SNES_ROM_RD", 0x0002)
-	if debug then print("attempted read SNES ROM prod ID:", string.format("%X", rv)) end
-	rv = dict.snes("SNES_ROM_RD", 0x001C)
-	if debug then print("attempted read SNES density ID: ", string.format("%X", rv)) end
-	rv = dict.snes("SNES_ROM_RD", 0x001E)
-	if debug then print("attempted read SNES boot sect ID:", string.format("%X", rv)) end
---	if ( (rv[RV_DATA0_IDX] == SST_PROD_128)
---	||   (rv[RV_DATA0_IDX] == SST_PROD_256)
---	||   (rv[RV_DATA0_IDX] == SST_PROD_512) ) {
---		//found expected manf and prod ID
---		flash->manf = SST_MANF_ID;
---		flash->part = rv[RV_DATA0_IDX];
---		flash->wr_dict = DICT_NES;
---		flash->wr_opcode = NES_PPU_WR;
---	}
---
+	local prod_id = dict.snes("SNES_ROM_RD", 0x0002)
+	if debug then print("attempted read SNES ROM prod ID:", string.format("%X", prod_id)) end
+	local density_id = dict.snes("SNES_ROM_RD", 0x001C)
+	if debug then print("attempted read SNES density ID: ", string.format("%X", density_id)) end
+	local boot_sect = dict.snes("SNES_ROM_RD", 0x001E)
+	if debug then print("attempted read SNES boot sect ID:", string.format("%X", boot_sect)) end
+
 	--put cart in program mode
 	dict.pinport("CTL_SET_LO", "SNES_RST")
 
@@ -93,7 +80,12 @@ local function read_flashID( debug )
 	dict.pinport("CTL_SET_HI", "SNES_RST")
 	
 
-	--return true
+	--return true if detected flash chip
+	if (manf_id == 0x01 and prod_id == 0x49) then
+		return true
+	else 
+		return false
+	end
 
 end
 
