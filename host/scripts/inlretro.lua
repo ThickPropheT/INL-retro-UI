@@ -100,7 +100,29 @@ function main ()
 
 		elseif cart_console == "SNES" then
 
-			swim.start()
+			if swim.start() then
+				--SWIM is now established and running at HIGH SPEED
+				--swim.printCSR()
+
+				--check if ROP set, allow clearing ROP and erasing CIC
+				
+				--open CIC file
+				local cic_file = assert(io.open("SNESCIC.bin", "rb"))
+
+				--write CIC file
+				swim.write_flash( cic_file )
+
+				--close CIC file
+				assert(cic_file:close())
+
+				--write option bytes
+				swim.write_optn_bytes( true )
+
+				--set ROP byte
+			else
+				print("ERROR problem with STM8 CIC")
+			end
+
 
 			dict.io("IO_RESET")	
 			dict.io("SNES_INIT")	
