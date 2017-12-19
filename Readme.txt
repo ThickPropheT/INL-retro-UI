@@ -16,13 +16,13 @@ run:
 ./inlretro
 
 
-FIRMWARE:
+AVR FIRMWARE:
 install avr-gcc and avr-libc:
 sudo apt-get install gcc-avr
 sudo apt-get install avr-libc
 
 
-BOOTLOADER:
+AVR BOOTLOADER:
 bootloadHID-master:
 https://github.com/ajd4096/bootloadHID
 fork of original obdev bootloader has option to remove BL switch with timeout.
@@ -57,6 +57,9 @@ Uploading 1920 (0x780) bytes starting at 0 (0x0)
 -take BL switch back to RUN
 -enjoy new firmware
 
+STM32 FIRMWARE:
+Need arm-none-eabi-gcc
+
 
 ===================
 Windows
@@ -71,6 +74,7 @@ Install minGW:
 		(primary need is make, basic unix commands are nice to have)
 	optional: msys-openssh 
 		(helpful if using gitlab to pull updates)
+		lua for host app dev
 	minGW utilities can be easily added or removed at any time with minGW installation manager.
 	Add C:\MinGW\bin & C:\MinGW\msys\1.0\bin to your PC's enviroment PATH variable
 		-control panel search: "edit system environment variables
@@ -95,7 +99,7 @@ But whatever it works and saves ~12sec of compile time with current setup.
 This way lua is compiled separately using it's provided make file.
 make clean still deletes lua object files, so this process must be reperformed if cleaned.
 
-FIRMWARE:
+AVR FIRMWARE:
 Download and Install WinAVR
 http://www.webring.org/l/rd?ring=avr;id=59;url=http%3A%2F%2Fwinavr%2Esourceforge%2Enet%2Findex%2Ehtml  
 	optional: install programmer's notepad has handy feature to make clean, all, program in tools menu
@@ -113,7 +117,7 @@ Place BL/RUN switch in BL, then hit reset button in INL retro-prog
 from firmware folder run command "make program" this will flash target build onto device using bootloadHID.exe
 Take BL/RUN switch back to RUN and device will reset into INL retro-prog you just built.
 
-BOOTLOADER:
+AVR BOOTLOADER:
 If you wish to build bootloader for kazzo (shouldn't be necessary for most ppl) follow the following
 Requires you to have an avr programmer to reflash atmega164a mcu
 Helpful to download more recent version of avrdude than included with WinAVR.
@@ -132,4 +136,11 @@ Now the bootloader can be built and flashed from the bootloadHID/firmware direct
 If trying to flash mcu from make file you'll have to modify AVRDUDE line to match your avr programmer
 Once completed you can make the bootloader and flash it with command "make flash"
 
+
+STM32 FIRMWARE:
+
+Need arm-none-eabi-gcc:
+	https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads
+
+Download .zip file and place in folder like C:\ARM and create environment variables to point to bin folder
 

@@ -3,9 +3,11 @@
 ########################################
 *.o
 *.swp
+*.swo
 *.bin
 *.bak
 *.smc
+*.dropbox.attr
 
 # ignore shared files that have been copied to host-firmware dirs
 firmware/source/shared_*.h

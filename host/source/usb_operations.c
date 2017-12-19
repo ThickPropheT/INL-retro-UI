@@ -101,12 +101,13 @@ libusb_device_handle * open_usb_device( libusb_context *context, int log_level )
 		if (log_level>0) printf("checking %x product\n", desc.idProduct);
 		if ((desc.idVendor == 0x16C0) && (desc.idProduct == 0x05DC)) {
 			//Found a V-USB device with default VID/PID now see if it's actually a kazzo
+			//printf("found matching VID PID pair\n");
 			if (log_level>0) printf("found vend ID:%x prod ID:%x ", desc.idVendor, desc.idProduct);
 			if (log_level>0) printf("manf: %d prod: %d\n", desc.iManufacturer, desc.iProduct);
 
 			//opening device allows performing I/O via USB with device
 			rv = libusb_open( device, &handle );
-			check( rv == LIBUSB_SUCCESS, "Unable to open USB device: %s", libusb_strerror(rv));
+			check( rv == LIBUSB_SUCCESS, "Unable to open USB device: %s., \n\nDEVICE FOUND, BUT CAN'T OPEN DEVICE, VERIFY DRIVERS ARE INSTALLED!!!", libusb_strerror(rv));
 			if (log_level>0) printf("device opened successfully\n");
 
 			if (desc.iManufacturer) {
