@@ -4,6 +4,7 @@
 #include "pinport.h"
 #include "types.h"
 #include "nes.h"
+#include "swim.h"
 #include "shared_dictionaries.h"
 #include "shared_errors.h"
 

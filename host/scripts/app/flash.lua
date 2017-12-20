@@ -5,6 +5,7 @@ local flash = {}
 -- import required modules
 local dict = require "scripts.app.dict"
 local buffers = require "scripts.app.buffers"
+local snes = require "scripts.app.snes"
 
 -- file constants
 
@@ -390,7 +391,7 @@ local function flash_snes( file, debug )
 	if debug then print("flashing cart") end
 
 --	//start with reset and init
-	dict.io("IO_RESET")
+--	dict.io("IO_RESET")
 	dict.io("SNES_INIT")
 
 --	//start operation at reset	
@@ -420,7 +421,7 @@ local function flash_snes( file, debug )
 	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer["LOROM"]<<8 | op_buffer["NOVAR"]), buff1 )
 
 	--set cart in program mode
-	dict.pinport("CTL_SET_LO", "SNES_RST")
+	snes.prgm_mode()
 
 	print("\n\nsetting operation STARTFLASH");
 --	//inform buffer manager to start dumping operation now that buffers are initialized
@@ -451,10 +452,15 @@ local function flash_snes( file, debug )
 		if ( i == 2048*1024/buff_size) then break end 
 --		if ( i == 32*1024/buff_size) then break end 
 		i = i + 1
-		if ( (i % (2048*1024/buff_size/16)) == 0) then
+--		if ( (i % (2048*1024/buff_size/16)) == 0) then
+--			local tdelta = os.clock() - tlast
+--			print("time delta:", tdelta, "seconds, speed:", (2048/16/tdelta), "KBps");
+--			print("flashed part:", i/512, "of 16 \n") 
+--			tlast = os.clock();
+		if ( (i % (4*2048*1024/buff_size/16)) == 0) then
 			local tdelta = os.clock() - tlast
-			print("time delta:", tdelta, "seconds, speed:", (2048/16/tdelta), "KBps");
-			print("flashed part:", i/512, "of 16 \n") 
+			print("time delta:", tdelta, "seconds, speed:", (4*2048/16/tdelta), "KBps");
+			print("flashed part:", i/(4*512), "of 4 \n")
 			tlast = os.clock();
 		end
 	end
@@ -480,10 +486,10 @@ local function flash_snes( file, debug )
 	dict.operation("SET_OPERATION", op_buffer["RESET"] )
 
 	--set cart in play mode
-	dict.pinport("CTL_SET_HI", "SNES_RST")
+	snes.play_mode()
 
 	dict.buffer("RAW_BUFFER_RESET")
-	dict.io("IO_RESET")
+--	dict.io("IO_RESET")
 
 end
 

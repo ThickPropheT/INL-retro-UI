@@ -105,6 +105,11 @@ uint8_t	write_page_chr( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr
 
 } 
 
+//#define PRGM_MODE() swim_wotf(SWIM_HS, 0x500F, 0x40)
+//#define PLAY_MODE() swim_wotf(SWIM_HS, 0x500F, 0x00)
+#define PRGM_MODE() EXP0_LO()
+#define PLAY_MODE() EXP0_HI()
+
 uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
 {
 	uint16_t cur = buff->cur_byte;
@@ -119,7 +124,19 @@ uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcpt
 
 
 	//set to program mode for first entry
-	EXP0_LO();
+	//EXP0_LO();
+	//swim_wotf(SWIM_HS, 0x500F, 0x40)
+	PRGM_MODE();
+
+//; TODO I don't think all these NOPs are actually needed, but they work and don't seem to significantly affect program time on stm32
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
 
 	//enter unlock bypass mode
 	wr_func( 0x0AAA, 0xAA );
@@ -161,7 +178,16 @@ uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcpt
 		//and optimizing flash routine to get time down.
 	
 		//exit program mode
-		EXP0_HI();
+	//	EXP0_HI();
+		PLAY_MODE();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
 		//pre-fetch next byte of data
 		//cur_data = buff->data[n+1];
 #ifdef AVR_CORE
@@ -183,21 +209,66 @@ uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcpt
 		usbPoll();
 		read = rd_func((addrH<<8)|n);
 		//prepare for upcoming write cycle, or allow for a polling read
-		EXP0_LO();
+		//EXP0_LO();
+		PRGM_MODE();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
 		//First check if already outputting final data
 		if (read != buff->data[n] )  {
 			//if not, lets see if toggle is occuring
-			EXP0_HI();
+			//EXP0_HI();
+			PLAY_MODE();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
 			while( read != rd_func((addrH<<8)|n) ){
-				EXP0_LO();
+				//EXP0_LO();
+				PRGM_MODE();
 				NOP(); NOP(); NOP(); NOP();
 				NOP(); NOP(); NOP(); NOP();
 				NOP(); NOP(); NOP(); NOP();
-				EXP0_HI();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+				//EXP0_HI();
+				PLAY_MODE();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
 				read = rd_func((addrH<<8)|n);
 			}
 			//prepare for upcoming write cycle
-			EXP0_LO();
+			//EXP0_LO();
+			PRGM_MODE();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
 		}
 
 //		//IDK why, but AVR will exit early sometimes
@@ -236,7 +307,8 @@ uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcpt
 	wr_func( 0x0000, 0xF0 );
 
 	//exit program mode
-	EXP0_HI();
+	//EXP0_HI();
+	PLAY_MODE();
 
 	return SUCCESS;
 

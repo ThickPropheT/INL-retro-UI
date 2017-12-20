@@ -181,6 +181,7 @@ void snes_init()
 	//disable SRAM and put cart in PLAY mode
 	EXP0_HI();
 	EXP0_OP();
+	//if SWIM is active, EXP0 must be set to pullup prior to SWIM transfers
 
 	//other control pins are inputs or unused, leave as IP pullup from reset
 

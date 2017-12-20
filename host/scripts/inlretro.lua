@@ -39,8 +39,8 @@ function main ()
 --	debug = true
 --	rv = cart.detect(debug)
 
---	local force_cart = true
---	cart_console = "SNES"
+	local force_cart = true
+	cart_console = "SNES"
 
 	if (force_cart or cart.detect_console(true)) then
 		if cart_console == "NES" or cart_console == "Famicom" then
@@ -100,14 +100,17 @@ function main ()
 
 		elseif cart_console == "SNES" then
 
-			if swim.start() then
+			snes_swimcart = nil
+			if swim.start(true) then
 				--SWIM is now established and running at HIGH SPEED
-				--swim.printCSR()
+				snes_swimcart = false	--don't want to use SWIM pin to control flash /OE, use SNES RESET (EXP0) instead
 
 				--check if ROP set, allow clearing ROP and erasing CIC
+				--blindly erase STM8 CIC for now by disabling ROP
+				swim.disable_ROP_erase(true)
 				
 				--open CIC file
-				local cic_file = assert(io.open("SNESCIC.bin", "rb"))
+				local cic_file = assert(io.open("SNESCIC_flashmode.bin", "rb"))
 
 				--write CIC file
 				swim.write_flash( cic_file )
@@ -115,14 +118,11 @@ function main ()
 				--close CIC file
 				assert(cic_file:close())
 
-				--write option bytes
-				swim.write_optn_bytes( true )
-
-				--set ROP byte
+				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
+				swim.stop_and_reset()
 			else
 				print("ERROR problem with STM8 CIC")
 			end
-
 
 			dict.io("IO_RESET")	
 			dict.io("SNES_INIT")	
@@ -143,16 +143,15 @@ function main ()
 			if snes.read_reset_vector(0, true) ~= 0xFFFF then
 				erase.erase_snes( false )
 			end
-			if snes.read_reset_vector(1, true) ~= 0xFFFF then
+			if snes.read_reset_vector( 1, true) ~= 0xFFFF then
 				erase.erase_snes( false )
 			end
-			if snes.read_reset_vector(20, true) ~= 0xFFFF then
+			if snes.read_reset_vector( 20, true) ~= 0xFFFF then
 				erase.erase_snes( false )
 			end
-			if snes.read_reset_vector(63, true) ~= 0xFFFF then
+			if snes.read_reset_vector( 63, true) ~= 0xFFFF then
 				erase.erase_snes( false )
 			end
-
 
 			--FLASHING:
 			--erase cart
@@ -173,19 +172,50 @@ function main ()
 			--close file
 			assert(file:close())
 
-			--DUMPING:
-			--create new file
-			local file 
-			file = assert(io.open("snesdump.bin", "wb"))
-			--dump cart into file
-			dump.dump_snes( file, snes_mapping, true )
+			--flash final CIC code
+			if swim.start(true) then
+				--SWIM is now established and running at HIGH SPEED
+				--swim.printCSR()
+				snes_swimcart = false
+				--print("main swimcart", snes_swimcart)
 
-			--close file
-			assert(file:close())
+				--check if ROP set, allow clearing ROP and erasing CIC
+				--blindly erase STM8 CIC for now by disabling ROP
+		--		swim.disable_ROP_erase(true)
+				
+				--open CIC file
+				local cic_file = assert(io.open("SNESCIC.bin", "rb"))
+
+				--write CIC file
+				swim.write_flash( cic_file )
+
+				--close CIC file
+				assert(cic_file:close())
+
+				--write option bytes
+						    -- enable ROP, debug
+				swim.write_optn_bytes( true, true )
+
+				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
+				swim.stop_and_reset()
+			else
+				print("ERROR problem with STM8 CIC")
+			end
+
+--			--DUMPING:
+--			--create new file
+--			local file 
+--			file = assert(io.open("snesdump.bin", "wb"))
+--			--dump cart into file
+--		--	swim.start()
+--			dump.dump_snes( file, snes_mapping, true )
+--
+--			--close file
+--			assert(file:close())
 
 
 		--trick to do this at end while debugging so don't have to wait for it before starting
-			erase.erase_snes( false )
+	--		erase.erase_snes( false )
 
 			dict.io("IO_RESET")	
 

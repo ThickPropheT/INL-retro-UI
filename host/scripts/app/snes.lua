@@ -4,12 +4,37 @@ local snes = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
+local swim = require "scripts.app.swim"
 
 -- file constants
 local RESET_VECT_HI = 0xFFFD
 local RESET_VECT_LO = 0xFFFC
 
+-- global variables so other modules can use them
+snes_swimcart = nil
+
 -- local functions
+
+local function prgm_mode(debug)
+	if debug then print("going to program mode, swim:", snes_swimcart) end
+	if snes_swimcart then
+		print("ERROR cart got set to swim mode somehow!!!")
+--		swim.snes_v3_prgm(debug)
+	else
+		dict.pinport("CTL_SET_LO", "SNES_RST")
+	end
+end
+
+local function play_mode(debug)
+	if debug then print("going to play mode, swim:", snes_swimcart) end
+	if snes_swimcart then
+--		swim.snes_v3_play(debug)
+		print("ERROR cart got set to swim mode somehow!!!")
+	else
+		dict.pinport("CTL_SET_HI", "SNES_RST")
+	end
+end
+
 
 -- Desc:read reset vector from passed in bank
 -- Pre: snes_init() been called to setup i/o
@@ -18,7 +43,7 @@ local RESET_VECT_LO = 0xFFFC
 local function read_reset_vector( bank, debug )
 
 	--ensure cart is in play mode
-	dict.pinport("CTL_SET_HI", "SNES_RST")
+	play_mode()
 
 	--first set SNES bank A16-23
 	dict.snes("SNES_SET_BANK", bank)
@@ -49,14 +74,15 @@ local function read_flashID( debug )
 	dict.snes("SNES_SET_BANK", 0x00)
 
 	--put cart in program mode
-	dict.pinport("CTL_SET_LO", "SNES_RST")
+	--v3.0 boards don't use EXP0 for program mode, must use SWIM via CIC
+	prgm_mode()
 
 	dict.snes("SNES_ROM_WR", 0x0AAA, 0xAA)
 	dict.snes("SNES_ROM_WR", 0x0555, 0x55)
 	dict.snes("SNES_ROM_WR", 0x0AAA, 0x90)
 
 	--exit program mode
-	dict.pinport("CTL_SET_HI", "SNES_RST")
+	play_mode()
 
 	--read manf ID
 	local manf_id = dict.snes("SNES_ROM_RD", 0x0000)
@@ -71,14 +97,13 @@ local function read_flashID( debug )
 	if debug then print("attempted read SNES boot sect ID:", string.format("%X", boot_sect)) end
 
 	--put cart in program mode
-	dict.pinport("CTL_SET_LO", "SNES_RST")
+	prgm_mode()
 
 	--exit software
 	dict.snes("SNES_ROM_WR", 0x0000, 0xF0)
 
 	--exit program mode
-	dict.pinport("CTL_SET_HI", "SNES_RST")
-	
+	play_mode()
 
 	--return true if detected flash chip
 	if (manf_id == 0x01 and prod_id == 0x49) then
@@ -89,8 +114,6 @@ local function read_flashID( debug )
 
 end
 
--- global variables so other modules can use them
-
 
 -- call functions desired to run when script is called/imported
 
@@ -98,6 +121,8 @@ end
 -- functions other modules are able to call
 snes.read_reset_vector = read_reset_vector
 snes.read_flashID = read_flashID
+snes.prgm_mode = prgm_mode
+snes.play_mode = play_mode
 
 -- return the module's table
 return snes

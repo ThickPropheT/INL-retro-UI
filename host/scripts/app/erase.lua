@@ -4,6 +4,8 @@ local erase = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
+--local swim = require "scripts.app.swim"
+local snes = require "scripts.app.snes"
 
 -- file constants
 
@@ -61,14 +63,14 @@ local function erase_snes(debug)
 
 	print("erasing SNES takes about 30sec");
 
-	dict.io("IO_RESET")
+--	dict.io("IO_RESET")
 	dict.io("SNES_INIT")
 	
 	--WR $AAA:AA $555:55 $AAA:AA
 	dict.snes("SNES_SET_BANK", 0x00)
 
 	--put cart in program mode
-	dict.pinport("CTL_SET_LO", "SNES_RST")
+	snes.prgm_mode()
 
 	dict.snes("SNES_ROM_WR", 0x0AAA, 0xAA)
 	dict.snes("SNES_ROM_WR", 0x0555, 0x55)
@@ -78,7 +80,7 @@ local function erase_snes(debug)
 	dict.snes("SNES_ROM_WR", 0x0AAA, 0x10)
 
 	--exit program mode
-	dict.pinport("CTL_SET_HI", "SNES_RST")
+	snes.play_mode()
 
 	rv = dict.snes("SNES_ROM_RD", 0x0000)
 
@@ -92,13 +94,16 @@ local function erase_snes(debug)
 	print(i, " done erasing snes.\n");
 
 	--put cart in program mode
-	dict.pinport("CTL_SET_LO", "SNES_RST")
+--	swim.start()
+	snes.prgm_mode()
 
 	--reset flash
 	dict.snes("SNES_ROM_WR", 0x0000, 0xF0)
 
 	--return to PLAY mode
-	dict.pinport("CTL_SET_HI", "SNES_RST")
+	print("erase play")
+	snes.play_mode()
+	print("erase play")
 
 end
 

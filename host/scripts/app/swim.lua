@@ -27,6 +27,7 @@ ECODE.HERR = 0x09
 
 local cur_CSR = 0x00
 local SWIM_CSR = 0x7F80
+local DEF_MAX_NAK = 8
 
 -- local functions
 local function get_key_for_value( t, value )
@@ -38,12 +39,12 @@ local function get_key_for_value( t, value )
 	return nil
 end
 
-local function system_reset()
+local function system_reset( debug )
 
 	--TODO if cur_CSR has bit 2 set, SWIM must be reactivated 
 	
 	if dict.swim("SWIM_SRST") ~= ECODE.ACK then
-		print("ERROR unable to reset STM8 core")
+		if debug then print("ERROR unable to reset STM8 core") end
 	else
 --		print("reset stm8 core")
 	end
@@ -57,6 +58,7 @@ local function reset_swim()
 	--must rewrite current value of SWIM_CSR register as HIGHSPEED is cleared during SWIM RESET
       	dict.swim("WOTF", SWIM_CSR, cur_CSR)	
 end
+
 
 local function rotf(addr, hspeed, debug)
 
@@ -93,37 +95,58 @@ local function rotf(addr, hspeed, debug)
 	return result, data
 end
 
-local function wotf(addr, data, hspeed, debug)
+local function wotf(addr, data, hspeed, debug, maxnaks)
 
 	local result = ECODE.NAK
-	local tries = 8
+	local tries = DEF_MAX_NAK
 	local resets = 3
+
+	--allow calling function to increase max allowed NAKs
+	if maxnaks then
+		tries = maxnaks
+	end
 
 	local opcode = "WOTF"
 	if hspeed then
 		opcode = "WOTF_HS"
 	end
 
-	while result ~= "ACK" and tries > 0 do
+	while result ~= "ACK" and tries >= 0 do
 		result = dict.swim(opcode, addr, data)
 		result = get_key_for_value( ECODE, result)
 		if debug then print("wotf", string.format(" %X: %X, result ", addr, data), result) end
 		if result == "NORESP" then
 			reset_swim()
 		end
-		if tries == 0 then 
-			print("ERROR max tries exceeded") 
+		tries = tries - 1
+		if tries < 0 then 
+			print("ERROR max tries exceeded, resetting stm8") 
 			reset_swim()
 			resets = resets - 1
 			if resets > 0 then
 				tries = 5
+				print("    FAIL! max resets exceeded!!!!!") 
 			end
 		end
-		tries = tries - 1
 	end
 
 	--return the result of the final transfer
 	return result
+end
+
+local function stop_and_reset()
+
+	--switch to low speed if was in high
+      	dict.swim("SWIM_RESET")	
+
+	--set bit 2 so SWIM module is also reset on system reset
+	cur_CSR = 0xA4
+--	wotf(SWIM_CSR, cur_CSR)
+	--must rewrite current value of SWIM_CSR register as HIGHSPEED is cleared during SWIM RESET
+	wotf(SWIM_CSR, cur_CSR)
+
+	--print("resetting SWIM")
+      	dict.swim("SWIM_SRST")	
 end
 
 local function unlock_eeprom(hspeed)
@@ -195,53 +218,54 @@ local function swim_test()
 --	print("rotf :", string.format("%X  %X", dict.swim("ROTF_HS", 0x4000)))
 --
 --      --need to unlock the eeprom first!
-	unlock_eeprom(true)
---	--Write 0xAE then 56h in
---	--FLASH_DUKR (0x00 5064)(1)(2)
---      	print("wotf :", dict.swim("WOTF_HS", 0x5064, 0xAE))
---      	print("wotf :", dict.swim("WOTF_HS", 0x5064, 0x56))
+--	unlock_eeprom(true)
+----	--Write 0xAE then 56h in
+----	--FLASH_DUKR (0x00 5064)(1)(2)
+----      	print("wotf :", dict.swim("WOTF_HS", 0x5064, 0xAE))
+----      	print("wotf :", dict.swim("WOTF_HS", 0x5064, 0x56))
+----	--write data
+--	rotf(0x4000, true)
+--	wotf(0x4000, 0xDE, true)
+--	wotf(0x4001, 0xAD, true)
+--	wotf(0x4002, 0xBE, true)
+--	wotf(0x4003, 0xEF, true)
+----      	print("wotf :", dict.swim("WOTF_HS", 0x4000, 0x00))
+----
+----	--lock eeprom
+----	--Reset bit 3 (DUL)
+--	lock_flash_eeprom(true)
+----	--in FLASH_IAPSR (0x00 505F)
+----      	print("wotf :", dict.swim("WOTF_HS", 0x505F, 0x00))
+----
+----	print("rotf :", string.format("%X  %X", dict.swim("ROTF_HS", 0x4000)))
+--	rotf(0x4000, true)
+--	rotf(0x4001, true)
+--	rotf(0x4002, true)
+--	rotf(0x4003, true)
+--
+----read then write to flash
+----	print("rotf :", string.format("%X  %X", dict.swim("ROTF_HS", 0x8028)))
+--
+--	--need to unlock the flash first!
+--	unlock_flash(true)
 --	--write data
-	rotf(0x4000, true)
-	wotf(0x4000, 0xDE, true)
-	wotf(0x4001, 0xAD, true)
-	wotf(0x4002, 0xBE, true)
-	wotf(0x4003, 0xEF, true)
---      	print("wotf :", dict.swim("WOTF_HS", 0x4000, 0x00))
+--	print("WRITE DATA")
+--	local byte_addr = 0x8028
+--	local data = 0xFF
+--	while byte_addr < 0x8030 do
+--		wotf(byte_addr, data, true, true) 
+--	
+--		byte_addr = byte_addr + 1
+----		data = data + 0x11
 --
---	--lock eeprom
---	--Reset bit 3 (DUL)
-	lock_flash_eeprom(true)
---	--in FLASH_IAPSR (0x00 505F)
---      	print("wotf :", dict.swim("WOTF_HS", 0x505F, 0x00))
---
---	print("rotf :", string.format("%X  %X", dict.swim("ROTF_HS", 0x4000)))
-	rotf(0x4000, true)
-	rotf(0x4001, true)
-	rotf(0x4002, true)
-	rotf(0x4003, true)
+--	end
+--	--lock flash/eeprom
+--	lock_flash_eeprom(true)
+--	--read it back
 
---read then write to flash
---	print("rotf :", string.format("%X  %X", dict.swim("ROTF_HS", 0x8028)))
-
-	--need to unlock the flash first!
-	unlock_flash(true)
-	--write data
-	print("WRITE DATA")
-	local byte_addr = 0x8028
-	local data = 0xFF
-	while byte_addr < 0x8030 do
-		wotf(byte_addr, data, true, true) 
-	
-		byte_addr = byte_addr + 1
---		data = data + 0x11
-
-	end
-	--lock flash/eeprom
-	lock_flash_eeprom(true)
-	--read it back
 	print("READ BACK DATA")
-	local byte_addr = 0x8028
-	while byte_addr < 0x8030 do
+	local byte_addr = 0x0200
+	while byte_addr < 0x0280 do
 		rotf(byte_addr, true, true)
 	
 		byte_addr = byte_addr + 1
@@ -275,12 +299,12 @@ local function swim_test()
 
 	--indicate to logic analyzer that test sequence above is complete
 --	dict.pinport("CTL_SET_LO", "EXP0")
-	dict.io("IO_RESET")	
+--	dict.io("IO_RESET")	
 
 end
 
 
-local function start()
+local function start( debug )
 
 	dict.io("IO_RESET")	
 
@@ -297,7 +321,7 @@ local function start()
 	--bit 7: masks internal reset sources (like WDT..?)
 	cur_CSR = 0xA0
 	if wotf(SWIM_CSR, cur_CSR) == "ACK" then
-		print("Successfully established SWIM comms")
+		if debug then print("Successfully established SWIM comms") end
 	else
 		print("Unable to establish SWIM comms")
 		return false
@@ -315,7 +339,7 @@ local function start()
 	
 	--reset the STM8 core
 --	dict.swim("SWIM_SRST")
-	system_reset()
+	system_reset( true )
 
 	--the STM8 core is now stalled @ reset vector
 	--can read/write to any address on STM8 core
@@ -323,6 +347,8 @@ local function start()
 
 	--bit 2: SWIM is reset (exits active mode) when chip reset
 	--this forces successful SWIM entry on each execution of script
+	--TODO if this bit is enabled bunch of other code here needs updated to re-establish SWIM 
+	--via this routine when system is reset
 --	cur_CSR = cur_CSR | 0x04
 --	wotf(SWIM_CSR, cur_CSR)
 
@@ -341,8 +367,84 @@ local function printCSR()
 	print(cur_CSR)
 end
 
-local function write_optn_bytes(debug)
+local function disable_ROP_erase(debug)
 
+	local toprint = nil-- debug
+	local maxnak = 20
+
+	if debug then print("disabling ROP and erasing STM8 CIC") end
+	unlock_eeprom(true)
+
+	--FLASH_CR2 and FLASH_NCR2 must be enabled to permit option byte writing
+	--DEF_8BIT_REG_AT(FLASH_CR2,0x505b);  default 0x00
+	--DEF_8BIT_REG_AT(FLASH_NCR2,0x505c); default 0xFF
+	--BIT 7: OPT/NOPT
+	if debug then print("enabling optn byte writes") end
+	wotf(0x505B, 0x80, true, toprint, maxnak)
+	wotf(0x505C, 0x7F, true, toprint, maxnak)
+
+	--enable READ OUT PROTECTION
+	--0x4800 Read-out protection (ROP)
+	--0x00 by default, set to 0xAA to prevent reading out flash & eeprom
+	if debug then print("reading ROP byte") end
+	if debug then rotf(0x4800, true, debug) end
+	if debug then print("clearing ROP byte") end
+	wotf(0x4800, 0x00, true, toprint, maxnak)
+	--after clearing ROP, system must be reset
+	--getting error that option bytes aren't complimentary
+	--seems they get completely erased and we should now flash them
+	--to be complimentary
+	--go ahead and write proper "erased" complimentary data prior to system reset
+
+	--option bytes seem to take awhile to write, increase max 
+	if debug then print("writing compliment option bytes") end
+--ROP	wotf(0x4800, 0x00, true, toprint)
+	wotf(0x4801, 0x00, true, toprint, maxnak)
+	wotf(0x4802, 0xFF, true, toprint, maxnak)
+	wotf(0x4803, 0x00, true, toprint, maxnak)
+	wotf(0x4804, 0xFF, true, toprint, maxnak)
+	wotf(0x4805, 0x00, true, toprint, maxnak)
+	wotf(0x4806, 0xFF, true, toprint, maxnak)
+	wotf(0x4807, 0x00, true, toprint, maxnak)
+	wotf(0x4808, 0xFF, true, toprint, maxnak)
+	wotf(0x4809, 0x00, true, toprint, maxnak)
+	wotf(0x480A, 0xFF, true, toprint, maxnak)
+
+	--disable option byte writing
+	if debug then print("disabling option byte writting") end
+	wotf(0x505B, 0x00, true, toprint, maxnak)
+	wotf(0x505C, 0xFF, true, toprint, maxnak)
+
+	if debug then print("locking eeprom") end
+	lock_flash_eeprom(true)
+
+--	if debug then print("read back option bytes") 
+--	rotf(0x4800, true, true)
+--	rotf(0x4801, true, true)
+--	rotf(0x4802, true, true)
+--	rotf(0x4803, true, true)
+--	rotf(0x4804, true, true)
+--	rotf(0x4805, true, true)
+--	rotf(0x4806, true, true)
+--	rotf(0x4807, true, true)
+--	rotf(0x4808, true, true)
+--	rotf(0x4809, true, true)
+--	rotf(0x480A, true, true)
+--	end
+
+	--need to reset the chip to reload option bytes
+	--after clearing ROP, system must be reset
+	if debug then print("resetting STM8") end
+	system_reset( false )
+	--TODO swim may need re-established if SWIM_CSR RST bit is set
+--	start()
+
+	if debug then print("done erasing chip, ROP disabled") end
+end
+
+local function write_optn_bytes(rop, debug)
+
+	local maxnak = 20
 	local toprint = nil--debug
 	if debug then print("programming option bytes") end
 	unlock_eeprom(true)
@@ -351,8 +453,8 @@ local function write_optn_bytes(debug)
 	--DEF_8BIT_REG_AT(FLASH_CR2,0x505b);  default 0x00
 	--DEF_8BIT_REG_AT(FLASH_NCR2,0x505c); default 0xFF
 	--BIT 7: OPT/NOPT
-	wotf(0x505B, 0x80, true, toprint)
-	wotf(0x505C, 0x7F, true, toprint)
+	wotf(0x505B, 0x80, true, toprint, maxnak)
+	wotf(0x505C, 0x7F, true, toprint, maxnak)
 
 	--need to enable AFR0 for TIM1 timer input pins
 	--AFR0 Alternate function remapping option 0(2)
@@ -363,12 +465,24 @@ local function write_optn_bytes(debug)
 	--	 OPT2 AFR7 AFR6 AFR5 AFR4 AFR3 AFR2 AFR1 AFR0 0x00
 	--0x4804 NOPT2 NAFR7 NAFR6 NAFR5 NAFR4 NAFR3 NAFR2 NAFR1 NAFR0 0xFF
 	if debug then print("ENABLING AFR0 for TIM1") end
-	wotf(0x4803, 0x01, true, toprint)
-	wotf(0x4804, 0xFE, true, toprint)
+	wotf(0x4803, 0x01, true, toprint, maxnak)
+	wotf(0x4804, 0xFE, true, toprint, maxnak)
+	print("optn byte write enabled")
+
+	--enable READ OUT PROTECTION
+	--0x4800 Read-out protection (ROP)
+	--0x00 by default, set to 0xAA to prevent reading out flash & eeprom
+	if rop then
+		wotf(0x4800, 0xAA, true, toprint, maxnak)
+		print("Read out Protection enabled")
+	else
+		print("Read out Protection isn't enabled, CIC code can be stolen!")
+	end
 
 	--disable option byte writing
-	wotf(0x505B, 0x00, true, toprint)
-	wotf(0x505C, 0xFF, true, toprint)
+	wotf(0x505B, 0x00, true, toprint, maxnak)
+	wotf(0x505C, 0xFF, true, toprint, maxnak)
+	print("optn byte write disabled")
 
 	lock_flash_eeprom(true)
 	if debug then print("done with option byte programming") end
@@ -405,6 +519,33 @@ local function write_flash(file, debug)
 	lock_flash_eeprom(true)
 end
 
+local function snes_v3_prgm(debug)
+	--dict.pinport("CTL_IP_PU", "SNES_RST")
+	--reset_swim()
+--	print("curCSR", cur_CSR)
+	--start()
+--	print("curCSR", cur_CSR)
+	--SNES v3 boards route Flash /OE to STM8 pin 3 PD6
+
+	--(PD_ODR,0x500f);
+	--(PD_IDR,0x5010);
+	--(PD_DDR,0x5011);
+	--(PD_CR1,0x5012);
+	--(PD_CR2,0x5013);
+
+	wotf(0x5012, 0x40, true, debug)	--PD6 is input with pullup, if changed to output via DDR it will be push pull
+	wotf(0x5011, 0x40, true, debug)	--PD6 is push-pull output now 
+	wotf(0x500F, 0x40, true, debug)	--PD6 high, program mode
+end
+
+local function snes_v3_play(debug)
+	--dict.pinport("CTL_IP_PU", "SNES_RST")
+	--reset_swim()
+	--start()
+	wotf(0x5012, 0x40, true, debug)	--PD6 is input with pullup, if changed to output via DDR it will be push pull
+	wotf(0x5011, 0x40, true, debug)	--PD6 is push-pull output now 
+	wotf(0x500F, 0x00, true, debug)	--PD6 low, play mode
+end
 
 -- global variables so other modules can use them
 
@@ -416,9 +557,14 @@ end
 swim.start = start
 swim.write_flash = write_flash
 swim.write_optn_bytes = write_optn_bytes
+swim.disable_ROP_erase = disable_ROP_erase
 swim.printCSR = printCSR
 swim.wotf = wotf
 swim.rotf = rotf
+swim.swim_test = swim_test
+swim.snes_v3_prgm = snes_v3_prgm
+swim.snes_v3_play = snes_v3_play
+swim.stop_and_reset = stop_and_reset
 
 -- return the module's table
 return swim

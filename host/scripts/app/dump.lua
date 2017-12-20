@@ -5,6 +5,7 @@ local dump = {}
 -- import required modules
 local dict = require "scripts.app.dict"
 local buffers = require "scripts.app.buffers"
+local snes = require "scripts.app.snes"
 
 -- file constants
 
@@ -246,8 +247,11 @@ local function dump_snes( file, mapping, debug )
 	if debug then print("dumping cart") end
 
 	--start with reset and init
-	dict.io("IO_RESET")
+	--dict.io("IO_RESET")
 	dict.io("SNES_INIT")
+
+	--set cart in play mode
+	snes.play_mode()
 
 	--setup buffers and manager
 	dict.operation("SET_OPERATION", op_buffer["RESET"] )
@@ -319,10 +323,12 @@ local function dump_snes( file, mapping, debug )
 		file:write( dict.buffer_payload_in( buff_size ))
 	--	print("dumped page:", i)
 		
-		if ( (i % (1024*1024/buff_size/16)) == 0) then
+		--if ( (i % (1024*1024/buff_size/16)) == 0) then
+		if ( (i % (4*2024*1024/buff_size/16)) == 0) then
 			local tdelta = os.clock() - tlast
 			print("time delta:", tdelta, "seconds, speed:", (1024/16/tdelta), "KBps");
-			print("dumped part:", i/1024, "of 16 \n") 
+			--print("dumped part:", i/1024, "of 16 \n") 
+			print("dumped part:", i/(4*1024), "of 4 \n") 
 			tlast = os.clock();
 		end
 	end
@@ -354,7 +360,7 @@ local function dump_snes( file, mapping, debug )
 	--reset io at end
 	dict.operation("SET_OPERATION", op_buffer["RESET"] )
 	dict.buffer("RAW_BUFFER_RESET")
-	dict.io("IO_RESET")
+--	dict.io("IO_RESET")
 
 	return true
 end

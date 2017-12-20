@@ -106,6 +106,10 @@ speed_dir:
 	//;mov	speed, #4	//;4  = 1.25usec bit time delay variable
 	//;mov	speed, #22
 
+//;TODO should probably disable interrupts while transferring data via SWIM as it's timing sensitive
+//;	haven't touched this code in awhile and can't get myself to make this update right now..
+//;	may want something similar when entering swim activation
+
 	//; set pushpull and opendrain to values we can write to otyper register
 	//; to quickly change direction of the SWIM pin only
 	ldr	pushpull, [swim_base, #OTYPER]
