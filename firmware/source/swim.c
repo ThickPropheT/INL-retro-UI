@@ -10,13 +10,13 @@
 //=================================================================================================
 
 uint8_t swim_pin;
-uint16_t swim_mask;
+//uint16_t swim_mask;
 GPIO_TypeDef *swim_base;
 
 /* Desc:Function takes an opcode which was transmitted via USB
  * 	then decodes it to call designated function.
  * 	shared_dict_swim.h is used in both host and fw to ensure opcodes/names align
- * Pre: Macros must be defined in firmware pinport.h
+ * Pre: Macros must be defined in firmware pinport.h & swim.h
  * 	opcode must be defined in shared_dict_swim.h
  * Post:function call complete.
  * Rtn: SUCCESS if opcode found, error if opcode not present or other problem.
@@ -36,7 +36,7 @@ uint8_t swim_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 		case SWIM_SRST:			
 			rdata[RD_LEN] = BYTE_LEN;
 			//assumes low speed
-			rdata[RD0] = swim_xfr( 0x0000, ((SWIM_WR<<16) | 4), swim_base, swim_mask);	break;
+			rdata[RD0] = swim_xfr( 0x0000, ((SWIM_WR<<16) | 4), swim_base, 1<<swim_pin);	break;
 		case WOTF:		
 			rdata[RD_LEN] = BYTE_LEN;
 			rdata[RD0] = swim_wotf( SWIM_LS, operand, miscdata );	break;
@@ -64,6 +64,27 @@ uint8_t swim_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 
 }
 
+//Doesn't actually delay exact usec, but it's proportional which is good enough for SWIM activation
+void delay_us( uint16_t delay )
+{
+	uint16_t i = 0;
+
+	delay = delay *4;
+
+	//calling and pin toggling overhead is 0.1usec
+
+	for( i=0; i<delay; i++) { 
+		NOP(); 
+		NOP(); 		//with delay * 4, and 2x NOP, 10 -> 10.64us, 100 -> 100.62us, 1k -> 1.0001 ms including pin delay
+	//	NOP(); 
+	//	NOP(); 		//with delay * 4, adding this NOP, adds 84nsec per delay
+		//NOP(); 
+		//NOP(); 	//6x NOP, 48Mhz, delay = 10 -> 2.92usec + overhead
+
+			
+	}
+
+}
 
 void delay( uint16_t delay )
 {
@@ -85,43 +106,30 @@ void swim_activate()
 {
 	uint16_t i;
 	
-//	pinport_call( CTL_OP_, 0, swim_pin, 0);
-
-	//toggles in this manner take 4.55-4.6usec on AVR
-	//toggles in this manner take 4.9-4.95usec on STM adapter
+//TODO probably should disable interrupts during this process as they would muck up timing
 	
 	//pulse low for 16usec  spec says 16usec
 	//but looking at working programmers they do twice the delays below
-	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
-	delay(3*16);
-	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
+	SWIM_SET_LO();
+	delay_us(16);
+	SWIM_SET_HI();
 
 	//toggle high->low T=1msec 4x
 	for( i = 0; i < 4; i++) {
-	//STM adapter 720 = 500.9usec
-	//TODO move this timed code into a timer to make timing more stable
-	//between boards, pinport.c code, etc....
-#ifdef STM_INL6
-	delay(3*719);
-#endif
-#ifdef STM_ADAPTER
-	delay(3*720);
-#endif
-	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
-	delay(3*718);
-	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
+	delay_us(500);
+	SWIM_SET_LO();
+	delay_us(500);
+	SWIM_SET_HI();
 	}
 
 	//toggle high->low T=0.5msec 4x
 	for( i = 0; i < 4; i++) {
-	//STM adapter 358 = 256usec
-	delay(3*356);
-	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
-	delay(3*355);
-	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
+	delay_us(250);
+	SWIM_SET_LO();
+	delay_us(250);
+	SWIM_SET_HI();
 	}
 
-	//pinport_call( CTL_IP_PU_, 0, swim_pin, 0);
 
 
 	//wait for device to take swim_pin low for ~16usec
@@ -143,29 +151,28 @@ void swim_activate()
  */
 void swim_reset()
 {
-	//pinport_call( CTL_OP_, 0, swim_pin, 0);
 
 	//pulse low for 16usec  spec says 16usec
 	//but looking at working programmers they do very long resets 
-	pinport_call( CTL_SET_LO_, 0, swim_pin, 0);
-	delay(3*16);
-	pinport_call( CTL_SET_HI_, 0, swim_pin, 0);
+	SWIM_SET_LO();
+	delay_us(16);
+	SWIM_SET_HI();
 
 }
 
 
 
-#define mov_swim_mask_r0()	__asm 		("mov  r0, %[val]" : : [val] "r" (swim_mask) 	: "r0" )
-#define mov_pushpull_r6()	__asm 		("mov  r6, %[val]" : : [val] "r" (pushpull) 	: "r6" )
-#define mov_opendrain_r7()	__asm 		("mov  r7, %[val]" : : [val] "r" (opendrain) 	: "r7" )
-
-//BSRR 0x18
-#define str_r0_bset() 		__asm volatile 	("strh r0, [%[mmio], #0x18]" : : [mmio] "r" (swim_base))
-//BRR  0x28
-#define str_r0_bres() 		__asm volatile 	("strh r0, [%[mmio], #0x28]" : : [mmio] "r" (swim_base))
-//OTYPER 0x04
-#define pp_swim()		__asm volatile 	("strh r6, [%[mmio], #0x04]" : : [mmio] "r" (swim_base))
-#define od_swim()		__asm volatile 	("strh r7, [%[mmio], #0x04]" : : [mmio] "r" (swim_base))
+//#define mov_swim_mask_r0()	__asm 		("mov  r0, %[val]" : : [val] "r" (swim_mask) 	: "r0" )
+//#define mov_pushpull_r6()	__asm 		("mov  r6, %[val]" : : [val] "r" (pushpull) 	: "r6" )
+//#define mov_opendrain_r7()	__asm 		("mov  r7, %[val]" : : [val] "r" (opendrain) 	: "r7" )
+//
+////BSRR 0x18
+//#define str_r0_bset() 		__asm volatile 	("strh r0, [%[mmio], #0x18]" : : [mmio] "r" (swim_base))
+////BRR  0x28
+//#define str_r0_bres() 		__asm volatile 	("strh r0, [%[mmio], #0x28]" : : [mmio] "r" (swim_base))
+////OTYPER 0x04
+//#define pp_swim()		__asm volatile 	("strh r6, [%[mmio], #0x04]" : : [mmio] "r" (swim_base))
+//#define od_swim()		__asm volatile 	("strh r7, [%[mmio], #0x04]" : : [mmio] "r" (swim_base))
 
 #define NO_RESP	0xFF
 #define ACK	0x01
@@ -200,7 +207,6 @@ uint16_t append_pairity(uint8_t n)
 uint16_t swim_rotf(uint8_t speed, uint16_t addr)
 {
 	uint32_t ack_data = 0;
-#ifdef STM_CORE
 
 	uint16_t data_pb;
 	uint32_t spddir_len;
@@ -212,26 +218,26 @@ uint16_t swim_rotf(uint8_t speed, uint16_t addr)
 	// 0b0_0011
 	data_pb = 0x3000;
 	spddir_len = ((SWIM_WR|speed)<<16) | 4; //data + pairity ( '0' header not included)
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 	if (ack_data != ACK) goto end_swim; 
 
 	//write N "number of bytes for ROTF"
 	data_pb = 0x0180;
 	spddir_len = ((SWIM_WR|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 	if (ack_data != ACK) goto end_swim; 
 
 	//write @E extended address of write
 	//always 0x00 since targetting stm8s003 which only has one section
 	data_pb = 0x0000;
 	spddir_len = ((SWIM_WR|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 	if (ack_data != ACK) goto end_swim; 
 
 	//write @H high address of write
 	data_pb = append_pairity( addr>>8 );
 	spddir_len = ((SWIM_WR|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 	if (ack_data != ACK) goto end_swim; 
 
 	//write @L high address of write
@@ -239,7 +245,7 @@ uint16_t swim_rotf(uint8_t speed, uint16_t addr)
 	//this is a read xfr because device will output data immediately after 
 	//writting last byte of command info
 	spddir_len = ((SWIM_RD|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 
 	//read DATA portion of write
 
@@ -247,7 +253,6 @@ uint16_t swim_rotf(uint8_t speed, uint16_t addr)
 	//any time NAK is recieved must resend byte
 end_swim:
 
-#endif
 	return ack_data;
 
 
@@ -256,7 +261,6 @@ end_swim:
 uint8_t swim_wotf(uint8_t speed, uint16_t addr, uint8_t data)
 {
 	uint32_t ack_data = 0;
-#ifdef STM_CORE
 	uint16_t data_pb;
 	uint32_t spddir_len;
 	//bit sequence:
@@ -267,48 +271,57 @@ uint8_t swim_wotf(uint8_t speed, uint16_t addr, uint8_t data)
 	// 0b0_0101
 	data_pb = 0x5000;
 	spddir_len = ((SWIM_WR|speed)<<16) | 4; //data + pairity ( '0' header not included)
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 	if (ack_data != ACK) goto end_swim; 
 
 	//write N "number of bytes for ROTF"
 	data_pb = 0x0180;
 	spddir_len = ((SWIM_WR|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 	if (ack_data != ACK) goto end_swim; 
 
 	//write @E extended address of write
 	//always 0x00 since targetting stm8s003 which only has one section
 	data_pb = 0x0000;
 	spddir_len = ((SWIM_WR|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 	if (ack_data != ACK) goto end_swim; 
 
 	//write @H high address of write
 	data_pb = append_pairity( addr>>8 );
 	spddir_len = ((SWIM_WR|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 	if (ack_data != ACK) goto end_swim; 
 
 	//write @L high address of write
 	data_pb = append_pairity( addr );
 	//writting last byte of command info
 	spddir_len = ((SWIM_WR|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 
 	//DATA portion of write
 	data_pb = append_pairity( data );
 	spddir_len = ((SWIM_WR|speed)<<16) | 9;
-	ack_data = swim_xfr( data_pb, spddir_len, swim_base, swim_mask);
+	ack_data = swim_xfr( data_pb, spddir_len, swim_base, 1<<swim_pin);
 
 	//More bytes can be written 
 	//any time NAK is recieved must resend byte
 end_swim:
 
-#endif
 	return ack_data;
 
-
 }
+
+
+#ifdef AVR_CORE
+
+//TODO write assembly function that runs on AVR core....
+uint32_t swim_xfr( uint16_t data_pb, uint32_t spddir_len, GPIO_TypeDef *swim_base, uint16_t swim_mask)
+{
+	return 0;
+}
+
+#endif
 
 /* Desc:Transfer SWIM bit stream
  * 	Always outputs '0' as first bit for header "from host"

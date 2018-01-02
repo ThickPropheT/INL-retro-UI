@@ -3,6 +3,10 @@
 
 #include <avr/io.h>
 
+//AVR GPIO ports are 8bits wide
+//Use this type when need an int to hold pin mask
+#define	GPIO_PinMask	uint8_t
+
 #define     __IO    volatile             /*!< Defines 'read / write' permissions */
 
 /** 

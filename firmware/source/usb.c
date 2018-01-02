@@ -121,6 +121,10 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 			rv[RETURN_ERR_IDX] = swim_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
 
+		case DICT_JTAG:
+			rv[RETURN_ERR_IDX] = jtag_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
+			break;
+
 
 		case DICT_BUFFER:
 			//just give buffer.c the setup packet and let it figure things out for itself

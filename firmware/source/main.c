@@ -2,6 +2,7 @@
 #include "usb.h"
 #include "io.h"
 #include "buffer.h"
+#include "jtag.h"
 
 #ifdef AVR_CORE
 	#include <avr/interrupt.h>
@@ -86,6 +87,9 @@ int main(void)
 	//intialize i/o and LED to pullup state
 	io_reset();
 
+	//initialize jtag engine to be off
+	pbje_status = PBJE_OFF;
+
 	//=================
 	//MAIN LOOP
 	//=================
@@ -112,5 +116,12 @@ int main(void)
 		//another thought would be to call usbPoll mid programming
 		//a few times to prevent incoming data from being delayed too long
 		update_buffers();
+
+		//if paul's basic jtag engine "PBJE" is running, main
+		//thread needs to call engine at periodic intervals to keep it
+		//running.
+		if (pbje_status != PBJE_OFF) {
+			jtag_run_pbje();
+		}
 	}
 }

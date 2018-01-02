@@ -419,6 +419,59 @@ RETURN_DAT_IDX = 4
 
 end
 
+-- external call for jtag dictionary
+local function jtag( opcode, operand, misc, data )
+
+	if not op_jtag[opcode] then
+		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_jtag.h")
+		return nil
+	end
+
+	if not operand then 
+		operand = 0 
+	elseif type(operand) == "string" then
+		if not op_jtag[operand] then
+			print("ERROR undefined operand:", operand, "must be defined in shared_dict_jtag.h")
+			return nil
+		end
+		--decode string operands into 
+		operand = op_jtag[operand]
+	end
+	
+	if not misc then misc = 0 end
+
+	local wLength, ep = default_rlen_1_in(op_jtag[opcode.."rlen"])
+
+	local count
+	count, data = usb_vend_xfr( 
+	--	ep,	dictionary		wValue[misc:opcode]     wIndex	wLength	 		data
+		ep, dict["DICT_JTAG"], ( misc<<8 | op_jtag[opcode]),	operand,	wLength,	data)
+	--print(count)
+	local error_code, data_len
+	if ep == USB_IN then
+		error_code = data:byte(RETURN_ERR_IDX)
+		data_len =   data:byte(RETURN_LEN_IDX)
+	end
+	--print("error:", error_code, "data_len:",  data_len)
+	
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+
+	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
+		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
+	end
+
+	--process the return data string and return it to calling function
+	if data_len then
+		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+	else 
+		return nil
+	end 
+
+
+
+end
+
+
 
 local function buffer_payload_in( wLength, buff_num )
 
@@ -594,6 +647,7 @@ op_operation = {}
 op_nes = {}
 op_snes = {}
 op_swim = {}
+op_jtag = {}
 err_codes = {}
 
 -- Dictionary table definitions initialized by calling parser
@@ -606,6 +660,7 @@ create_dict_tables( op_operation,  "../shared/shared_dict_operation.h")
 create_dict_tables( op_nes,  	"../shared/shared_dict_nes.h")
 create_dict_tables( op_snes,  	"../shared/shared_dict_snes.h")
 create_dict_tables( op_swim,  	"../shared/shared_dict_swim.h")
+create_dict_tables( op_jtag,  	"../shared/shared_dict_jtag.h")
 create_dict_tables( err_codes, 	"../shared/shared_errors.h")
 
 -- functions other modules are able to call
@@ -614,6 +669,7 @@ dict.io = io
 dict.nes = nes
 dict.snes = snes
 dict.swim = swim
+dict.jtag = jtag
 dict.buffer = buffer
 dict.buffer_payload_in = buffer_payload_in
 dict.buffer_payload_out = buffer_payload_out

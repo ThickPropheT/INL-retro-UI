@@ -31,6 +31,8 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 		case SNES_INIT:	snes_init();			break;
 		case SWIM_INIT:	
 			return swim_init(operand);		break;
+		case JTAG_INIT:	
+			return jtag_init(operand);		break;
 
 		case EXP0_PULLUP_TEST:	
 			rdata[RD_LEN] = BYTE_LEN;
@@ -210,6 +212,20 @@ uint8_t swim_init( uint8_t swim_lane )
 {
 	switch (swim_lane) {
 		case SWIM_ON_A0:	//Most NES & Famicom carts
+			//Enable A0 pin on EXT PORT
+			EXT_A0_ENABLE();
+			//set A0 to open drain with pull-up enabled
+			A0_IP_PU();
+			#ifdef STM_CORE
+				A0_OD();	//set type to open drain
+				A0_HI();	//set output high (deasserted)
+				A0_OP();	//enable as output to have above take effect
+			#endif
+			swim_pin = A0;	
+			swim_base = A0bank;
+			//swim_mask = 1<<A0;
+			//set set as output high
+			//define the swim pin, base, & mask
 			break;
 		case SWIM_ON_EXP0:	//SNES carts	
 			//set to define used by shared_dict_pinport.h 
@@ -223,7 +239,7 @@ uint8_t swim_init( uint8_t swim_lane )
 			#endif
 			swim_pin = EXP0_;	
 			swim_base = EXP0bank;
-			swim_mask = 1<<EXP0;
+			//swim_mask = 1<<EXP0;
 			break;
 		case SWIM_ON_D0:	//NES/FC carts with CICOprocesor
 			break;
@@ -232,6 +248,47 @@ uint8_t swim_init( uint8_t swim_lane )
 	}
 	return SUCCESS;
 }
+
+//Initialization of JTAG communications
+//the JTAG pin depends on INL board design.
+//dict call must provide the "jtag_lane"
+//that jtag lane will be used for all subsequent communications.
+//if jtag lane is unknown or other problem return error, else return SUCCESS
+uint8_t jtag_init( uint8_t jtag_lane ) 
+{
+	switch (jtag_lane) {
+		case JTAG_ON_EXP0_3:	//Most NES carts
+
+
+#ifdef STM_INL6
+			//set base & masks
+			tdo_base = EXP0bank;
+			tdo_pin = EXP0;
+			tdi_base = D8bank;
+			tdi_pin = D8;
+			tms_base = D9bank;
+			tms_pin = D9;
+			tck_base = D10bank;
+			tck_pin = D10;
+#else
+#endif
+
+
+			//enable GPIO banks
+			//EXT_D8_10_ENABLE();	//EXP0 is also on this GPIO bank
+			EXP_ENABLE();
+			CTL_ENABLE();		//not really needed..
+
+
+			//initialize PBJE
+			jtag_init_pbje();
+			break;
+		default: 
+			return ERR_UNKN_JTAG_LANE;
+	}
+	return SUCCESS;
+}
+
 
 //Test starts by verifying EXP0 can be driven low, if not, will return one byte of AUX_PIN
 //followed by alternating 0xAA, 0x55, 0xAA...

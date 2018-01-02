@@ -27,7 +27,8 @@ ECODE.HERR = 0x09
 
 local cur_CSR = 0x00
 local SWIM_CSR = 0x7F80
-local DEF_MAX_NAK = 8
+--local DEF_MAX_NAK = 8
+local DEF_MAX_NAK = 12	--8 wasn't enough especially for long strings of 0x00 -> 0xff or vice versa
 
 -- local functions
 local function get_key_for_value( t, value )
@@ -184,8 +185,15 @@ local function swim_test()
 
       	--print("wotf :", dict.swim("WOTF_HS", 0x0000, 0x00))
 	--high speed now, enable flag with true
---	wotf(0x0000, 0x00, true) 
---	rotf(0x0000, true) 
+	rotf(0x0000, true, true) 
+	wotf(0x0000, 0x00, true, true) 
+	rotf(0x0000, true, true) 
+	wotf(0x0000, 0xFF, true, true) 
+	rotf(0x0000, true, true) 
+	wotf(0x0000, 0xA5, true, true) 
+	rotf(0x0000, true, true) 
+	wotf(0x0000, 0xC3, true, true) 
+	rotf(0x0000, true, true) 
 --	rotf(0x0000, true) 
 --	rotf(0x0000, true) 
 --	rotf(0x0000, true) 
@@ -263,13 +271,13 @@ local function swim_test()
 --	lock_flash_eeprom(true)
 --	--read it back
 
-	print("READ BACK DATA")
-	local byte_addr = 0x0200
-	while byte_addr < 0x0280 do
-		rotf(byte_addr, true, true)
-	
-		byte_addr = byte_addr + 1
-	end
+--	print("READ BACK DATA")
+--	local byte_addr = 0x0200
+--	while byte_addr < 0x0280 do
+--		rotf(byte_addr, true, true)
+--	
+--		byte_addr = byte_addr + 1
+--	end
 
 	--test by blinking LED via periph register access
 	--v2 board has LED on hi_lo_sel PA2
@@ -306,10 +314,10 @@ end
 
 local function start( debug )
 
-	dict.io("IO_RESET")	
+	--dict.io("IO_RESET")	
 
-	dict.io("SNES_INIT")	
-	dict.io("SWIM_INIT", "SWIM_ON_EXP0")	
+	--dict.io("SNES_INIT")	
+	--dict.io("SWIM_INIT", "SWIM_ON_EXP0")	
 	dict.swim("SWIM_ACTIVATE")	
 
 	--holds SWIM pin low for 16usec+ to reset SWIM comms incase of error

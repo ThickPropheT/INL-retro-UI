@@ -13,6 +13,7 @@ function main ()
 	local erase = require "scripts.app.erase"
 	local flash = require "scripts.app.flash"
 	local swim = require "scripts.app.swim"
+	local jtag = require "scripts.app.jtag"
 --	local crc32 = require "scripts.app.crc32"
 
 	local rv
@@ -40,7 +41,7 @@ function main ()
 --	rv = cart.detect(debug)
 
 	local force_cart = true
-	cart_console = "SNES"
+	cart_console = "NES"
 
 	if (force_cart or cart.detect_console(true)) then
 		if cart_console == "NES" or cart_console == "Famicom" then
@@ -67,36 +68,77 @@ function main ()
 			nes.read_flashID_prgrom_exp0(true)
 				--try mapper 30 flash ID
 
-			--determined all that could about mapper board
-			--set rom types and sizes
-			--perform desired operation
+
+			jtag.run_jtag()
 
 
-			--FLASHING:
-			--erase cart
-			erase.erase_nes( true )
-			--open file
-			local file 
-			file = assert(io.open("inltest.bin", "rb"))
-			--determine if auto-doubling, deinterleaving, etc, 
-			--needs done to make board compatible with rom
-			--flash cart
-			flash.flash_nes( file, true )
-			--close file
-			assert(file:close())
-
-			--DUMPING:
-			--create new file
-			local file 
-			file = assert(io.open("dump.bin", "wb"))
-			--dump cart into file
-			dump.dump_nes( file, true )
-
-			--close file
-			assert(file:close())
-
+--			--Check for SWIM on A0
+--			dict.io("IO_RESET")	
+--
+--			dict.io("SWIM_INIT", "SWIM_ON_A0")	
+--			if swim.start(true) then
+--				--SWIM is now established and running at HIGH SPEED
+--				snes_swimcart = false	--don't want to use SWIM pin to control flash /OE, use SNES RESET (EXP0) instead
+--
+--			--	swim.swim_test()
+--
+--				--swim.write_optn_bytes( true, true ) -- enable ROP, debug
+--
+--				--check if ROP set, allow clearing ROP and erasing CIC
+--				--blindly erase STM8 CIC for now by disabling ROP
+--				swim.disable_ROP_erase(true)
+--				
+--				--open CIC file
+--				--local cic_file = assert(io.open("stm8_8KB_zero.bin", "rb"))
+--				--local cic_file = assert(io.open("stm8_8KB_0xff.bin", "rb"))
+--				local cic_file = assert(io.open("stm8_8KB_testpattern.bin", "rb"))
+--
+--				--write CIC file
+--				swim.write_flash( cic_file )
+--
+--				--close CIC file
+--				assert(cic_file:close())
+--
+--				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
+--				swim.stop_and_reset()
+--			else
+--				print("ERROR problem with STM8 CIC")
+--			end
+--
+--			print("done flashing STM8 on A0")
 
 			dict.io("IO_RESET")	
+
+	--		--determined all that could about mapper board
+	--		--set rom types and sizes
+	--		--perform desired operation
+
+
+	--		--FLASHING:
+	--		--erase cart
+	--		erase.erase_nes( true )
+	--		--open file
+	--		local file 
+	--		file = assert(io.open("inltest.bin", "rb"))
+	--		--determine if auto-doubling, deinterleaving, etc, 
+	--		--needs done to make board compatible with rom
+	--		--flash cart
+	--		flash.flash_nes( file, true )
+	--		--close file
+	--		assert(file:close())
+
+	--		--DUMPING:
+	--		--create new file
+	--		local file 
+	--		file = assert(io.open("dump.bin", "wb"))
+	--		--dump cart into file
+	--		dump.dump_nes( file, true )
+
+	--		--close file
+	--		assert(file:close())
+
+
+	--		dict.io("IO_RESET")	
 
 		elseif cart_console == "SNES" then
 

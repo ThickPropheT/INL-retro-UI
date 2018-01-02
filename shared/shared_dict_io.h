@@ -48,6 +48,16 @@
 	#define	SWIM_ON_EXP0	0x02	//SNES carts
 	#define	SWIM_ON_D0	0x03	//NES discrete CICOprocessor
 
+
+//JTAG protocol init
+//4 wire serial protocol for configuring and communicating to programmable logic device cores
+//different INL boards have this signal on different pins or virtual CIC ports
+//So initialization must provide pins to perform all subsequent
+//communications with
+#define JTAG_INIT	4
+	//	don't define    0x00 to protect from forgetting to pass jtag lane
+	#define	JTAG_ON_EXP0_3	0x01	//Most NES carts with CPLDs
+
 //Test EXP0 drive with pull up 
 //This is an important test if reling on pulling up EXP0 pin to drive the cart's pin.
 //EXP0 is used for various things and may have pull up/down of it's own or significant load

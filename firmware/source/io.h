@@ -3,6 +3,7 @@
 
 #include "pinport.h"
 #include "swim.h"
+#include "jtag.h"
 #include "shared_dictionaries.h"
 #include "shared_errors.h"
 
@@ -12,6 +13,7 @@ void io_reset();
 void nes_init();
 void snes_init();
 uint8_t swim_init(uint8_t opcode);
+uint8_t jtag_init(uint8_t opcode);
 uint8_t exp0_pullup_test();
 
 #endif

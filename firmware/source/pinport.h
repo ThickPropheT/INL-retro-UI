@@ -12,7 +12,9 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 #define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
 
 
-//PIN MACROS
+////////////////////////////////
+// CONTROL (CTL) PORT PINS
+////////////////////////////////
 
 //     PC0  "MCO"
 #define	MCO_IP_PU()	CTL_IP_PU(MCObank, MCO)
@@ -166,4 +168,35 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 
 //     PC21 "FCAPU" 
 
+
+////////////////////////////////
+// EXTRA (EXT) PORT PINS
+////////////////////////////////
+
+//     PE0 "A0"
+#define	A0_IP_PU()	EXT_IP_PU(A0bank, A0)
+#define	A0_IP_FL()	EXT_IP_FL(A0bank, A0)
+#define	A0_OP()		EXT_OP(A0bank, A0)
+#define A0_LO()		EXT_SET_LO(A0bank, A0)
+#define A0_HI()		EXT_SET_HI(A0bank, A0)
+#define A0_RD(val)	EXT_RD(A0bank, A0, val)
+
+#ifdef STM_CORE
+	#define	A0_OD()	EXT_OD(A0bank, A0)
+	#define	A0_PP()	EXT_PP(A0bank, A0)
 #endif
+
+//     PE1 "D0"
+#define	D0_IP_PU()	EXT_IP_PU(D0bank, D0)
+#define	D0_IP_FL()	EXT_IP_FL(D0bank, D0)
+#define	D0_OP()		EXT_OP(D0bank, D0)
+#define D0_LO()		EXT_SET_LO(D0bank, D0)
+#define D0_HI()		EXT_SET_HI(D0bank, D0)
+#define D0_RD(val)	EXT_RD(D0bank, D0, val)
+
+#ifdef STM_CORE
+	#define	D0_OD()	EXT_OD(D0bank, D0)
+	#define	D0_PP()	EXT_PP(D0bank, D0)
+#endif
+
+#endif	//end of file

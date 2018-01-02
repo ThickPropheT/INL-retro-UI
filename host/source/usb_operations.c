@@ -114,6 +114,8 @@ libusb_device_handle * open_usb_device( libusb_context *context, int log_level )
 				if ( libusb_get_string_descriptor_ascii( handle, 
 					desc.iManufacturer, (unsigned char *)manf, sizeof(manf) ) > LIBUSB_SUCCESS) {
 					if (log_level>0) printf("manf_ascii: %s\n",manf);
+				} else {
+					printf("\nMatching PID/VID found and opened, but unable to communicate to device, verify drivers installed!!!\n\n");
 				}
 			}
 			if (desc.iProduct) {

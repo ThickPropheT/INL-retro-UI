@@ -11,6 +11,9 @@
 	#include <avr/wdt.h>
 #elif STM_CORE
 	#include <stm32f0xx.h>
+	//STM32 GPIO ports are effectively 16bits wide
+	//Use this type when need an int to hold pin mask
+	#define	GPIO_PinMask	uint16_t
 #endif
 
 //This file contains pinout translations from AVR names to "kazzo" names
@@ -1126,5 +1129,156 @@ void software_AXL_CLK();
 
 #endif	//AVR_KAZZO or STM_ADAPTER
 
+//	---------------------------------------------------------------------------------------
+//	EXTRA (EXT) PORT
+//	
+//	This port is present on all devices, but all pins aren't necessarily available
+//	Intention is for pins on this port to act similar to CONTROL PORT, but require
+//	individual enabling as these pins may conflict with other ports.  This is a port
+//	that allows rules of other ports to be broken.  For example a single address pin 
+//	can become bidirectional open drain; which doesn't fit the ADDRESS PORT definition.
+//	Another use for this would be to establish a SPI port on a few DATA BUS pins.
+//	Other things that make sense here are serial protocols which need conveinent pin
+//	macros, but don't make any sense to have individual bit control from host PC.
+//	The low level protocol is handled from the firmware side since you would never want
+//	to bit bang these from the host.
+//
+//	Restrictions: Great care must be used when utilizing this port, doing so will often
+//		break other ports which the pins are shared with.  Best to disable this port
+//		when done with it to then allow the other port to be enabled and initialized.
+//		Each pin (set) needs it's own enable, the EXT PORT doesn't get enabled with one 
+//		macro since typically only one pin (set) is of interest.
+//	Directionality: Any allowed, defined separately for each pin
+//	Driver: Any allowed, defined separately for each pin
+//	Write/Output: Depends on pins, any allowed
+//	Read/Input: Depends on pins, any allowed
+//
+//
+//	---------------------------------------------------------------------------------------
 
-#endif
+#ifdef STM_INL6
+
+	//     PE0  "A0"	mcupinC0
+	#define E0bank 		GPIOC 
+	#define E0		(0U)
+
+	//     PE1  "D0"	mcupinB2
+	#define E1bank 		GPIOB 
+	#define E1		(2U)
+
+	//     PE2  "D8"	mcupinB10
+	#define E2bank 		GPIOB 
+	#define E2		(10U)
+
+	//     PE3  "D9"	mcupinB11
+	#define E3bank 		GPIOB 
+	#define E3		(11U)
+
+	//     PE4  "D10"	mcupinB12
+	#define E4bank 		GPIOB 
+	#define E4		(12U)
+
+
+#endif //STM_INL6
+
+
+#ifdef STM_ADAPTER
+
+	//     PE0  "A0"	mcupinB2
+	#define E0bank 		GPIOB 
+	#define E0		(2U)
+
+	//     PE1  "D0"	mcupinB8
+	#define E1bank 		GPIOB 
+	#define E1		(8U)
+
+	#define E2nodef
+	#define E3nodef
+	#define E4nodef
+
+#endif	//STM_ADAPTER
+
+
+#ifdef AVR_KAZZO
+
+	//     PE0  "A0"	mcupinA0
+	#define E0bank 		GPIOA 
+	#define E0		(0U)
+
+	//     PE1  "D0"	mcupinB0
+	#define E1bank 		GPIOB 
+	#define E1		(0U)
+
+	#define E2nodef
+	#define E3nodef
+	#define E4nodef
+
+#endif //AVR_KAZZO
+
+
+////////////////////////////////////////////////////////////////////////////////
+//	PORT E pin mappings
+////////////////////////////////////////////////////////////////////////////////
+
+//STM8 SWIM PINS A0 & D0 depending on cartridge
+#define A0 		E0
+#define A0bank		E0bank
+
+#define D0 		E1
+#define D0bank		E1bank
+
+//JTAG pins for INL6
+#ifdef STM_INL6
+	
+//TDI
+#define D8 		E2
+#define D8bank		E2bank
+
+//TMS
+#define D9 		E3
+#define D9bank		E3bank
+
+//TCK
+#define D10 		E4
+#define D10bank		E4bank
+
+#endif	//JTAG INL6
+
+#ifdef STM_CORE
+
+#define EXT_IP_PU(bank, pin)		bank->MODER &= ~(MODER_OP<<(pin*2)); bank->PUPDR |=  (PUPDR_PU<<(pin*2))
+#define EXT_IP_FL(bank, pin)		bank->MODER &= ~(MODER_OP<<(pin*2)); bank->PUPDR &= ~(PUPDR_PU<<(pin*2))
+#define EXT_OP(bank, pin)		bank->MODER |=  (MODER_OP<<(pin*2))
+#define EXT_OD(bank, pin)		bank->OTYPER |=  (OTYPER_OD<<(pin))	//open drain has no effect when pin is input
+#define EXT_PP(bank, pin)		bank->OTYPER &= ~(OTYPER_OD<<(pin))
+#define EXT_SET_LO(bank, pin)		bank->BRR = 1<<pin 
+#define EXT_SET_HI(bank, pin)		bank->BSRR = 1<<pin
+#define EXT_RD(bank, pin, val)		val = (bank->IDR & (1<<pin))
+	//NOTE: STM registers are 16bit "halfwords" so must provide a 16bit val
+	
+//each pin needs it's own enable macro
+#define EXT_A0_ENABLE()		ADDR_EN_CLK()	//unnecessarily enables both GPIO banks for STM adapter, oh well
+#define EXT_D0_ENABLE()		DATA_EN_CLK()
+#define EXT_D8_10_ENABLE()	DATA_EN_CLK()	
+
+#endif //STM_CORE
+
+#ifdef AVR_CORE
+
+#define EXT_IP_PU(bank, pin)		bank->DDR &= ~(1<<pin); bank->PORT |=  (1<<pin)
+#define EXT_IP_FL(bank, pin)		bank->DDR &= ~(1<<pin); bank->PORT &= ~(1<<pin)
+#define EXT_OP(bank, pin)		bank->DDR |=  (1<<pin)	
+#define EXT_SET_LO(bank, pin)		bank->PORT &= ~(1<<pin)
+#define EXT_SET_HI(bank, pin)		bank->PORT |=  (1<<pin)
+#define EXT_RD(bank, pin, val)		val = (uint16_t) (bank->PIN & (1<<pin))
+
+//each pin needs it's own enable macro
+#define EXT_A0_ENABLE()			//nothing to be done for AVR	
+#define EXT_D0_ENABLE()			//nothing to be done for AVR	
+
+
+#endif	//AVR_CORE
+
+
+
+#endif	//file end
