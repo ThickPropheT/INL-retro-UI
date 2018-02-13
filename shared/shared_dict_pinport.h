@@ -103,7 +103,7 @@
 //	PC15 "AUDR"	cart audio
 	#define	C15_		15
 	#define	AUDR_		15
-//	PC16 "CIN"	CIC data in
+//	PC16 "CIN"	CIC data in  & GB power selector
 	#define	C16_		16
 	#define	CIN_		16
 //	PC17 "SWD" 	mcu debug

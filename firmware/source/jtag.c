@@ -170,33 +170,57 @@ void jtag_run_pbje()
 				pbje_status = PBJE_DONE;
 				break;
 
-			case PBJE_TDI_SCAN:   //ignore TDO    256max
+			case PBJE_TDI_SCAN:   //ignore TDO, end scan with exit   256max
 				pbje_status = PBJE_PROC;
-				pbje_scan( DATA0, 0 );
+				pbje_scan( DATA0, 0, 1 );
 				pbje_status = PBJE_DONE;
 				break;
 
-			case PBJE_TDO_SCAN0:  //TDI = 0, TMS=0      256max
+			case PBJE_TDI_SCAN_HOLD:   //ignore TDO, don't exit    256max
 				pbje_status = PBJE_PROC;
-				pbje_scan( FORCE0, DATA0 );
+				pbje_scan( DATA0, 0, 0 );
 				pbje_status = PBJE_DONE;
 				break;
 
-			case PBJE_TDO_SCAN1:  //TDI = 1, TMS=0      256max
+			case PBJE_TDO_SCAN0:  //TDI = 0, TMS=0 (last TMS=1)      256max
 				pbje_status = PBJE_PROC;
-				pbje_scan( FORCE1, DATA0 );
+				pbje_scan( FORCE0, DATA0, 1 );
+				pbje_status = PBJE_DONE;
+				break;
+
+			case PBJE_TDO_SCAN1:  //TDI = 1, TMS=0 (last TMS=1)      256max
+				pbje_status = PBJE_PROC;
+				pbje_scan( FORCE1, DATA0, 1 );
+				pbje_status = PBJE_DONE;
+				break;
+
+			case PBJE_TDO_SCAN0_HOLD:  //TDI = 0, TMS=0      256max
+				pbje_status = PBJE_PROC;
+				pbje_scan( FORCE0, DATA0, 0 );
+				pbje_status = PBJE_DONE;
+				break;
+
+			case PBJE_TDO_SCAN1_HOLD:  //TDI = 1, TMS=0      256max
+				pbje_status = PBJE_PROC;
+				pbje_scan( FORCE1, DATA0, 0 );
 				pbje_status = PBJE_DONE;
 				break;
 
 			//case PBJE_HALF_SCAN:  //TDI = first half of data array, TDO = second, TMS=0  128max
 			//	pbje_status = PBJE_PROC;
-			//	pbje_scan( DATA0, DATA1 );
+			//	pbje_scan( DATA0, DATA1, 1 );
 			//	pbje_status = PBJE_DONE;
 			//	break;
 
 			case PBJE_FULL_SCAN:  //TDI = entire data array, TDO dumped into array stomping TDI, TMS=0   256max
 				pbje_status = PBJE_PROC;
-				pbje_scan( DATA0, DATA0 );
+				pbje_scan( DATA0, DATA0, 1 );
+				pbje_status = PBJE_DONE;
+				break;
+
+			case PBJE_FULL_SCAN_HOLD:  //TDI = entire data array, TDO dumped into array stomping TDI, TMS=0   256max
+				pbje_status = PBJE_PROC;
+				pbje_scan( DATA0, DATA0, 0 );
 				pbje_status = PBJE_DONE;
 				break;
 
@@ -332,8 +356,9 @@ void pbje_state_change( uint8_t tms_data )
 //tdi/tdo data in data array, ingored, or forced 0/1
 //numclk contains number of tck clocks to perform
 //PRE/POST: TCK is low, all signals low (limit 5v non-tolerance with original kazzos)
-void pbje_scan( uint8_t tdi_data, uint8_t tdo_data )
+void pbje_scan( uint8_t tdi_data, uint8_t tdo_data, uint8_t exit )
 {
+
 	//numclk is a sticky value, don't modify!
 	uint8_t	clk_count = pbje_numclk;
 	uint8_t	cur_byte = 0;
@@ -414,7 +439,22 @@ void pbje_scan( uint8_t tdi_data, uint8_t tdo_data )
 			}
 		}
 
+		clk_count--;
+
 		//clock in TMS & TDI value with rising edge of TCK
+		//on the last shift, if exiting, exit SHIFT-DR/IR so TMS must go high
+		//This will put statemachine in EXIT1-IR/DR state at the same time the last bit is shifted in
+		if( exit && (clk_count == 0)) {
+#ifdef STM_INL6
+			TMS_HI();
+#else
+			exp_byte |= TMS_MASK;
+			EXP_SET(exp_byte);
+#endif
+		}
+
+
+		//clock TCK latching both TMS & TDI
 #ifdef STM_INL6
 		TCK_HI();
 #else
@@ -423,8 +463,6 @@ void pbje_scan( uint8_t tdi_data, uint8_t tdo_data )
 		EXP_SET(exp_byte_temp);
 #endif
 
-		//may need to slow between edges.. depending on max TCK frequency...
-		clk_count--;
 
 		//end cycle TDO shifted out on falling edge of TCK
 #ifdef STM_INL6

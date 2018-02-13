@@ -36,6 +36,7 @@ STARTUP=$(BASE)/include_stm/startup_ARM$(CORE).S
 
 # -Os -flto -ffunction-sections -fdata-sections to compile for code size
 CFLAGS=$(ARCH_FLAGS) $(STARTUP_DEFS) -Os -flto -ffunction-sections -fdata-sections -g
+#CFLAGS=$(ARCH_FLAGS) $(STARTUP_DEFS) -flto -ffunction-sections -fdata-sections -g
 CXXFLAGS=$(CFLAGS)
 
 # Link for code size

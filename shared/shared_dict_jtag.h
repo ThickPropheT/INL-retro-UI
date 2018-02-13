@@ -26,24 +26,42 @@
 					//should only be used for quick commands like state change, not for long scan in/outs
 					
 #define		GET_STATUS	4	//RL=3	only the engine can write to status, ready only by host
+
 #define		SET_NUMCLK	5	//numclk is only writable by host, read only by engine
+					//set to zero if would like 256 clocks to be performed
+					//range is 1-255, 0 equates to 256 clocks
+
 #define		SET_2B_DATA	7
 #define		GET_6B_DATA	8	//RL=8
 
 
 //PBJE Paul's Basic Jtag engine commands & status'
 #define		PBJE_STATE_CHG	0x01	//data array holds TMS values to clock values bit packed, TDI undefined
+
+
+//DATA SCAN commands, these end with settting TMS to 1 to exit SHIFT-IR/DR completing the SCAN.
+//If need to make multiple smaller scans to make up one big scan, this would be the last scan, "HOLD" scans 
+//lower down would be the first to second to last scans
 #define		PBJE_TDI_SCAN	0x02	//ignore TDO	256max
 #define		PBJE_TDO_SCAN0	0x03	//TDI = 0, TMS=0	256max
 #define		PBJE_TDO_SCAN1	0x04	//TDI = 1, TMS=0	256max
-#define		PBJE_HALF_SCAN	0x05	//TDI = first half of data array, TDO = second, TMS=0	128max
+//#define		PBJE_HALF_SCAN	0x05	//TDI = first half of data array, TDO = second, TMS=0	128max
 #define		PBJE_FULL_SCAN	0x06	//TDI = entire data array, TDO dumped into array stomping TDI, TMS=0	256max
+
+//Clocking commands, mostly used for RUNTEST type instructions when waiting for device to complete operation
 #define		PBJE_CLOCK0	0x07	//data not used, clock TMS=0 for NUMCLK	
 #define		PBJE_CLOCK1	0x08	//data not used, clock TMS=1 for NUMCLK
 #define		PBJE_FREE_CLOCK0	0x09	//data not used, clock TMS=0 indefinely
 #define		PBJE_FREE_CLOCK1	0x0A	//data not used, clock TMS=1 indefinely
 #define		PBJE_LONG_CLOCK0	0x0B	//data contains 32bit uint for number of clocks, TMS=0, numclk not used
 #define		PBJE_LONG_CLOCK1	0x0C	//data contains 32bit uint for number of clocks, TMS=1, numclk not used
+
+//These scans leave JTAG SM in SHIFT state so more bits can be shifted in later on
+//this is because the last bit is shifted in when exiting SHIFT-IR/DR
+#define		PBJE_TDI_SCAN_HOLD	0x0D	//ignore TDO	256max
+#define		PBJE_TDO_SCAN0_HOLD	0x0E	//TDI = 0, TMS=0	256max
+#define		PBJE_TDO_SCAN1_HOLD	0x0F	//TDI = 1, TMS=0	256max
+#define		PBJE_FULL_SCAN_HOLD	0x10	//TDI = entire data array, TDO dumped into array stomping TDI, TMS=0	256max
 
 
 //Statuses & commands to get to the status

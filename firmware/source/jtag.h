@@ -81,6 +81,6 @@ void jtag_run_pbje();
 #define	DATA0	0x20	//0x2x -> data array
 //#define	DATA1	0x21
 void pbje_state_change( uint8_t tms_data ); 
-void pbje_scan( uint8_t tdi_data, uint8_t tdo_data );
+void pbje_scan( uint8_t tdi_data, uint8_t tdo_data, uint8_t exit );
 
 #endif
