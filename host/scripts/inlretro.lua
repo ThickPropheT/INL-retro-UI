@@ -19,16 +19,12 @@ function main ()
 	local jtag = require "scripts.app.jtag"
 --	local crc32 = require "scripts.app.crc32"
 
+
+	--cart/mapper specific scripts
+	local curcart = require "scripts.nes.nrom"
+	--local curcart = require "scripts.nes.bnrom"
+
 	local rv
---	rv = dict.pinport( "CTL_ENABLE" )
---	rv = dict.pinport( "CTL_IP_PU", "LED" )
---	rv = dict.pinport( "CTL_RD", "LED" )
---	rv = dict.pinport( "CTL_OP", "LED" )
---	rv = dict.pinport( "CTL_SET_HI", "LED" )
---	rv = dict.pinport( "CTL_RD", "LED" )
---	rv = dict.pinport( "DATA_ENABLE" )
---	rv = dict.pinport( "DATA_RD" )
---	rv = dict.pinport( "DATA_OP" )
 --	rv = dict.pinport( "DATA_SET", 0xAA )
 --	rv = dict.pinport( "DATA_RD" )
 --	rv = dict.io("IO_RESET")
@@ -43,6 +39,14 @@ function main ()
 --	debug = true
 --	rv = cart.detect(debug)
 
+--DETECT WHICH CART IS INSERTED, 
+--or take user input for manual override 
+--VERIFY BASIC CART FUNCTIONALITY
+--DON'T PUT THE CART IN ANY WEIRD STATE LIKE SWIM ACTIVATION OR ANYTHING
+--	IF SOMETHING LIKE THIS IS DONE, IT MUST BE UNDONE PRIOR TO MOVING ON
+
+--PROCESS USER ARGS ON WHAT IS TO BE DONE WITH CART
+
 	local force_cart = true
 	cart_console = "NES"
 
@@ -51,7 +55,7 @@ function main ()
 			dict.io("IO_RESET")	
 			dict.io("NES_INIT")	
 			
-		--[[
+		---[[
 			--NES detect mirroring to gain mapper info
 			nes.detect_mapper_mirroring(true)
 			--NES detect memories to gain more mapper/board info	
@@ -71,10 +75,11 @@ function main ()
 			dict.nes("NES_CPU_WR", 0x8000, 0x00)
 			nes.read_flashID_prgrom_exp0(true)
 				--try mapper 30 flash ID
+			print("\n")
 		--]]
 
 
-			jtag.run_jtag()
+		--	jtag.run_jtag()
 
 
 			--Check for SWIM on A0
@@ -125,6 +130,8 @@ function main ()
 			--determined all that could about mapper board
 			--set rom types and sizes
 			--perform desired operation
+			--CART and programmer should be in a RESET condition upon calling the specific script
+			curcart.process( true, true, true, true, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
 
 
 		--[[
@@ -133,7 +140,9 @@ function main ()
 			erase.erase_nes( true )
 			--open file
 			local file 
-			file = assert(io.open("inltest.bin", "rb"))
+			--file = assert(io.open("inltest.bin", "rb"))
+			--file = assert(io.open("ignore/ddug2.bin", "rb"))
+			file = assert(io.open("ignore/lizard_v1.bin", "rb"))
 			--determine if auto-doubling, deinterleaving, etc, 
 			--needs done to make board compatible with rom
 			--flash cart

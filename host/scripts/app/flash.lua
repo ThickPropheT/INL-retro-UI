@@ -10,6 +10,90 @@ local snes = require "scripts.app.snes"
 -- file constants
 
 -- local functions
+local function write_file( file, sizeKB, map, mem, debug )
+
+	local buff0 = 0
+	local buff1 = 1
+	local cur_buff_status = 0
+	local data = nil --lua stores data in strings
+
+	if debug then print("flashing cart") end
+
+	--start operation at reset	
+	dict.operation("SET_OPERATION", op_buffer["RESET"] )
+
+	--setup buffers and manager
+	--reset buffers first
+	dict.buffer("RAW_BUFFER_RESET")
+	--need to allocate some buffers for flashing
+	--2x 256Byte buffers
+	local num_buffers = 2
+	local buff_size = 256	
+	print("allocating buffers")
+	assert(buffers.allocate( num_buffers, buff_size ), "fail to allocate buffers")
+
+	--set mem_type and part_num to designate how to get/write data
+	print("setting map n part")
+	dict.buffer("SET_MEM_N_PART", (op_buffer[mem]<<8 | op_buffer["MASKROM"]), buff0 )
+	dict.buffer("SET_MEM_N_PART", (op_buffer[mem]<<8 | op_buffer["MASKROM"]), buff1 )
+	--set multiple and add_mult only when flashing
+	--TODO
+	
+	--set mapper, map_var, and function to designate read/write algo
+	--just dump visible NROM memory to start
+	print("setting map n mapvar")
+	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer[map]<<8 | op_buffer["NOVAR"]), buff0 )
+	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer[map]<<8 | op_buffer["NOVAR"]), buff1 )
+
+	print("\n\nsetting operation STARTFLASH");
+	--inform buffer manager to start flashing operation now that buffers are initialized
+	dict.operation("SET_OPERATION", op_buffer["STARTFLASH"] )
+
+	local tstart = os.clock();
+	local tlast = tstart
+
+	local i = 1
+	local nak = 0
+	for bytes in file:lines(buff_size) do
+		dict.buffer_payload_out( buff_size, bytes )
+
+		cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
+		while (cur_buff_status ~= op_buffer["EMPTY"]) do
+			nak = nak +1
+			--print(nak, "cur_buff->status: ", cur_buff_status)
+			cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
+		end
+		--if ( i == 2048*1024/buff_size) then break end 
+		--if ( i == 32*1024/buff_size) then break end 
+		if ( i == sizeKB*1024/buff_size) then break end 
+		i = i + 1
+	--	if ( (i % (4*2048*1024/buff_size/16)) == 0) then
+	--		local tdelta = os.clock() - tlast
+	--		print("time delta:", tdelta, "seconds, speed:", (4*2048/16/tdelta), "KBps");
+	--		print("flashed part:", i/(4*512), "of 4 \n")
+	--		tlast = os.clock();
+	--	end
+	end
+	print("FLASHING DONE")
+	print("number of naks", nak)
+	tstop = os.clock()
+	timediff = ( tstop-tstart)
+	print("total time:", timediff, "seconds, average speed:", (sizeKB/timediff), "KBps")
+
+	-- wait till all buffers are done
+	--while flashing buffer manager updates from USB_FULL -> FLASHING -> FLASHED
+	--then next time a USB_FULL buffer comes it it updates the last buffer (above) to EMPTY
+	--the next payload opcode updates from EMPTY -> USB_LOADING
+	--so when complete, buff0 should be EMPTY, and buff1 should be FLASHED
+	--just pass the possible status to exit wait, and buffer numbers we're waiting on
+	buffers.status_wait({buff0, buff1}, {"EMPTY","FLASHED"}) 
+
+	dict.operation("SET_OPERATION", op_buffer["RESET"] )
+
+	dict.buffer("RAW_BUFFER_RESET")
+end
+
+--[[
 local function flash_nes( file, debug )
 --{
 --	//make some checks to ensure rom is compatible with cart
@@ -364,6 +448,7 @@ local function flash_nes( file, debug )
 	dict.io("IO_RESET")
 
 end
+--]]
 
 
 local function flash_snes( file, debug )
@@ -502,6 +587,7 @@ end
 -- functions other modules are able to call
 flash.flash_nes = flash_nes
 flash.flash_snes = flash_snes
+flash.write_file = write_file
 
 -- return the module's table
 return flash

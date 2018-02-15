@@ -399,6 +399,8 @@ uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 
 	//set lower address bits
 	ADDRL(first);		//doing this prior to entry and right after latching
+	//extra NOP was needed on stm6 as address hadn't settled in time for the very first read
+	NOP();	
 				//gives longest delay between address out and latching data
 	for( i=0; i<=len; i++ ) {
 		//testing shows that having this if statement doesn't affect overall dumping speed
@@ -453,6 +455,7 @@ uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 
 	//set lower address bits
 	ADDRL(first);		//doing this prior to entry and right after latching
+	NOP();	//adding extra NOP as it was needed on PRG
 				//gives longest delay between address out and latching data
 
 	for( i=0; i<=len; i++ ) {
