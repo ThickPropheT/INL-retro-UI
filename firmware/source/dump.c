@@ -9,6 +9,7 @@
 uint8_t dump_buff( buffer *buff ) {
 
 	uint8_t addrH = buff->page_num;	//A15:8  while accessing page
+	uint8_t	bank;
 //warn	uint8_t addrX;	//A23:16 while accessing page
 
 	//TODO use mapper to set mapper controlled address bits
@@ -18,6 +19,13 @@ uint8_t dump_buff( buffer *buff ) {
 	switch ( buff->mem_type ) {
 		case PRGROM:
 			addrH |= 0x80;	//$8000
+			if (buff->mapper == BxROM) {
+				bank = (buff->page_num)>>7;
+				//write bank value to bank table
+				//page_num shift by 6 bits A15 >> A8(0)
+				//Lizard bank table @ FF94
+				nes_cpu_wr( (0xFF94+bank), bank );
+			}
 			buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id, 
 								//id contains MSb of page when <256B buffer
 								buff->last_idx, ~FALSE );

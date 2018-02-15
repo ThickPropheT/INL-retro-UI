@@ -21,8 +21,8 @@ function main ()
 
 
 	--cart/mapper specific scripts
-	local curcart = require "scripts.nes.nrom"
-	--local curcart = require "scripts.nes.bnrom"
+	--local curcart = require "scripts.nes.nrom"
+	local curcart = require "scripts.nes.bnrom"
 
 	local rv
 --	rv = dict.pinport( "DATA_SET", 0xAA )
@@ -131,7 +131,9 @@ function main ()
 			--set rom types and sizes
 			--perform desired operation
 			--CART and programmer should be in a RESET condition upon calling the specific script
-			curcart.process( true, true, true, true, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
+			--curcart.process( true, true, true, true, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
+			curcart.process( false, true, true, true, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, false, false, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
 
 
 		--[[

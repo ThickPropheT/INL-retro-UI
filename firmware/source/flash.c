@@ -39,10 +39,18 @@ uint8_t	write_page( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_
 			read = rd_func((addrH<<8)|n);
 	
 		} while( read != rd_func((addrH<<8)|n) );
-		//TODO verify byte is value that was trying to be flashed
-		//move on to next byte
-		n++;
-		cur++;
+
+		//retry if write failed
+		//this helped but still seeing similar fails to dumps
+		if (read == buff->data[n]) {
+			n++;
+			cur++;
+			LED_IP_PU();	
+			LED_LO();
+		} else {
+			LED_OP();
+			LED_HI();
+		}
 
 	}
 
@@ -94,8 +102,17 @@ uint8_t	write_page_chr( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr
 		} while( read != rd_func((addrH<<8)|n) );
 		//TODO verify byte is value that was trying to be flashed
 		//move on to next byte
-		n++;
-		cur++;
+		//n++;
+		//cur++;
+		if (read == buff->data[n]) {
+			n++;
+			cur++;
+			LED_IP_PU();	
+			LED_LO();
+		} else {
+			LED_OP();
+			LED_HI();
+		}
 
 	}
 
@@ -324,6 +341,7 @@ uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcpt
 uint8_t flash_buff( buffer *buff ) {
 
 	uint8_t addrH = buff->page_num;	//A15:8  while accessing page
+	uint8_t	bank;
 
 	//First need to initialize mapper register bits
 	//Perhaps this only needs to be done on first buffer though..?
@@ -339,6 +357,13 @@ uint8_t flash_buff( buffer *buff ) {
 	//also use to get read function pointer
 	switch ( buff->mem_type ) {
 		case PRGROM:		//$8000
+			if (buff->mapper == BxROM) {
+				//write bank value
+				//page_num shift by 7 bits A15 >> A8(0)
+				bank = buff->page_num >> 7;
+				//Lizard banktable location
+				nes_cpu_wr( (0xFF94+bank), bank );
+			}
 			write_page( 0, (0x80 | addrH), buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
 			break;
 		case CHRROM:		//$0000
