@@ -66,7 +66,7 @@ end
 
 --Cart should be in reset state upon calling this function 
 --this function processes all user requests for this specific board/mapper
-local function process( read, erase, program, verify, dumpfile, flashfile, verifyfile)
+local function process( test, read, erase, program, verify, dumpfile, flashfile, verifyfile)
 
 	local rv = nil
 	local file 
@@ -75,6 +75,10 @@ local function process( read, erase, program, verify, dumpfile, flashfile, verif
 	dict.io("IO_RESET")
 	dict.io("NES_INIT")
 
+--test cart by reading manf/prod ID
+	if test then
+--		prgrom_manf_id(true)
+	end
 
 --dump the cart to dumpfile
 	if read then

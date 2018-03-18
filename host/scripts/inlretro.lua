@@ -23,6 +23,8 @@ function main ()
 	--cart/mapper specific scripts
 	--local curcart = require "scripts.nes.nrom"
 	local curcart = require "scripts.nes.bnrom"
+	--local curcart = require "scripts.nes.action53"
+	--local curcart = require "scripts.nes.action53_tsop"
 
 	local rv
 --	rv = dict.pinport( "DATA_SET", 0xAA )
@@ -55,7 +57,7 @@ function main ()
 			dict.io("IO_RESET")	
 			dict.io("NES_INIT")	
 			
-		---[[
+		--[[
 			--NES detect mirroring to gain mapper info
 			nes.detect_mapper_mirroring(true)
 			--NES detect memories to gain more mapper/board info	
@@ -88,11 +90,12 @@ function main ()
 			print("start swim")
 
 			dict.io("SWIM_INIT", "SWIM_ON_A0")	
+			----[[
 			if swim.start(true) then
 				--SWIM is now established and running at HIGH SPEED
 				snes_swimcart = false	--don't want to use SWIM pin to control flash /OE, use SNES RESET (EXP0) instead
 
-			--	swim.swim_test()
+				swim.swim_test()
 
 				--swim.write_optn_bytes( true, true ) -- enable ROP, debug
 
@@ -101,10 +104,11 @@ function main ()
 				swim.disable_ROP_erase(true)
 				
 				--open CIC file
-				--local cic_file = assert(io.open("stm8_8KB_zero.bin", "rb"))
+				local cic_file = assert(io.open("stm8_8KB_zero.bin", "rb"))
 				--local cic_file = assert(io.open("stm8_8KB_0xff.bin", "rb"))
 				--local cic_file = assert(io.open("stm8_8KB_testpattern.bin", "rb"))
-				local cic_file = assert(io.open("NESCIC.bin", "rb"))
+				--local cic_file = assert(io.open("NESCIC.bin", "rb"))
+				--local cic_file = assert(io.open("LIZv1.bin", "rb"))
 
 				--write CIC file
 				swim.write_flash( cic_file )
@@ -113,12 +117,29 @@ function main ()
 				assert(cic_file:close())
 
 				--set ROP & AFR0
-				swim.write_optn_bytes( false, true ) -- ROP not set, debug set
+				swim.write_optn_bytes( true, true ) -- ROP not set, debug set
 
 				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
 				swim.stop_and_reset()
 			else
 				print("ERROR problem with STM8 CIC")
+			end
+
+			print("done flashing STM8 on A0")
+
+			dict.io("IO_RESET")	
+
+			--]]
+
+		---[[
+			--test reading back CIC version
+			dict.io("SWIM_INIT", "SWIM_ON_A0")	
+			if swim.start(true) then
+
+				swim.read_stack()
+
+			else
+				print("ERROR trying to read back CIC signature stack data")
 			end
 
 			print("done flashing STM8 on A0")
@@ -132,8 +153,13 @@ function main ()
 			--perform desired operation
 			--CART and programmer should be in a RESET condition upon calling the specific script
 			--curcart.process( true, true, true, true, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
-			curcart.process( false, true, true, true, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
-			--curcart.process( true, false, false, false, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
+			--curcart.process( false, true, true, false, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
+			--curcart.process( false, true, true, false, "ignore/dump.bin", "ignore/liz/liz.bin", "ignore/verifyout.bin")
+			curcart.process( false, false, true, true, false, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
+			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/da53v2.prg", "ignore/verifyout.bin")
+			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/da53v2_x2.prg", "ignore/verifyout.bin")
+			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/a53part2.prg", "ignore/verifyout.bin")
+			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/a53vol3.prg", "ignore/verifyout.bin")
 
 
 		--[[

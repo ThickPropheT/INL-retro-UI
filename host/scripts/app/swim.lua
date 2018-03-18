@@ -312,6 +312,36 @@ local function swim_test()
 end
 
 
+local function read_stack()
+
+	--STM8 stack starts at $0200 which is where the CIC version 
+	--and other special data is placed starting with v2.0
+	local stack_start = 0x0200
+	local last_char = 73
+	local ack
+	local data = {}
+
+	--read 
+	for i = 0, last_char do 
+		ack, data[i+1] = rotf(stack_start+i, true, false) 
+	end
+
+	print("\n")
+
+	local j = 1
+	while data[j] do
+		io.write(string.char(data[j]))
+		j = j+1
+	end
+	print("\n")
+
+--	print("rotf :", string.format("%X  %X", dict.swim("ROTF_HS", 0x0000)))
+
+
+end
+
+
+
 local function start( debug )
 
 	--dict.io("IO_RESET")	
@@ -570,6 +600,7 @@ swim.printCSR = printCSR
 swim.wotf = wotf
 swim.rotf = rotf
 swim.swim_test = swim_test
+swim.read_stack = read_stack
 swim.snes_v3_prgm = snes_v3_prgm
 swim.snes_v3_play = snes_v3_play
 swim.stop_and_reset = stop_and_reset

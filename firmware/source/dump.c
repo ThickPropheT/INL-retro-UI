@@ -20,11 +20,23 @@ uint8_t dump_buff( buffer *buff ) {
 		case PRGROM:
 			addrH |= 0x80;	//$8000
 			if (buff->mapper == BxROM) {
-				bank = (buff->page_num)>>7;
 				//write bank value to bank table
-				//page_num shift by 6 bits A15 >> A8(0)
+				//page_num shift by 7 bits A15 >> A8(0)
+				bank = (buff->page_num)>>7;
 				//Lizard bank table @ FF94
 				nes_cpu_wr( (0xFF94+bank), bank );
+			}
+			if (buff->mapper == A53) {
+				//write bank value to bank table
+				//page_num shift by 7 bits A15 >> A8(0)
+				bank = (buff->page_num)>>7;
+				//Setup as CNROM, then scroll through outer banks.
+				//cpu_wr(0x5000, 0x80); //reg select mode
+				//   xxSSPPMM   SS-size: 0-32KB, PP-prg mode: 0,1 32KB, MM-mirror
+				//cpu_wr(0x8000, 0b00000000);   //reg value 256KB inner, 32KB banks
+				nes_cpu_wr(0x5000, 0x81); //outer reg select mode
+				nes_cpu_wr(0x8000, bank);	  //outer bank
+				nes_cpu_wr(0x5000, 0x00); //chr reg select act like CNROM
 			}
 			buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id, 
 								//id contains MSb of page when <256B buffer
