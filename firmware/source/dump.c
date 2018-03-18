@@ -19,6 +19,20 @@ uint8_t dump_buff( buffer *buff ) {
 	switch ( buff->mem_type ) {
 		case PRGROM:
 			addrH |= 0x80;	//$8000
+			if (buff->mapper == UxROM) {
+				//addrH &= 0b1011 1111 A14 must always be low
+				addrH &= 0xBF;
+				//write bank value to bank table
+				//page_num shift by 6 bits A14 >> A8(0)
+				bank = (buff->page_num)>>6;
+				//Nomolos bank table @ CC84
+				nes_cpu_wr( (0xCC84+bank), bank );
+
+				buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id, 
+								//id contains MSb of page when <256B buffer
+								buff->last_idx, ~FALSE );
+				break;
+			}
 			if (buff->mapper == BxROM) {
 				//write bank value to bank table
 				//page_num shift by 7 bits A15 >> A8(0)

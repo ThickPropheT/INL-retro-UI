@@ -1,7 +1,7 @@
 #include "flash.h"
 
 
-uint8_t	write_page( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
+uint8_t	write_page( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlock2, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
 {
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
@@ -28,14 +28,71 @@ uint8_t	write_page( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_
 		//addrH_dmask   = 0b0000 1111
 		//page2bankshft = A11->A8 = 4 shifts
 		//wr_func( 0x5555, 0xAA );
-		wr_func( 0xD555, 0xAA );
+		//wr_func( 0xD555, 0xAA );
+		wr_func( unlock1, 0xAA );
 //		wr_func( oper_info->unlock1_AH, oper_info->unlock1_AL, oper_info->unlock1_data );
 		//wr_func( 0x2AAA, 0x55 );
-		wr_func( 0xAAAA, 0x55 );
+		//wr_func( 0xAAAA, 0x55 );
+		wr_func( unlock2, 0x55 );
 //		wr_func( oper_info->unlock2_AH, oper_info->unlock2_AL, oper_info->unlock2_data );
 		//wr_func( 0x5555, 0xA0 );
-		wr_func( 0xD555, 0xA0 );
+		//wr_func( 0xD555, 0xA0 );
+		wr_func( unlock1, 0xA0 );
 //		wr_func( oper_info->command_AH, oper_info->command_AL, oper_info->command1_data );
+		wr_func( ((addrH<<8)| n), buff->data[n] );
+	
+		do {
+			usbPoll();
+			read = rd_func((addrH<<8)|n);
+	
+		} while( read != rd_func((addrH<<8)|n) );
+
+		//retry if write failed
+		//this helped but still seeing similar fails to dumps
+	//	if (read == buff->data[n]) {
+	      		n++;
+	      		cur++;
+	//		LED_IP_PU();	
+	//		LED_LO();
+	//	} else {
+	//		nes_cpu_wr(0x5000, 0x81); //outer reg select mode
+	//		nes_cpu_wr(0x8000, bank);	  //outer bank
+	//		nes_cpu_wr(0x5000, 0x00); //chr reg select act like CNROM
+	//		LED_OP();
+	//		LED_HI();
+	//	}
+
+	}
+
+	buff->cur_byte = n;
+
+	return SUCCESS;
+
+} 
+
+uint8_t	write_page_bank( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlock2, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
+{
+	uint16_t cur = buff->cur_byte;
+	uint8_t	n = buff->cur_byte;
+	uint8_t read;
+
+	while ( cur <= buff->last_idx ) {
+
+		//select first bank for unlock sequence
+		//needs to be written to bank table!
+		nes_cpu_wr( (0xCC84), 0x00 );
+
+		//wr_func( 0x5555, 0xAA );
+		wr_func( unlock1, 0xAA );
+		//wr_func( 0x2AAA, 0x55 );
+		wr_func( unlock2, 0x55 );
+		//wr_func( 0x5555, 0xA0 );
+		wr_func( unlock1, 0xA0 );
+
+		//now need to select bank for the actual write!
+		//but this write can't be applied to the PRG-ROM 
+		nes_cpu_wr( (0xCC84+bank), bank );
+
 		wr_func( ((addrH<<8)| n), buff->data[n] );
 	
 		do {
@@ -110,6 +167,16 @@ uint8_t	write_page_a53( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr
 //		wr_func( ((addrH<<8)| n), buff->data[n] );
 
 
+		//TODO FIX THIS!  It shouldn't be needed!
+		//but for some reason the mapper is loosing it's setting for $5000 register to 
+		//permit flash writes.  Many writes go through, but at somepoint it gets lost..
+		//maybe the best fix it to require address to be equal to $5555 to write to flash enable register..
+		//but for now, this rewrite hack solves the issue.
+		nes_cpu_wr(0x5000, 0x54); //chr reg select act like CNROM & enable flash writes
+		//AVR didn't need this patch so maybe is a speed issue
+		//stmadapter didn't have problems either..
+		//added time delay before m2 rising edge and it didn't change anything for stm6
+
 	//	curaddresswrite( 0xA0 );	//gained ~3KBps (59.13KBps) inl6 with v3.0 proto
 		wr_func( ((addrH<<8)| n), 0xA0  );
 
@@ -124,14 +191,14 @@ uint8_t	write_page_a53( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr
 		//retry if write failed
 		//this helped but still seeing similar fails to dumps
 //		if (read == buff->data[n]) {
-	      		n++;
-	      		cur++;
+          		n++;
+            		cur++;
 //			LED_IP_PU();	
 //			LED_LO();
 //		} else {
-//			nes_cpu_wr(0x5000, 0x81); //outer reg select mode
-//			nes_cpu_wr(0x8000, bank);	  //outer bank
-//			nes_cpu_wr(0x5000, 0x00); //chr reg select act like CNROM
+////			nes_cpu_wr(0x5000, 0x81); //outer reg select mode
+////			nes_cpu_wr(0x8000, bank);	  //outer bank
+////			nes_cpu_wr(0x5000, 0x54); //chr reg select act like CNROM & enable flash writes
 //			LED_OP();
 //			LED_HI();
 //		}
@@ -448,12 +515,27 @@ uint8_t flash_buff( buffer *buff ) {
 	//also use to get read function pointer
 	switch ( buff->mem_type ) {
 		case PRGROM:		//$8000
+			if (buff->mapper == NROM) {
+				write_page( 0, (0x80 | addrH), 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
+			}
+			if (buff->mapper == UxROM) {
+				//addrH &= 0b1011 1111 A14 must always be low
+				addrH &= 0x3F;
+				addrH |= 0x80;	//A15 doesn't apply to exp0 write, but needed for read back
+				//write bank value
+				//page_num shift by 6 bits A14 >> A8(0)
+				bank = buff->page_num >> 6;
+				//Nomolos banktable location
+				nes_cpu_wr( (0xCC84+bank), bank );
+				write_page_bank( bank, addrH, 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
+			}
 			if (buff->mapper == BxROM) {
 				//write bank value
 				//page_num shift by 7 bits A15 >> A8(0)
 				bank = buff->page_num >> 7;
 				//Lizard banktable location
 				nes_cpu_wr( (0xFF94+bank), bank );
+				write_page( 0, (0x80 | addrH), 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
 			}
 			if (buff->mapper == A53) {
 				//write bank value to bank table
@@ -470,13 +552,11 @@ uint8_t flash_buff( buffer *buff ) {
 				//need to use standard CPU writes
 				//write_page( 0, (0x80 | addrH), buff, nes_cpu_wr, nes_cpu_rd );
 				//break;
+				//WORKS PLCC Action53:
+				//write_page( bank, (0x80 | addrH), buff, nes_cpu_wr, nes_cpu_rd );
+				//TSSOP-28 action53:
+				write_page_a53( bank, (0x80 | addrH), buff, nes_cpu_wr, nes_cpu_rd );
 			}
-			//discrete:
-			//write_page( 0, (0x80 | addrH), buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
-			//WORKS PLCC Action53:
-			//write_page( bank, (0x80 | addrH), buff, nes_cpu_wr, nes_cpu_rd );
-			//TSSOP-28 action53:
-			write_page_a53( bank, (0x80 | addrH), buff, nes_cpu_wr, nes_cpu_rd );
 			break;
 		case CHRROM:		//$0000
 			write_page_chr( 0, addrH, buff, nes_ppu_wr, nes_ppu_rd );

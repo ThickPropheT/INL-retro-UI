@@ -1,6 +1,6 @@
 
 -- create the module's table
-local bnrom = {}
+local unrom = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
@@ -11,6 +11,18 @@ local flash = require "scripts.app.flash"
 -- file constants
 
 -- local functions
+local function init_mapper( debug )
+	--need to select bank0 so PRG-ROM A14 is low when writting to lower bank
+	--TODO this needs to be written to rom where value is 0x00 due to bus conflicts
+	--so need to find the bank table first!
+	--this could present an even larger problem with a blank flash chip
+	--would have to get a byte written to 0x00 first before able to change the bank..
+	--becomes catch 22 situation.  Will have to rely on mcu over powering PRG-ROM..
+	--ahh but a way out would be to disable the PRG-ROM with exp0 (/WE) going low
+	--for now the write below seems to be working fine though..
+	dict.nes("NES_CPU_WR", 0x8000, 0x80)
+end
+
 local function wr_flash_byte(addr, value, debug)
 
 	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xAA)
@@ -32,38 +44,19 @@ end
 --base is the actual NES CPU address, not the rom offset (ie $FFF0, not $7FF0)
 local function wr_bank_table(base, entries)
 
-	--BNROM needs to have a bank table present in each and every bank
-	--it should also be at the same location in every bank
-
---	--first select the last bank as cartridge should be erased (all 0xFF)
---	--go ahead and write the value to where it's supposed to be incase rom isn't erased
---	dict.nes("NES_CPU_WR", base+entries-1, entries-1)
---
---	--write bank table to selected bank
---	while( i < entries) do
---		wr_flash_byte(base+i, i)
---		i = i+1;
---	end
---	--now we can use that bank table to jump to any other bank
+	--UxROM can have a single bank table in $C000-FFFF (assuming this is most likely)
+	--or a bank table in all other banks in $8000-BFFF
 	
-	--smarter solution is to simply count down so we can use just one loop
+	--need to have A14 clear when lower bank enabled
+	init_mapper()
 
-	local cur_bank = entries - 1  --16 minus 1 is 15 = 0x0F
-
-	while( cur_bank >= 0 ) do
-		--select bank to write to (last bank first)
-		--use the bank table to make the switch
-		dict.nes("NES_CPU_WR", base+cur_bank, cur_bank)
-
-		--write bank table to selected bank
-		local i = 0
-		while( i < entries) do
-			wr_flash_byte(base+i, i)
-			i = i+1;
-		end
-
-		cur_bank = cur_bank-1
+	local i = 0
+	while( i < entries) do
+		wr_flash_byte(base+i, i)
+		i = i+1;
 	end
+
+	--TODO verify the bank table was successfully written before continuing!
 
 end
 
@@ -83,6 +76,9 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		nes.detect_mapper_mirroring(true)
 		nes.ppu_ram_sense(0x1000, true)
 		print("EXP0 pull-up test:", dict.io("EXP0_PULLUP_TEST"))	
+
+		--need to set PRG-ROM A14 low when lower bank selected
+		init_mapper() 	--this may not succeed due to bus conflicts...
 		nes.read_flashID_prgrom_exp0(true)
 	end
 
@@ -92,7 +88,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 		--TODO find bank table to avoid bus conflicts!
 		--dump cart into file
-		dump.dumptofile( file, 512, "BxROM", "PRGROM", true )
+		dump.dumptofile( file, 512, "UxROM", "PRGROM", true )
 
 		--close file
 		assert(file:close())
@@ -102,7 +98,9 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 --erase the cart
 	if erase then
 
-		print("\nerasing BxROM");
+		init_mapper()
+
+		print("\nerasing UxROM");
 
 		print("erasing PRG-ROM");
 		dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xAA)
@@ -128,6 +126,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 --program flashfile to the cart
 	if program then
+
 		--open file
 		file = assert(io.open(flashfile, "rb"))
 		--determine if auto-doubling, deinterleaving, etc, 
@@ -135,11 +134,11 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 		--find bank table in the rom
 		--write bank table to all banks of cartridge
-		--Lizard's bank table is at $FF94 so hard code that for now
-		wr_bank_table(0xFF94, 16)
+		--Nomolos' bank table is at $CC84 so hard code that for now
+		wr_bank_table(0xCC84, 32)
 
 		--flash cart
-		flash.write_file( file, 512, "BxROM", "PRGROM", true )
+		flash.write_file( file, 512, "UxROM", "PRGROM", true )
 		--close file
 		assert(file:close())
 
@@ -152,7 +151,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(verifyfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 512, "BxROM", "PRGROM", true )
+		dump.dumptofile( file, 512, "UxROM", "PRGROM", true )
 
 		--close file
 		assert(file:close())
@@ -169,7 +168,7 @@ end
 
 
 -- functions other modules are able to call
-bnrom.process = process
+unrom.process = process
 
 -- return the module's table
-return bnrom
+return unrom

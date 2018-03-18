@@ -22,7 +22,8 @@ function main ()
 
 	--cart/mapper specific scripts
 	--local curcart = require "scripts.nes.nrom"
-	local curcart = require "scripts.nes.bnrom"
+	local curcart = require "scripts.nes.unrom"
+	--local curcart = require "scripts.nes.bnrom"
 	--local curcart = require "scripts.nes.action53"
 	--local curcart = require "scripts.nes.action53_tsop"
 
@@ -131,7 +132,7 @@ function main ()
 
 			--]]
 
-		---[[
+		--[[
 			--test reading back CIC version
 			dict.io("SWIM_INIT", "SWIM_ON_A0")	
 			if swim.start(true) then
@@ -152,14 +153,18 @@ function main ()
 			--set rom types and sizes
 			--perform desired operation
 			--CART and programmer should be in a RESET condition upon calling the specific script
-			--curcart.process( true, true, true, true, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
-			--curcart.process( false, true, true, false, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
-			--curcart.process( false, true, true, false, "ignore/dump.bin", "ignore/liz/liz.bin", "ignore/verifyout.bin")
-			curcart.process( false, false, true, true, false, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
+
+			--NROM
+			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
+			--UxROM
+			curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/nomolosFINAL.prg", "ignore/verifyout.bin")
+			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/nomolos.bin", "ignore/verifyout.bin")
+			--BNROM
+			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
+			--A53 PLCC
 			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/da53v2.prg", "ignore/verifyout.bin")
-			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/da53v2_x2.prg", "ignore/verifyout.bin")
-			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/a53part2.prg", "ignore/verifyout.bin")
-			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/a53vol3.prg", "ignore/verifyout.bin")
+			--A53 tssop
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/a53vol3.prg", "ignore/verifyout.bin")
 
 
 		--[[

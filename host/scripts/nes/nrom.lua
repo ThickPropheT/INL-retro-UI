@@ -4,17 +4,23 @@ local nrom = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
+local nes = require "scripts.app.nes"
 local dump = require "scripts.app.dump"
 local flash = require "scripts.app.flash"
 
 -- file constants
 
 -- local functions
+--read PRG-ROM flash ID
+local function prgrom_manf_id( debug )
+
+
+end
 
 
 --Cart should be in reset state upon calling this function 
 --this function processes all user requests for this specific board/mapper
-local function process( read, erase, program, verify, dumpfile, flashfile, verifyfile)
+local function process( test, read, erase, program, verify, dumpfile, flashfile, verifyfile)
 
 	local rv = nil
 	local file 
@@ -23,6 +29,13 @@ local function process( read, erase, program, verify, dumpfile, flashfile, verif
 	dict.io("IO_RESET")
 	dict.io("NES_INIT")
 
+--test the cart
+	if test then
+		nes.detect_mapper_mirroring(true)
+		nes.read_flashID_chrrom_8K(true)
+		print("EXP0 pull-up test:", dict.io("EXP0_PULLUP_TEST"))	
+		nes.read_flashID_prgrom_exp0(true)
+	end
 
 --dump the cart to dumpfile
 	if read then
