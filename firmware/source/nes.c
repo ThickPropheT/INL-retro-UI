@@ -38,6 +38,9 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 		case NES_CPU_WR:	
 			nes_cpu_wr( operand, miscdata );
 			break;
+//		case DISCRETE_EXP0_MAPPER_WR:	
+//			discrete_exp0_mapper_wr( operand, miscdata );
+//			break;
 
 		//8bit return values:
 //		case EMULATE_NES_CPU_RD:
@@ -97,6 +100,114 @@ void	discrete_exp0_prgrom_wr( uint16_t addr, uint8_t data )
 	//16Mhz avr clk = 62.5ns period guarantees timing reqts
 	DATA_IP();
 }
+
+
+/* Desc: Discrete board MAPPER write without bus conflicts
+ * 	will also write to PRG-ROM, but PRG-ROM shouldn't output
+ * 	data while writting to mapper.  Thus removing need for bank table.
+ * 	NOTE: I think it would be possible to write one value to mapper
+ * 	and another value to PRG-ROM.
+ * 	PRG-ROM /WE <- EXP0 w/PU
+ * 	PRG-ROM /OE <- /ROMSEL
+ * 	PRG-ROM /CE <- GND
+ * 	PRG-ROM write: /WE & /CE low, /OE high
+ * 	mapper '161 CLK  <- /ROMSEL
+ * 	mapper '161 /LOAD <- PRG R/W
+ * 	mapper '161 /LOAD must be low on rising edge of CLK to latch data
+ * Note:addrH bit7 has no effect (ends up on PPU /A13)
+ * 	M2 signal untouched
+ * Pre: nes_init() setup of io pins
+ * Post:data latched by MAPPER, will also be written to PRG-ROM afterwards
+ * 	address left on bus
+ * 	data left on bus, but pullup only
+ * 	EXP0 left pulled up
+ * Rtn:	None
+ */
+//void	discrete_exp0_mapper_wr( uint16_t addr, uint8_t data )
+//{
+//	//Float EXP0 as it should be in NES
+//	EXP0_IP_FL();
+//	//EXP0_OP();	//tas = 0ns, tah = 30ns
+//	//EXP0_LO();
+//
+//	//need for whole function
+//	//_DATA_OP();
+//
+//	//set addrL
+//	//ADDR_OUT = addrL;
+//	//latch addrH
+//	//DATA_OUT = addrH;
+//	//_AHL_CLK();	
+//	ADDR_SET(addr);
+//
+//	//PRG R/W LO
+//	PRGRW_LO();
+//
+//	//put data on bus
+//	DATA_OP();
+//	DATA_SET(data);
+//
+//	//set M2 and /ROMSEL
+//	MCO_HI();
+//	if( addr >= 0x8000 ) {	//addressing cart rom space
+//		ROMSEL_LO();	//romsel trails M2 during CPU operations
+//	}
+//
+//	//give some time
+//	NOP();
+//	NOP();
+//
+//	//latch data to cart memory/mapper
+//	MCO_LO();
+//	ROMSEL_HI();
+//
+//	//retore PRG R/W to default
+//	PRGRW_HI();
+//
+//	EXP0_IP_PU();	//Twp = 40ns, Tds = 40ns, Tdh = 0ns
+//	//Free data bus
+//	DATA_IP();
+//
+//	return;
+//
+//	/*
+//	ADDR_SET(addr);
+//
+//	DATA_OP();
+//	DATA_SET(data);
+//
+//	//start write to PRG-ROM (latch address)
+//	exp0_op();	//tas = 0ns, tah = 30ns
+//	exp0_lo();
+//
+//	//enable write to mapper PRG R/W LO
+//	PRGRW_LO();
+//	ROMSEL_LO();	//fact that it's low for such a short time might also if PRG-ROM does output data
+//
+//	NOP();		//AVR didn't need this delay
+//	NOP();		//AVR didn't need this delay
+//	NOP();		//AVR didn't need this delay
+//	NOP();		//AVR didn't need this delay
+//	NOP();		//AVR didn't need this delay
+//	NOP();		//AVR didn't need this delay
+//	//clock mapper register, should not enable PRG-ROM output since /WE low
+//	NOP();		//AVR didn't need this delay
+//	NOP();		//AVR didn't need this delay
+//	ROMSEL_HI();	//data latched on rising edge
+//
+//	//Could output other data here that would like to be written to PRG-ROM
+//	//I'm not certain an actual write gets applied to PRG-ROM as /OE is supposed to be high whole time..
+//
+//	NOP();		//AVR didn't need this delay
+//	//return to default
+//	PRGRW_HI();
+//
+//	EXP0_IP_PU();	//Twp = 40ns, Tds = 40ns, Tdh = 0ns
+//	//16Mhz avr clk = 62.5ns period guarantees timing reqts
+//	DATA_IP();
+//	*/
+//}
+
 
 //	
 //	/* Desc:Emulate NES CPU Read as best possible

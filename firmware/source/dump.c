@@ -27,18 +27,24 @@ uint8_t dump_buff( buffer *buff ) {
 				bank = (buff->page_num)>>6;
 				//Nomolos bank table @ CC84
 				nes_cpu_wr( (0xCC84+bank), bank );
+				//nes_cpu_wr( (0xE473+bank), bank );
 
 				buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id, 
 								//id contains MSb of page when <256B buffer
 								buff->last_idx, ~FALSE );
 				break;
 			}
-			if (buff->mapper == BxROM) {
+			if ((buff->mapper == BxROM) || (buff->mapper == CDREAM)) {
 				//write bank value to bank table
 				//page_num shift by 7 bits A15 >> A8(0)
 				bank = (buff->page_num)>>7;
 				//Lizard bank table @ FF94
-				nes_cpu_wr( (0xFF94+bank), bank );
+				//nes_cpu_wr( (0xFF94+bank), bank );
+				//HH85
+				nes_cpu_wr( (0xFFE0+bank), bank );
+				//Mojon bank table @ FF94
+				//nes_cpu_wr( 0x800C, 0x00);	//select first bank (only one with table)
+				//nes_cpu_wr( (0xCC43+bank), bank );	//then select desired bank
 			}
 			if (buff->mapper == A53) {
 				//write bank value to bank table

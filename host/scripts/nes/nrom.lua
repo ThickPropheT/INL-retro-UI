@@ -83,6 +83,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		dict.nes("NES_PPU_WR", 0x1555, 0x10)
 		rv = dict.nes("NES_PPU_RD", 0x0000)
 
+		i = 0
 		while ( rv ~= 0xFF ) do
 			rv = dict.nes("NES_PPU_RD", 0x0000)
 			i = i + 1

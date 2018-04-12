@@ -136,6 +136,8 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--write bank table to all banks of cartridge
 		--Nomolos' bank table is at $CC84 so hard code that for now
 		wr_bank_table(0xCC84, 32)
+		--Owlia bank table
+		--wr_bank_table(0xE473, 32)
 
 		--flash cart
 		flash.write_file( file, 512, "UxROM", "PRGROM", true )

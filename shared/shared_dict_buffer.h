@@ -138,7 +138,7 @@
 	#define AxROM	7
 	#define MMC2	9
 	#define MMC4	10
-	#define CDREAMS	11
+	#define CDREAM	11
 	#define A53	28
 	#define UNROM512 30
 	#define EZNSF	31

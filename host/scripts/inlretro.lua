@@ -22,8 +22,9 @@ function main ()
 
 	--cart/mapper specific scripts
 	--local curcart = require "scripts.nes.nrom"
-	local curcart = require "scripts.nes.unrom"
-	--local curcart = require "scripts.nes.bnrom"
+	--local curcart = require "scripts.nes.unrom"
+	local curcart = require "scripts.nes.bnrom"
+	--local curcart = require "scripts.nes.cdream"
 	--local curcart = require "scripts.nes.action53"
 	--local curcart = require "scripts.nes.action53_tsop"
 
@@ -31,9 +32,28 @@ function main ()
 --	rv = dict.pinport( "DATA_SET", 0xAA )
 --	rv = dict.pinport( "DATA_RD" )
 --	rv = dict.io("IO_RESET")
-	if rv then
-		print(string.format("%X", rv))
-	end
+
+--[[	--TEST GB power
+	rv = dict.pinport( "CTL_ENABLE", "CIN" )
+	rv = dict.pinport( "CTL_OP", "CIN")
+	rv = dict.pinport( "CTL_SET_LO", "CIN")
+	print("CIN low 5v GB")
+	jtag.sleep(5)
+	rv = dict.pinport( "CTL_SET_HI", "CIN")
+	print("CIN high 3v GBA")
+	jtag.sleep(90)
+	rv = dict.pinport( "CTL_SET_LO", "CIN")
+	print("CIN low 5v GB")
+	jtag.sleep(10)
+	rv = dict.pinport( "CTL_SET_HI", "CIN")
+	print("CIN high 3v GBA")
+	jtag.sleep(10)
+	--]]
+
+
+	--if rv then
+	--	print(string.format("%X", rv))
+	--end
 
 --	print(dict.io("EXP0_PULLUP_TEST"))	
 --
@@ -132,7 +152,7 @@ function main ()
 
 			--]]
 
-		--[[
+		---[[
 			--test reading back CIC version
 			dict.io("SWIM_INIT", "SWIM_ON_A0")	
 			if swim.start(true) then
@@ -143,7 +163,7 @@ function main ()
 				print("ERROR trying to read back CIC signature stack data")
 			end
 
-			print("done flashing STM8 on A0")
+			print("done reading STM8 stack on A0\n")
 
 			dict.io("IO_RESET")	
 		--]]
@@ -157,10 +177,14 @@ function main ()
 			--NROM
 			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
 			--UxROM
-			curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/nomolosFINAL.prg", "ignore/verifyout.bin")
-			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/nomolos.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/nomolosFINAL.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/owlia_revb.prg", "ignore/verifyout.bin")
 			--BNROM
-			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/lizard_v1.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/lizard_v2.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/lizard_v2_fr.prg", "ignore/verifyout.bin")
+			curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/hh85.prg", "ignore/verifyout.bin")
+			--COLOR DREAMS
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/multicart_mojontalesFINAL.prg", "ignore/verifyout.bin")
 			--A53 PLCC
 			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/da53v2.prg", "ignore/verifyout.bin")
 			--A53 tssop
@@ -200,6 +224,7 @@ function main ()
 		elseif cart_console == "SNES" then
 
 			snes_swimcart = nil
+			--[[
 			if swim.start(true) then
 				--SWIM is now established and running at HIGH SPEED
 				snes_swimcart = false	--don't want to use SWIM pin to control flash /OE, use SNES RESET (EXP0) instead
@@ -222,6 +247,7 @@ function main ()
 			else
 				print("ERROR problem with STM8 CIC")
 			end
+			--]]
 
 			dict.io("IO_RESET")	
 			dict.io("SNES_INIT")	
@@ -232,6 +258,7 @@ function main ()
 			local snes_mapping = "LOROM"
 			--SNES detect if there's save ram and size
 
+		---[[
 			--SNES detect if able to read flash ID's
 			if not snes.read_flashID(true) then
 				print("ERROR unable to read flash ID")
@@ -257,8 +284,9 @@ function main ()
 --			erase.erase_snes( false )
 			--open file
 			local file 
-	--	      	file = assert(io.open("flash.bin", "rb"))
-		      	file = assert(io.open("SF2_PTdump_capcomFINAL.bin", "rb"))
+	---[[      	file = assert(io.open("flash.bin", "rb"))
+		      	--file = assert(io.open("SF2_PTdump_capcomFINAL.bin", "rb"))
+		      	file = assert(io.open("ignore/MMXdump.bin", "rb"))
 
 			--calculate checksum
 			--local data = file:read("*all")
@@ -270,13 +298,20 @@ function main ()
 			flash.flash_snes( file, true )
 			--close file
 			assert(file:close())
+			--]]
 
+			dict.io("IO_RESET")	
+			print("start swim")
+
+			dict.io("SWIM_INIT", "SWIM_ON_A0")	
 			--flash final CIC code
 			if swim.start(true) then
 				--SWIM is now established and running at HIGH SPEED
 				--swim.printCSR()
-				snes_swimcart = false
+				--snes_swimcart = false
 				--print("main swimcart", snes_swimcart)
+
+				swim.swim_test()
 
 				--check if ROP set, allow clearing ROP and erasing CIC
 				--blindly erase STM8 CIC for now by disabling ROP
@@ -293,24 +328,27 @@ function main ()
 
 				--write option bytes
 						    -- enable ROP, debug
-				swim.write_optn_bytes( true, true )
+				swim.write_optn_bytes( false, true )
 
 				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
 				swim.stop_and_reset()
 			else
 				print("ERROR problem with STM8 CIC")
 			end
+		--]]
 
---			--DUMPING:
---			--create new file
---			local file 
---			file = assert(io.open("snesdump.bin", "wb"))
---			--dump cart into file
---		--	swim.start()
---			dump.dump_snes( file, snes_mapping, true )
---
---			--close file
---			assert(file:close())
+			--DUMPING:
+			--create new file
+			print("dumping SNES")
+			snes.read_reset_vector(0, true)
+			local file 
+			file = assert(io.open("snesdump.bin", "wb"))
+			--dump cart into file
+		--	swim.start()
+		--	dump.dump_snes( file, snes_mapping, true )
+
+			--close file
+			assert(file:close())
 
 
 		--trick to do this at end while debugging so don't have to wait for it before starting
@@ -331,6 +369,7 @@ function main ()
 		end
 
 	end
+
 
 end
 

@@ -136,7 +136,9 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--find bank table in the rom
 		--write bank table to all banks of cartridge
 		--Lizard's bank table is at $FF94 so hard code that for now
-		wr_bank_table(0xFF94, 16)
+		--wr_bank_table(0xFF94, 16)
+		--hh85 bank table at $FFE0
+		wr_bank_table(0xFFE0, 16)
 
 		--flash cart
 		flash.write_file( file, 512, "BxROM", "PRGROM", true )

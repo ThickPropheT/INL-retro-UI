@@ -9,6 +9,7 @@
 uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rdata );
 
 void	discrete_exp0_prgrom_wr( uint16_t addr, uint8_t data );
+//void	discrete_exp0_mapper_wr( uint16_t addr, uint8_t data );
 //uint8_t	emulate_nes_cpu_rd( uint8_t addrH, uint8_t addrL );
 uint8_t	nes_cpu_rd( uint16_t addr );
 void	nes_cpu_wr( uint16_t addr, uint8_t data );

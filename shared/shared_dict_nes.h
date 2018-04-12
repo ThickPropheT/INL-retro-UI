@@ -37,6 +37,8 @@
 // A15 decoded to enable /ROMSEL as it should
 #define NES_CPU_WR			0x02
 
+//#define DISCRETE_EXP0_MAPPER_WR		0x03
+
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================

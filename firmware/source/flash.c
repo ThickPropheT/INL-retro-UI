@@ -49,18 +49,18 @@ uint8_t	write_page( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlo
 
 		//retry if write failed
 		//this helped but still seeing similar fails to dumps
-	//	if (read == buff->data[n]) {
-	      		n++;
-	      		cur++;
-	//		LED_IP_PU();	
-	//		LED_LO();
-	//	} else {
-	//		nes_cpu_wr(0x5000, 0x81); //outer reg select mode
-	//		nes_cpu_wr(0x8000, bank);	  //outer bank
-	//		nes_cpu_wr(0x5000, 0x00); //chr reg select act like CNROM
-	//		LED_OP();
-	//		LED_HI();
-	//	}
+//		if (read == buff->data[n]) {
+	    		n++;
+	    		cur++;
+//			LED_IP_PU();	
+//			LED_LO();
+//		} else {
+//			nes_cpu_wr(0x5000, 0x81); //outer reg select mode
+//			nes_cpu_wr(0x8000, bank);	  //outer bank
+//			nes_cpu_wr(0x5000, 0x00); //chr reg select act like CNROM
+//			LED_OP();
+//			LED_HI();
+//		}
 
 	}
 
@@ -81,6 +81,7 @@ uint8_t	write_page_bank( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t
 		//select first bank for unlock sequence
 		//needs to be written to bank table!
 		nes_cpu_wr( (0xCC84), 0x00 );
+//		nes_cpu_wr( (0xE473), 0x00 );
 
 		//wr_func( 0x5555, 0xAA );
 		wr_func( unlock1, 0xAA );
@@ -92,6 +93,7 @@ uint8_t	write_page_bank( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t
 		//now need to select bank for the actual write!
 		//but this write can't be applied to the PRG-ROM 
 		nes_cpu_wr( (0xCC84+bank), bank );
+	//	nes_cpu_wr( (0xE473+bank), bank );
 
 		wr_func( ((addrH<<8)| n), buff->data[n] );
 	
@@ -103,18 +105,15 @@ uint8_t	write_page_bank( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t
 
 		//retry if write failed
 		//this helped but still seeing similar fails to dumps
-	//	if (read == buff->data[n]) {
-	      		n++;
-	      		cur++;
-	//		LED_IP_PU();	
-	//		LED_LO();
-	//	} else {
-	//		nes_cpu_wr(0x5000, 0x81); //outer reg select mode
-	//		nes_cpu_wr(0x8000, bank);	  //outer bank
-	//		nes_cpu_wr(0x5000, 0x00); //chr reg select act like CNROM
-	//		LED_OP();
-	//		LED_HI();
-	//	}
+		if (read == buff->data[n]) {
+	    		n++;
+	    		cur++;
+			LED_IP_PU();	
+			LED_LO();
+		} else {
+			LED_OP();
+			LED_HI();
+		}
 
 	}
 
@@ -525,16 +524,20 @@ uint8_t flash_buff( buffer *buff ) {
 				//write bank value
 				//page_num shift by 6 bits A14 >> A8(0)
 				bank = buff->page_num >> 6;
-				//Nomolos banktable location
-				nes_cpu_wr( (0xCC84+bank), bank );
+				//bank gets written inside flash algo
 				write_page_bank( bank, addrH, 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
 			}
-			if (buff->mapper == BxROM) {
+			if ((buff->mapper == BxROM) || (buff->mapper == CDREAM)) {
 				//write bank value
 				//page_num shift by 7 bits A15 >> A8(0)
 				bank = buff->page_num >> 7;
 				//Lizard banktable location
-				nes_cpu_wr( (0xFF94+bank), bank );
+				//nes_cpu_wr( (0xFF94+bank), bank );
+				//hh85
+				nes_cpu_wr( (0xFFE0+bank), bank );
+				//Mojontales
+				//nes_cpu_wr( 0x800C, 0x00);	//select first bank (only bank with table)
+				//nes_cpu_wr( (0xCC43+bank), bank );	//then select desired bank
 				write_page( 0, (0x80 | addrH), 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
 			}
 			if (buff->mapper == A53) {
