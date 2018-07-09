@@ -39,6 +39,10 @@
 
 //#define DISCRETE_EXP0_MAPPER_WR		0x03
 
+#define NES_MMC1_WR			0x04
+
+#define NES_DUALPORT_WR			0x05
+
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================
@@ -62,5 +66,6 @@
 	#define	MIR_VERT	0x12
 	#define	MIR_HORZ	0x13
 
+#define NES_DUALPORT_RD			0x84	//RL=3
 
 #endif

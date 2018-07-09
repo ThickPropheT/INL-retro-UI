@@ -139,8 +139,9 @@
 	#define MMC2	9
 	#define MMC4	10
 	#define CDREAM	11
+	#define CNINJA	12	//not actually mapper 12, just a temp mapper assignment
 	#define A53	28
-	#define UNROM512 30
+	#define MAP30 	30
 	#define EZNSF	31
 	#define BxROM	34
 	#define RAMBO	64
@@ -151,6 +152,7 @@
 	#define FME7	69	//SUNSOFT-5 with synth
 	#define HDIVER	78
 	#define DxROM	205
+	#define DPROM	254	//just a random mapper number for whatever I need it for
 	//	UNKNOWN 255	don't assign to something meaningful
 	//operand LSB mapper variant
 	#define NOVAR	0

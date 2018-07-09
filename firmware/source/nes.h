@@ -10,14 +10,18 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 
 void	discrete_exp0_prgrom_wr( uint16_t addr, uint8_t data );
 //void	discrete_exp0_mapper_wr( uint16_t addr, uint8_t data );
-//uint8_t	emulate_nes_cpu_rd( uint8_t addrH, uint8_t addrL );
+uint8_t	emulate_nes_cpu_rd( uint16_t addr );
 uint8_t	nes_cpu_rd( uint16_t addr );
 void	nes_cpu_wr( uint16_t addr, uint8_t data );
 uint8_t	nes_ppu_rd( uint16_t addr );
 void	nes_ppu_wr( uint16_t addr, uint8_t data );
+uint8_t	nes_dualport_rd( uint16_t addr );
+void	nes_dualport_wr( uint16_t addr, uint8_t data );
 uint8_t	ciram_a10_mirroring( void );
 uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last, uint8_t poll );
 uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last, uint8_t poll );
+uint8_t nes_dualport_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t len, uint8_t poll );
+void	mmc1_wr( uint16_t addr, uint8_t data, uint8_t reset );
 
 #define A10_BYTE 	0x04
 #define A11_BYTE 	0x08

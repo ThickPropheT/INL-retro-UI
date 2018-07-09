@@ -47,6 +47,7 @@ local function init_mapper( debug )
 	
 	--enable flash writes $5000 set to 0b0 101 010 0
 	dict.nes("NES_CPU_WR", 0x5000, 0x54)
+	--dict.nes("NES_CPU_WR", 0x5555, 0x54)
 
 end
 
@@ -54,6 +55,7 @@ end
 --read PRG-ROM flash ID
 local function prgrom_manf_id( debug )
 
+	local rv
 	init_mapper()
 
 	if debug then print("reading PRG-ROM manf ID") end
@@ -66,12 +68,130 @@ local function prgrom_manf_id( debug )
 	if debug then print("attempted read PRG-ROM manf ID:", string.format("%X", rv)) end	--0x01
 	rv = dict.nes("NES_CPU_RD", 0x8002)
 	if debug then print("attempted read PRG-ROM prod ID:", string.format("%X", rv)) end	--0xDA(top), 0x5B(bot)
---	rv = dict.nes("NES_CPU_RD", 0x801C)
---	if debug then print("attempted read PRG-ROM density ID:", string.format("%X", rv)) end
---	rv = dict.nes("NES_CPU_RD", 0x801E)
---	if debug then print("attempted read PRG-ROM bootsect ID:", string.format("%X", rv)) end
 
 	--exit software
+	dict.nes("NES_CPU_WR", 0x8000, 0xF0)
+
+end
+
+
+local function read_gift( base, len )
+
+	local rv
+	init_mapper()
+
+	--select last bank in read only mode
+	dict.nes("NES_CPU_WR", 0x5000, 0x81)
+	dict.nes("NES_CPU_WR", 0x8000, 0xFF)
+
+	local i = 0
+
+	while i < len do 
+		rv = dict.nes("NES_CPU_RD", base+i)
+		io.write(string.char(rv))
+		i = i+1
+	end
+
+	i = 0
+
+	print("")
+
+	while i < len do 
+		rv = dict.nes("NES_CPU_RD", base+i)
+		io.write(string.format("%X.", rv))
+		i = i+1
+	end
+
+	print("")
+end
+
+local function write_gift(base, off)
+
+	local i
+	local rv
+	init_mapper()
+
+	--select last bank in flash mode
+	dict.nes("NES_CPU_WR", 0x5000, 0x81)
+	dict.nes("NES_CPU_WR", 0x8000, 0xFF)
+	dict.nes("NES_CPU_WR", 0x5000, 0x54)
+
+	--enter unlock bypass mode
+	dict.nes("NES_CPU_WR", 0x8AAA, 0xAA)
+	dict.nes("NES_CPU_WR", 0x8555, 0x55)
+	dict.nes("NES_CPU_WR", 0x8AAA, 0x20)
+
+	--write 0xA0 to address of byte to write, then write data
+	dict.nes("NES_CPU_WR", base+off, 0xA0)
+	dict.nes("NES_CPU_WR", base+off, 0x00)		--end previous line
+	off=off+1
+	dict.nes("NES_CPU_WR", base+off, 0xA0)
+	dict.nes("NES_CPU_WR", base+off, 0x15)		--line number..?
+	off=off+1
+	dict.nes("NES_CPU_WR", base+off, 0xA0)
+	dict.nes("NES_CPU_WR", base+off, string.byte("(",1))		--start with open parenth
+
+
+	--off = off + 1	--increase to start of message but index starting at 1
+	i = 1
+
+	--local msg1 = "Regular Edition"
+	--local msg1 = "Contributor Edition"
+	local msg1 = "Limited Edition"
+	local msg2 = "100 of 100"	--  all flashed
+
+	--local msg1 = " Contributor Edition "
+	--local msg2 = " PinoBatch "	--issue if capital P or R is first char for some reason..
+
+	local len = string.len(msg1)
+
+	while (i <= len) do
+		dict.nes("NES_CPU_WR", base+off+i, 0xA0)
+		dict.nes("NES_CPU_WR", base+off+i, string.byte(msg1,i))	--line 1 of message
+		print("write:", string.byte(msg1,i))
+		i=i+1
+	end
+
+	off = off + i
+
+	dict.nes("NES_CPU_WR", base+off, 0xA0)
+	dict.nes("NES_CPU_WR", base+off, 0x00)		--end current line
+	off=off+1
+	dict.nes("NES_CPU_WR", base+off, 0xA0)
+	dict.nes("NES_CPU_WR", base+off, 0x16)		--line number..?
+	off=off+1
+	dict.nes("NES_CPU_WR", base+off, 0xA0)
+	dict.nes("NES_CPU_WR", base+off, string.byte("(",1))		--start with open parenth
+
+	i = 1
+
+
+	len = string.len(msg2)
+
+	while (i <= len) do
+		dict.nes("NES_CPU_WR", base+off+i, 0xA0)
+		dict.nes("NES_CPU_WR", base+off+i, string.byte(msg2,i))	--line 2 of message
+		print("write:", string.byte(msg2,i))
+		i=i+1
+	end
+
+	off = off + i
+
+	dict.nes("NES_CPU_WR", base+off, 0xA0)
+	dict.nes("NES_CPU_WR", base+off, 0x00)		--end current line
+
+	--]]
+
+
+	--poll until stops toggling, or data is as wrote
+--	rv = dict.nes("NES_CPU_RD", 0x8BDC)
+--	print (rv)
+
+
+	--exit unlock bypass
+	dict.nes("NES_CPU_WR", 0x8000, 0x90)
+	dict.nes("NES_CPU_WR", 0x8000, 0x00)
+	--reset the flash chip
 	dict.nes("NES_CPU_WR", 0x8000, 0xF0)
 
 end
@@ -92,6 +212,16 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 --test cart by reading manf/prod ID
 	if test then
 		prgrom_manf_id(true)
+
+		--manipulate gift message
+		local base = 0x8BD0
+		local start_offset = 0xC
+		local len = 80
+		read_gift(base, len)
+
+		write_gift(base, start_offset)
+
+		read_gift(base, len)
 	end
 
 --dump the cart to dumpfile

@@ -4,6 +4,7 @@
 //Define the board type in makefile
 //#define AVR_KAZZO
 //#define STM_ADAPTER
+//#define STM_INL6_PROTO
 //#define STM_INL6 
 
 #ifdef AVR_CORE
@@ -213,6 +214,89 @@ void software_AXL_CLK();
 // Unlike all previous version above this has direct access to most pins
 // Only exception is one Flipflop for SegaGen A17-18, 20-23, #LO_MEM, & #TIME
 // 	flipflop also drives SNES PA0-7
+//
+// This version had 16bit data bus mapped to PB2-15 & PA9-10 (D0-15 linearly)
+// for 5v tolerance.  This kept the data bits linear, but doesn't have
+// much benefit and comes at the cost of slowing all 8bit data transfers.
+// The final version below changed this mapping.
+//
+// PA8: NES connected to M2 & 21.4Mhz SYSTEM CLOCK
+// 	SNES connected to both SYSCLK & MASTER CLOCK
+// PA10: NES- CIRAM_CE
+// PB1: NES CIC CLK & LED, this caused problems when SWIM needed to be on CICCLK
+// SNES PA0-7 are behind flipflop, some of other expansion pins are SW alt signals or shared
+// PA4: AUDIOL is connected to NES/famicom audio out which may conflict with GB pin31 irq/audio
+//
+//
+// STM32F070RBT6 "INL RETRO 6" First Release
+// minor changes to prototype above still has 6 connectors: 
+// 	GBA/DMG, SNES/SFC, NES, N64, Sega gen, Famicom
+// Orange solder mask
+// Labeled "INL RETRO PROGRAMMER DUMPER V2.0"
+// Dated APR 2018
+// Like prototype this has direct access to most pins but some are behind a flipflop
+// It changed pinouts to gain connection to *ALL* cartridge pins unlike the prototype
+// This version also added P-mos transistor and schottky diode for software control
+// of Gameboy/GBA supply voltage.
+//
+// PB8-15: DATA 0-7
+// PB2-7 and PA9-10: DATA 8-15
+//
+// NES changes:
+// Expansion port connections are affected by rearrangement of DATA PORT
+// 	but the assignment of D# to EXP# are the same
+// NES M2 & SYSTEM CLOCK split up & CIRAM /CE moved
+// PA8: 21Mhz SYSCLK
+// PA10: M2 (can now be driven independent of software with TIM1_CH3)
+// PA13: CIRAM /CE
+// CIC CLK moved off of LED signal since will be used for SWIM
+// PC0: Drives both A0 & CIC CLK
+// PB1: LED doesn't share any NES signals
+//
+// SNES changes:
+// Expansion PA0-7 are no longer behind flipflop, connected to AD0-7 instead
+// PA /RD, PA /WR, /REFRESH, & /WRAMSEL are now mapped to FLIPFLOP:4-7
+// SYSCLK & MASTER CLOCK split up
+// PA1: SYSCLK (pin 57)
+// PA8: 21Mhz MASTER CLOCK
+// PA7: unused to keep from conflicting with GB power sel
+// PA13: connected to EXPAND now
+// PC0: Drives both A0 & CIC CLK
+//
+// SEGA GENESIS changes:
+// PC0: AD0 is connected to A1 & #CAS
+// PC1: AD1 is connected to A2 & Vsync
+// PC2: AD2 is connected to A3 & Video
+// PB1: LED is connected to #H_RESET (bidirectional hard reset should be open drain)
+// 
+//
+// GAMEBOY/GBA changes:
+// pin31 GBirq/GBAaudio PA5 (AUDIOR) because NES/famicom may drive PA4 (audioL)
+// PA7: selects GB voltage supply via Pmos & diode
+//   mcu pin connects to pmos gate with source connected to 5v
+//   schottky diode between 3v3 and GB power
+//   -PA7 low: Vgs = -5v, mosfet on, GB power ~5v
+//   -PA7 high: Vgs = -1.7v mosfet mostly off
+//    diode supplies power ~3v
+//   without a load on the GB slot, ~5v is present regardless of PA7
+// BSS84 mosfet has max Id of 130mA with Rds of ~10ohm
+//  can support up to 520mA pulsed
+// RB521S30T schottky diode has Vf of 0.5v @ 200mA
+//  @ 25C 20ma: Vf= 0.3v, 100mA: Vf= 0.37v
+//  testing data 47ohm load:
+//  	PA7 low (0v @ gate) 90mA 4.74v (~2.8Rds plus fuse cable etc)
+//  	PA7 hi (3.3v @ gate) 54mA 2.97v (~0.33Vf)
+//  testing data 23ohm load:
+//  	PA7 low (0v @ gate) 159mA 4.51v (~2.8Rds plus fuse cable etc)
+//  		Vusb = 4.84, Vfuse = 4.77, -> Vds = 260mV -> Rds = 1.6ohm
+//  	PA7 hi (3.3v @ gate) 103mA 2.94v (~0.36Vf)
+//  in practice should be able to expect GB power to be 2.9v / 4.5v
+//  this more than satisfies 2.7v requirement for 3v flash
+//  and 4.5v is more than adequate for 5v chips/regulators
+//
+//
+//
+//
 
 
 
@@ -368,11 +452,31 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 
-#ifdef STM_INL6
+#ifdef STM_INL6_PROTO
 
-	//     PC0  "MCO"	mcupinA8
+	//     PC0  "M2"	mcupinA8
 	#define C0bank 		GPIOA 
 	#define C0		(8U)
+
+	//     PC6  "CICE" 	mcupinA10
+	#define C6bank 		GPIOA 
+	#define C6		(10U)
+
+#endif
+
+#ifdef STM_INL6
+
+	//     PC0  "M2"	mcupinA10
+	#define C0bank 		GPIOA 
+	#define C0		(10U)
+
+	//     PC6  "CICE" 	mcupinA13
+	#define C6bank 		GPIOA 
+	#define C6		(13U)
+
+#endif
+
+#if defined (STM_INL6_PROTO) || defined(STM_INL6)
 	
 	//     PC1  "ROMSEL"	mcupinA0
 	#define C1bank 		GPIOA 
@@ -393,10 +497,6 @@ void software_AXL_CLK();
 	//     PC5  "CSWR"	mcupinA3
 	#define C5bank 		GPIOA 
 	#define C5		(3U)
-
-	//     PC6  "CICE" 	mcupinA10
-	#define C6bank 		GPIOA 
-	#define C6		(10U)
 
 	//     PC7  "AHL"
 	//     Not defined
@@ -434,7 +534,7 @@ void software_AXL_CLK();
 	#define C15bank 	GPIOA 
 	#define C15		(5U)
 
-	//     PC16 "CIN" 	mcupinA7
+	//     PC16 "GBP" 	mcupinA7
 	#define C16bank 	GPIOA 
 	#define C16		(7U)
 
@@ -459,6 +559,7 @@ void software_AXL_CLK();
 	#define C21		C15
 
 /* NEED MORE UNIQUE names for these pins to not conflict with Data port definitions...
+ * these changed around from proto to final
 	//     PCxx "D8" 	mcupinB10
 	#define Cxxbank 	GPIOB 
 	#define Cxx		(10U)
@@ -492,11 +593,11 @@ void software_AXL_CLK();
 #define RCC_AHBENR_EXP		(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
 
 
-#endif //STM_INL6
+#endif //STM_INL6 & PROTO
 
 #ifdef STM_ADAPTER
 
-	//     PC0  "MCO"	mcupinA3
+	//     PC0  "M2"	mcupinA3
 	#define C0bank 		GPIOA 
 	#define C0		(3U)
 	
@@ -563,7 +664,7 @@ void software_AXL_CLK();
 	//     Not defined
 	#define C15nodef
 
-	//     PC16 "CIN" 
+	//     PC16 "GBP" 
 	//     Not defined
 	#define C16nodef
 
@@ -597,7 +698,7 @@ void software_AXL_CLK();
 
 #ifdef AVR_KAZZO
 
-	//     PC0  "MCO"	mcupinC0
+	//     PC0  "M2"	mcupinC0
 	#define C0bank 		GPIOC 
 	#define C0		(0U)
 	
@@ -664,7 +765,7 @@ void software_AXL_CLK();
 	//     not defined
 	#define C15nodef
 
-	//     PC16 "CIN" 
+	//     PC16 "GBP" 
 	//     not defined
 	#define C16nodef
 
@@ -697,9 +798,9 @@ void software_AXL_CLK();
 ////////////////////////////////////////////////////////////////////////////////
 //
 //	PC0-13 are defined based on majority of avr kazzos PORTC-PORTD
-//	PC0  "MCO"	mcu clock out M2/phi2, Sysclk, etc
-#define MCO 		C0
-#define MCObank		C0bank
+//	PC0  "M2"	NES M2/phi2
+#define M2 		C0
+#define M2bank		C0bank
 
 //	PC1  "ROMSEL"	Cartridge rom enable
 #define ROMSEL 		C1
@@ -733,7 +834,7 @@ void software_AXL_CLK();
 #define EXP0 		C8
 #define EXP0bank	C8bank
 
-//	PC9  "LED" 	kazzos tied this to NES EXP9, INL6 connects to CIC CLK
+//	PC9  "LED" 	kazzos tied this to NES EXP9
 #define LED 		C9
 #define LEDbank		C9bank
 
@@ -762,9 +863,9 @@ void software_AXL_CLK();
 #define AUDR 		C15
 #define AUDRbank	C15bank
 
-//	PC16 "CIN"	CIC data in
-#define CIN 		C16
-#define CINbank		C16bank
+//	PC16 "GBP"	Gameboy power select
+#define GBP 		C16
+#define GBPbank		C16bank
 
 //	PC17 "SWD" 	mcu debug
 #define SWD 		C17
@@ -853,7 +954,8 @@ void software_AXL_CLK();
 // CONTROL PORT MACROS to simplify flipflop operations
 //
 
-#ifndef STM_INL6
+//#ifndef STM_INL6
+#if !defined (STM_INL6_PROTO) && !defined(STM_INL6)
 	
 	#ifdef GREEN_KAZZO
 		#define AHL_CLK()      software_AHL_CLK()
@@ -882,15 +984,36 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 //
-#ifdef STM_INL6
+#ifdef STM_INL6 
+
+	//All 8bits are on upper byte of GPIOB inorder
+	//PB8-15 map to D0-7
+	//PB2-7 map to D8-13
+	//PA9-10 map to D14-15 (unchanged from prototype)
+	#define Dbank 		GPIOB 
+
+	//IP and OP assume MODER[1] is clear (ie not set to Alt Func)
+	//also assume PUPDR is reset default floating
+	#define DATA_IP_PU()	Dbank->MODER &= ~(MODER_OP_ALL & 0xFFFF0000); Dbank->PUPDR |= (PUPDR_PU_ALL & 0xFFFF0000)
+	#define DATA_IP()	Dbank->MODER &= ~(MODER_OP_ALL & 0xFFFF0000)
+	#define DATA_OP()	Dbank->MODER |=  (MODER_OP_ALL & 0xFFFF0000)
+	#define DATA_SET(data)	Dbank->ODR = (Dbank->ODR & 0x00FF) | (data<<8)			
+	#define DATA_RD(data)	data = (Dbank->IDR>>8) & 0x00FF
+
+	#define DATA_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_DATA
+	#define DATA_ENABLE()	DATA_EN_CLK(); DATA_IP_PU();
+
+
+#endif	//STM_INL6
+
+#ifdef STM_INL6_PROTO
 
 	//All 8bits are on GPIOB inorder, but mapped to bits9-2 for 5v tolerance
 	//I get why I designed it that way so D8-13 could follow in order..
 	//But with D8-15 required to be broken up anyways, perhaps it would have
 	//made more sense to map D0-7 to bits 9-15 so byte access could be performed
 	//without shifting on Data7-0...
-	//IDK if I will reroute the board for production or not... Only other way to
-	//do it senisbly really makes a mess of the upper byte of Data
+	//This is what I did for final production version v2.0 above
 	#define Dbank 		GPIOB 
 
 	//IP and OP assume MODER[1] is clear (ie not set to Alt Func)
@@ -905,7 +1028,7 @@ void software_AXL_CLK();
 	#define DATA_ENABLE()	DATA_EN_CLK(); DATA_IP_PU();
 
 
-#endif	//STM_INL6
+#endif	//STM_INL6_PROTO
 
 #ifdef STM_ADAPTER
 
@@ -953,7 +1076,7 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 
-#ifdef STM_INL6
+#if defined (STM_INL6_PROTO) || defined(STM_INL6)
 
 	//All 16bits are on GPIOC in perfect alignment
 	#define Abank 		GPIOC 
@@ -962,13 +1085,18 @@ void software_AXL_CLK();
 	#define ADDR_IP()	Abank->MODER &= ~MODER_OP_ALL
 	#define ADDR_OP()	Abank->MODER |=  MODER_OP_ALL 
 	#define ADDRL(low)	Abank->ODR = (Abank->ODR & 0xFF00) | low						
-	#define ADDRH(high)	Abank->ODR = (Abank->ODR & 0x00FF) | (high<<8)			
+	#define ADDRH(high)	Abank->ODR = (Abank->ODR & 0x00FF) | (high<<8)	
+	//Not sure why but this wasn't working on inl6 detection of vertical mirroring was failing..
+	//seems to not be reading the ODR, maybe getting optimized out..?
+	//works fine on stmad and AVR which have ADDRH behind flipflop
+	//Appears to be working for setting A10, but not A11 reguardless of order of execution..
+	//TODO really these macros should be making byte writes to the registers, not 16bit RMW
 	#define ADDR_SET(hword)	Abank->ODR = hword
 
 	#define ADDR_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_ADDR
 	#define ADDR_ENABLE()	ADDR_EN_CLK(); ADDR_OP()
 
-#endif	//STM_INL6
+#endif	//STM_INL6 & PROTO
 
 #ifdef STM_ADAPTER
 
@@ -1036,7 +1164,7 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 
-#ifdef STM_INL6
+#if defined (STM_INL6_PROTO) || defined(STM_INL6)
 
 	//pins1-5 = GPIOB10-14 (D8-12), pin6 = GPIOA4 (AUDL), pin7 = GPIOB15 (D13), pin8 = GPIOA14 (SWCLK)
 	//these defines are quite the mess currently due to pins all over the place
@@ -1056,7 +1184,7 @@ void software_AXL_CLK();
 	#define EXP_ENABLE()	ADDR_EN_CLK(); EXP_OP()
 	#define EXP_DISABLE()	EXP_PU(); EXP_IP()
 
-//end STM_INL6
+//end STM_INL6 & PROTO
 #else	//AVR_KAZZO or STM_ADAPTER
 
 
@@ -1097,16 +1225,16 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 
-#ifdef STM_INL6
+#if defined STM_INL6_PROTO
 
 	//A16-21 are on PB10-15	these also map to EXP1-5, & 7
 	//A22-23 are on PA9-10 these also map to CIRAM A10 & CIRAM /CE respectively
 	#define A16_21bank	GPIOB 
 	#define A22_23bank 	GPIOA 
 
-	#define HADDR_PU()	A16_21bank->PUPDR |= (PUPDR_PU_ALL & 0xFFF00000); A22_23bank->PUPDR |= (PUPDR_PU_ALL & 0x0003C000)
-	#define HADDR_IP()	A16_21bank->MODER &=~(MODER_OP_ALL & 0xFFF00000); A22_23bank->MODER &=~(MODER_OP_ALL & 0x0003C000)
-	#define HADDR_OP()	A16_21bank->MODER |= (MODER_OP_ALL & 0xFFF00000); A22_23bank->MODER |= (MODER_OP_ALL & 0x0003C000)
+	#define HADDR_PU()	A16_21bank->PUPDR |= (PUPDR_PU_ALL & 0xFFF00000); A22_23bank->PUPDR |= (PUPDR_PU_ALL & 0x003C0000)
+	#define HADDR_IP()	A16_21bank->MODER &=~(MODER_OP_ALL & 0xFFF00000); A22_23bank->MODER &=~(MODER_OP_ALL & 0x003C0000)
+	#define HADDR_OP()	A16_21bank->MODER |= (MODER_OP_ALL & 0xFFF00000); A22_23bank->MODER |= (MODER_OP_ALL & 0x003C0000)
 
 	#define HADDR_SET(val)	A16_21bank->ODR = ((A16_21bank->ODR&0x03FF) | (val<<10 & 0xFC00)); A22_23bank->ODR = ((A22_23bank->ODR & 0xF9FF) | (val<<3 & 0x0600))
 
@@ -1114,7 +1242,24 @@ void software_AXL_CLK();
 	#define HADDR_ENABLE()	HADDR_EN_CLK(); HADDR_OP()
 	#define HADDR_DISABLE()	HADDR_PU(); HADDR_IP()
 
-//end STM_INL6
+#elif defined STM_INL6
+
+	//A16-21 are on PB2-7	these also map to EXP1-5, & 7 (changed from prototype)
+	//A22-23 are on PA9-10 these also map to CIRAM A10 & CIRAM /CE respectively
+	#define A16_21bank	GPIOB 
+	#define A22_23bank 	GPIOA 
+
+	#define HADDR_PU()	A16_21bank->PUPDR |= (PUPDR_PU_ALL & 0x0000FFF0); A22_23bank->PUPDR |= (PUPDR_PU_ALL & 0x003C0000)
+	#define HADDR_IP()	A16_21bank->MODER &=~(MODER_OP_ALL & 0x0000FFF0); A22_23bank->MODER &=~(MODER_OP_ALL & 0x003C0000)
+	#define HADDR_OP()	A16_21bank->MODER |= (MODER_OP_ALL & 0x0000FFF0); A22_23bank->MODER |= (MODER_OP_ALL & 0x003C0000)
+
+	#define HADDR_SET(val)	A16_21bank->ODR = ((A16_21bank->ODR&0xFF03) | (val<<2 & 0x00FC)); A22_23bank->ODR = ((A22_23bank->ODR & 0xF9FF) | (val<<3 & 0x0600))
+
+	#define HADDR_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_HADDR
+	#define HADDR_ENABLE()	HADDR_EN_CLK(); HADDR_OP()
+	#define HADDR_DISABLE()	HADDR_PU(); HADDR_IP()
+
+//end STM_INL6 & PROTO
 #else	//AVR_KAZZO or STM_ADAPTER
 
 
@@ -1156,7 +1301,7 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 
-#ifdef STM_INL6
+#if defined (STM_INL6_PROTO) || defined(STM_INL6)
 
 	//     PE0  "A0"	mcupinC0
 	#define E0bank 		GPIOC 
@@ -1179,7 +1324,7 @@ void software_AXL_CLK();
 	#define E4		(12U)
 
 
-#endif //STM_INL6
+#endif //STM_INL6 & PROTO
 
 
 #ifdef STM_ADAPTER
@@ -1228,7 +1373,7 @@ void software_AXL_CLK();
 #define D0bank		E1bank
 
 //JTAG pins for INL6
-#ifdef STM_INL6
+#if defined (STM_INL6_PROTO) || defined(STM_INL6)
 	
 //TDI
 #define D8 		E2

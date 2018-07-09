@@ -71,7 +71,7 @@ void io_reset()
 
 	//pull up control port
 	CTL_ENABLE();
-	MCO_IP_PU();
+	M2_IP_PU();
 	ROMSEL_IP_PU();
 	PRGRW_IP_PU();
 	CSRD_IP_PU();
@@ -128,8 +128,8 @@ void nes_init()
 	ROMSEL_OP();
 	ROMSEL_HI();
 	//WRAM (and state of m2 during first half of CPU cycle)
-	MCO_OP();
-	MCO_LO();
+	M2_OP();
+	M2_LO();
 	//CPU RD
 	PRGRW_OP();
 	PRGRW_HI();

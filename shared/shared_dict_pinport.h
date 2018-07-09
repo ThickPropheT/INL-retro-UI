@@ -53,9 +53,9 @@
 #define	CTL_OD_		24
 #define	CTL_PP_		25
 	//operands
-//	PC0  "MCO"	mcu clock out M2/phi2, Sysclk, etc
+//	PC0  "M2"	NES M2/phi signal
 	#define	C0_		0
-	#define	MCO_		0
+	#define	M2_		0
 //	PC1  "ROMSEL"	Cartridge rom enable
 	#define	C1_		1
 	#define	ROMSEL_		1
@@ -103,9 +103,9 @@
 //	PC15 "AUDR"	cart audio
 	#define	C15_		15
 	#define	AUDR_		15
-//	PC16 "CIN"	CIC data in  & GB power selector
+//	PC16 "GBP"	GB power selector
 	#define	C16_		16
-	#define	CIN_		16
+	#define	GBP_		16
 //	PC17 "SWD" 	mcu debug
 	#define	C17_		17
 	#define	SWD_		17

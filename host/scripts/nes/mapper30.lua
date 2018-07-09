@@ -1,0 +1,163 @@
+
+-- create the module's table
+local mapper30 = {}
+
+-- import required modules
+local dict = require "scripts.app.dict"
+local nes = require "scripts.app.nes"
+local dump = require "scripts.app.dump"
+local flash = require "scripts.app.flash"
+
+-- file constants
+
+-- local functions
+
+--read PRG-ROM flash ID
+local function prgrom_manf_id( debug )
+
+
+	if debug then print("reading PRG-ROM manf ID") end
+	--no bus conflicts
+	--$8000-BFFF writes to flash
+	--$C000-FFFF writes to mapper
+	--ROM A14 is mapper controlled
+	--
+	--A15 14 - 13 12
+	-- 1   1    0  1  : 0x5555 -> bank1, $9555
+	-- 1   0    1  0  : 0x2AAA -> bank0, $AAAA
+	dict.nes("NES_CPU_WR", 0xC000, 0x01)
+	dict.nes("NES_CPU_WR", 0x9555, 0xAA)
+
+	dict.nes("NES_CPU_WR", 0xC000, 0x00)
+	dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
+
+	dict.nes("NES_CPU_WR", 0xC000, 0x01)
+	dict.nes("NES_CPU_WR", 0x9555, 0x90)
+
+	rv = dict.nes("NES_CPU_RD", 0x8000)
+	if debug then print("attempted read PRG-ROM manf ID:", string.format("%X", rv)) end
+	rv = dict.nes("NES_CPU_RD", 0x8001)
+	if debug then print("attempted read PRG-ROM prod ID:", string.format("%X", rv)) end
+
+	--exit software
+	dict.nes("NES_CPU_WR", 0x8000, 0xF0)
+
+end
+
+
+--Cart should be in reset state upon calling this function 
+--this function processes all user requests for this specific board/mapper
+local function process( test, read, erase, program, verify, dumpfile, flashfile, verifyfile)
+
+	local rv = nil
+	local file 
+
+--initialize device i/o for NES
+	dict.io("IO_RESET")
+	dict.io("NES_INIT")
+
+--test cart by reading manf/prod ID
+	if test then
+		nes.detect_mapper_mirroring(true)
+		nes.ppu_ram_sense(0x1000, true)
+		print("EXP0 pull-up test:", dict.io("EXP0_PULLUP_TEST"))	
+
+		prgrom_manf_id( debug )
+	end
+
+--dump the cart to dumpfile
+	if read then
+		file = assert(io.open(dumpfile, "wb"))
+
+		--dump cart into file
+		dump.dumptofile( file, 512, "MAP30", "PRGROM", true )
+
+		--close file
+		assert(file:close())
+	end
+
+
+--erase the cart
+	if erase then
+
+
+		print("\nerasing mapper 30");
+
+		print("erasing PRG-ROM");
+		dict.nes("NES_CPU_WR", 0xC000, 0x01)
+		dict.nes("NES_CPU_WR", 0x9555, 0xAA)
+
+		dict.nes("NES_CPU_WR", 0xC000, 0x00)
+		dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
+
+		dict.nes("NES_CPU_WR", 0xC000, 0x01)
+		dict.nes("NES_CPU_WR", 0x9555, 0x80)
+
+		dict.nes("NES_CPU_WR", 0xC000, 0x01)
+		dict.nes("NES_CPU_WR", 0x9555, 0xAA)
+
+		dict.nes("NES_CPU_WR", 0xC000, 0x00)
+		dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
+
+		dict.nes("NES_CPU_WR", 0xC000, 0x01)
+		dict.nes("NES_CPU_WR", 0x9555, 0x10)
+
+		rv = dict.nes("NES_CPU_RD", 0x8000)
+
+		local i = 0
+
+		--TODO create some function to pass the read value 
+		--that's smart enough to figure out if the board is actually erasing or not
+		while ( rv ~= 0xFF ) do
+			rv = dict.nes("NES_CPU_RD", 0x8000)
+			i = i + 1
+		end
+		print(i, "naks, done erasing prg.");
+
+	end
+
+
+--program flashfile to the cart
+	if program then
+
+		--open file
+		file = assert(io.open(flashfile, "rb"))
+		--determine if auto-doubling, deinterleaving, etc, 
+		--needs done to make board compatible with rom
+
+
+		--flash cart
+		flash.write_file( file, 512, "MAP30", "PRGROM", true )
+		--close file
+		assert(file:close())
+
+	end
+
+--verify flashfile is on the cart
+	if verify then
+		--for now let's just dump the file and verify manually
+
+		file = assert(io.open(verifyfile, "wb"))
+
+		--dump cart into file
+		dump.dumptofile( file, 512, "MAP30", "PRGROM", true )
+
+		--close file
+		assert(file:close())
+	end
+
+	dict.io("IO_RESET")
+end
+
+
+-- global variables so other modules can use them
+
+
+-- call functions desired to run when script is called/imported
+
+
+-- functions other modules are able to call
+mapper30.process = process
+
+-- return the module's table
+return mapper30

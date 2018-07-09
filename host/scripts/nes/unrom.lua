@@ -20,7 +20,7 @@ local function init_mapper( debug )
 	--becomes catch 22 situation.  Will have to rely on mcu over powering PRG-ROM..
 	--ahh but a way out would be to disable the PRG-ROM with exp0 (/WE) going low
 	--for now the write below seems to be working fine though..
-	dict.nes("NES_CPU_WR", 0x8000, 0x80)
+	dict.nes("NES_CPU_WR", 0x8000, 0x00)
 end
 
 local function wr_flash_byte(addr, value, debug)
@@ -39,22 +39,59 @@ local function wr_flash_byte(addr, value, debug)
 		i = i + 1
 	end
 	if debug then print(i, "naks, done writing byte.") end
+
+	--TODO report error if write failed
+	
 end
 
 --base is the actual NES CPU address, not the rom offset (ie $FFF0, not $7FF0)
-local function wr_bank_table(base, entries)
+local function wr_bank_table(base, entries, numtables)
+
+	local cur_bank 
+
+	--need to have A14 clear when lower bank enabled
+	init_mapper()
 
 	--UxROM can have a single bank table in $C000-FFFF (assuming this is most likely)
 	--or a bank table in all other banks in $8000-BFFF
 	
-	--need to have A14 clear when lower bank enabled
-	init_mapper()
-
 	local i = 0
 	while( i < entries) do
 		wr_flash_byte(base+i, i)
 		i = i+1;
 	end
+
+	--[[
+	if( base >= 0xC000 ) then 
+		--only need one bank table in last bank
+		cur_bank = entries - 1  --16 minus 1 is 15 = 0x0F
+	else
+		--need bank table in all banks except last
+		cur_bank = entries - 2  --16 minus 2 is 14 = 0x0E
+	end
+
+
+	while( cur_bank >= 0 ) do
+		--select bank to write to (last bank first)
+		--use the bank table to make the switch
+		dict.nes("NES_CPU_WR", base+cur_bank, cur_bank)
+
+		--write bank table to selected bank
+		local i = 0
+		while( i < entries) do
+			print("write entry", i, "bank:", cur_bank)
+			wr_flash_byte(base+i, i)
+			i = i+1;
+		end
+
+		cur_bank = cur_bank-1
+
+		if( base >= 0xC000 ) then 
+			--only need one bank table in last bank
+			break
+		end
+	end
+	--]]
 
 	--TODO verify the bank table was successfully written before continuing!
 
@@ -135,9 +172,13 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--find bank table in the rom
 		--write bank table to all banks of cartridge
 		--Nomolos' bank table is at $CC84 so hard code that for now
-		wr_bank_table(0xCC84, 32)
+		--wr_bank_table(0xCC84, 32)
 		--Owlia bank table
-		--wr_bank_table(0xE473, 32)
+		wr_bank_table(0xE473, 32)
+		--rushnattack
+		--wr_bank_table(0x8000, 8)
+		--twindragons
+		--wr_bank_table(0xC000, 32)
 
 		--flash cart
 		flash.write_file( file, 512, "UxROM", "PRGROM", true )

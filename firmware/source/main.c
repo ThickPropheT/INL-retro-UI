@@ -59,6 +59,9 @@ int main(void)
 	//Change system clock as needed
 	init_clock();
 
+	
+	//now enable GPIO and set
+
 //trying to move to 48Mhz clock for all STM32 cores
 	//If >24Mhz SYSCLK, must add wait state to flash
 	//can also enable prefetch buffer
@@ -86,6 +89,22 @@ int main(void)
 
 	//intialize i/o and LED to pullup state
 	io_reset();
+
+//this is just a quick hack to allow measuring HSE with a scope w/o loading the circuit with probes.
+//#define DRIVE_MCO
+#ifdef DRIVE_MCO
+	//drive HSE (8Mhz) divided by 8 = 1Mhz for crystal load capacitor calibration
+	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOPRE) | RCC_CFGR_MCOPRE_DIV8; 	/* MCO prescaler = div 8 */
+	//RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOPRE) | RCC_CFGR_MCOPRE_DIV16; 	/* MCO prescaler = div 16 */
+	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCO) | RCC_CFGR_MCO_HSE; 		/* MCO source HSE */
+	//enable GPIO pin PA8 MCO AF0
+	//RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+	//CTL_ENABLE();
+	nes_init();
+	//GPIOA->MODER = MODER_AF << (2*8U);	//set PA8 to AF
+	GPIOA->MODER = 0x28020000;	//set PA14, PA13, (SWD) &  PA8 (MCO) to AF
+	//AF0 is the default value of GPIOx_AFRH/L registers so MCO is already selected as AF in use
+#endif
 
 	//initialize jtag engine to be off
 	pbje_status = PBJE_OFF;

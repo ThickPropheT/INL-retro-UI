@@ -534,7 +534,8 @@ local function flash_snes( file, debug )
 			--print(nak, "cur_buff->status: ", cur_buff_status)
 			cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
 		end
-		if ( i == 2048*1024/buff_size) then break end 
+		--if ( i == 2048*1024/buff_size) then break end 
+		if ( i == 4096*1024/buff_size) then break end 
 --		if ( i == 32*1024/buff_size) then break end 
 		i = i + 1
 --		if ( (i % (2048*1024/buff_size/16)) == 0) then

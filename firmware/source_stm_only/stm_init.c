@@ -54,7 +54,11 @@ void HardFault_Handler(void)
 
 //pick define based on xtal setup for init_clock and init_usb_clock functions
 //#define NO_XTAL
-#define XTAL_16Mhz
+#ifdef STM_INL6
+	#define XTAL_8Mhz
+#else	//kaz6 prototype & stm adapter have 16Mhz xtal
+	#define XTAL_16Mhz
+#endif
 void init_clock()
 {
 #ifdef NO_XTAL // setup PLL for HSI * 2 = 16Mhz and set SYSCLK to use it
@@ -104,6 +108,63 @@ void init_clock()
 
 #endif
 	
+#ifdef XTAL_8Mhz
+
+	//Turn on HSE
+	/* (2) Enable the CSS
+	 * Enable the HSE and set HSEBYP to use the internal clock
+	 * Enable HSE */
+	RCC->CR |= (RCC_CR_CSSON | RCC_CR_HSEON); /* (2) */
+
+	/* (1) Check the flag HSE ready */
+	while ((RCC->CR & RCC_CR_HSERDY) == 0) /* (1) */
+	{ /*spin while waiting for HSE to be ready */	}
+
+
+	/* (3) Switch the system clock to HSE */
+	//at startup HSI is selected SW = 00
+	RCC->CFGR |= RCC_CFGR_SW_HSE;
+
+	//TODO poll RCC->CFGR SWS bits to ensure sysclk switched over
+
+	//Now the SYSCLK is running directly off the HSE 16Mhz xtal
+
+	/* (1) Test if PLL is used as System clock */
+//	if ((RCC->CFGR & RCC_CFGR_SWS) == RCC_CFGR_SWS_PLL) {
+//		RCC->CFGR &= (uint32_t) (~RCC_CFGR_SW); /* (2) Select HSI as system clock */
+//		while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) /* (3) Wait for HSI switched */
+//		{ /* For robust implementation, add here time-out management */ }
+//	}
+//
+//	RCC->CR &= (uint32_t)(~RCC_CR_PLLON);/* (4) Disable the PLL */
+//	while((RCC->CR & RCC_CR_PLLRDY) != 0) /* (5) Wait until PLLRDY is cleared */
+//	{ /* For robust implementation, add here time-out management */ }
+
+	//Set PLL Source to HSE, the PLL must be off to do this
+	RCC->CFGR |= RCC_CFGR_PLLSRC_HSE_PREDIV;	//by default HSE isn't divided
+	
+	////Set PLL to 16 * 3 = 48Mhz for USB
+	////RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_PLLMUL) | RCC_CFGR_PLLMUL3; /* PLLMUL set to *2 at reset) */
+	//RCC->CFGR |= RCC_CFGR_PLLMUL3; /* PLLMUL set to *2 at reset) */
+	//RCC->CR |= RCC_CR_PLLON; /* (7) Enable the PLL */
+	//while((RCC->CR & RCC_CR_PLLRDY) == 0) /* (8) Wait until PLLRDY is set */
+	//{ /* For robust implementation, add here time-out management */ }
+	//
+	//Set PLL to 8 * 6 = 48Mhz for USB
+	//RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_PLLMUL) | RCC_CFGR_PLLMUL3; /* PLLMUL set to *2 at reset) */
+	RCC->CFGR |= RCC_CFGR_PLLMUL6; /* PLLMUL set to *2 at reset) */
+	RCC->CR |= RCC_CR_PLLON; /* (7) Enable the PLL */
+	while((RCC->CR & RCC_CR_PLLRDY) == 0) /* (8) Wait until PLLRDY is set */
+	{ /* For robust implementation, add here time-out management */ }
+
+	//test SYSCLK with 48Mhz
+//	FLASH->ACR |= (uint32_t) 0x01;	//If >24Mhz SYSCLK, must add wait state to flash
+//	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_PLL; /* (9) Select PLL as system clock */
+//	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) /* (10) Wait until the PLL is switched on */
+//	{ /* For robust implementation, add here time-out management */ }
+
+#endif
+
 
 #ifdef XTAL_16Mhz
 
@@ -165,5 +226,6 @@ void init_clock()
 	
 	//AHB APB clock setup:
 	//these are not divided by default
+	
 }
 

@@ -16,13 +16,13 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 // CONTROL (CTL) PORT PINS
 ////////////////////////////////
 
-//     PC0  "MCO"
-#define	MCO_IP_PU()	CTL_IP_PU(MCObank, MCO)
-#define	MCO_IP_FL()	CTL_IP_FL(MCObank, MCO)
-#define	MCO_OP()	CTL_OP(MCObank, MCO)
-#define MCO_LO()	CTL_SET_LO(MCObank, MCO)
-#define MCO_HI()	CTL_SET_HI(MCObank, MCO)
-#define MCO_RD(val)	CTL_RD(MCObank, MCO, val)
+//     PC0  "M2"
+#define	M2_IP_PU()	CTL_IP_PU(M2bank, M2)
+#define	M2_IP_FL()	CTL_IP_FL(M2bank, M2)
+#define	M2_OP()		CTL_OP(M2bank, M2)
+#define M2_LO()		CTL_SET_LO(M2bank, M2)
+#define M2_HI()		CTL_SET_HI(M2bank, M2)
+#define M2_RD(val)	CTL_RD(M2bank, M2, val)
 
 //     PC1  "ROMSEL"
 #define	ROMSEL_IP_PU()	CTL_IP_PU(ROMSELbank, ROMSEL)

@@ -5,7 +5,7 @@ WINLIB= -L ./winlib
 LIBUSB= -lusb-1.0
 CC= gcc
 
-SOURCES=$(wildcard source/*.c)
+SOURCES=$(wildcard source/*.c source/lua/*.c)
 OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
 
 LUAOBJ=$(wildcard source/lua/*.o)

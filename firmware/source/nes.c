@@ -38,14 +38,21 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 		case NES_CPU_WR:	
 			nes_cpu_wr( operand, miscdata );
 			break;
+		case NES_DUALPORT_WR:	
+			nes_dualport_wr( operand, miscdata );
+			break;
 //		case DISCRETE_EXP0_MAPPER_WR:	
 //			discrete_exp0_mapper_wr( operand, miscdata );
 //			break;
+		case NES_MMC1_WR:	
+			mmc1_wr( operand, miscdata, 0 );
+			break;
 
 		//8bit return values:
-//		case EMULATE_NES_CPU_RD:
-//			*data = emulate_nes_cpu_rd( addrH, addrL );
-//			break;
+		case EMULATE_NES_CPU_RD:
+			rdata[RD_LEN] = BYTE_LEN;
+			rdata[RD0] = emulate_nes_cpu_rd( operand );
+			break;
 		case NES_CPU_RD:
 			rdata[RD_LEN] = BYTE_LEN;
 			rdata[RD0] = nes_cpu_rd( operand );
@@ -53,6 +60,10 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 		case NES_PPU_RD:
 			rdata[RD_LEN] = BYTE_LEN;
 			rdata[RD0] = nes_ppu_rd( operand );
+			break;
+		case NES_DUALPORT_RD:
+			rdata[RD_LEN] = BYTE_LEN;
+			rdata[RD0] = nes_dualport_rd( operand );
 			break;
 		case CIRAM_A10_MIRROR:
 			rdata[RD_LEN] = BYTE_LEN;
@@ -148,7 +159,7 @@ void	discrete_exp0_prgrom_wr( uint16_t addr, uint8_t data )
 //	DATA_SET(data);
 //
 //	//set M2 and /ROMSEL
-//	MCO_HI();
+//	M2_HI();
 //	if( addr >= 0x8000 ) {	//addressing cart rom space
 //		ROMSEL_LO();	//romsel trails M2 during CPU operations
 //	}
@@ -158,7 +169,7 @@ void	discrete_exp0_prgrom_wr( uint16_t addr, uint8_t data )
 //	NOP();
 //
 //	//latch data to cart memory/mapper
-//	MCO_LO();
+//	M2_LO();
 //	ROMSEL_HI();
 //
 //	//retore PRG R/W to default
@@ -209,67 +220,66 @@ void	discrete_exp0_prgrom_wr( uint16_t addr, uint8_t data )
 //}
 
 
-//	
-//	/* Desc:Emulate NES CPU Read as best possible
-//	 * 	decode A15 from addrH to set /ROMSEL as expected
-//	 * 	float EXP0
-//	 * 	toggle M2 as NES would
-//	 * 	insert some NOP's in to be slow like NES
-//	 * Note:not the fastest read operation
-//	 * Pre: nes_init() setup of io pins
-//	 * Post:address left on bus
-//	 * 	data bus left clear
-//	 * 	EXP0 left floating
-//	 * Rtn:	Byte read from PRG-ROM at addrHL
-//	 */
-//	uint8_t	emulate_nes_cpu_rd( uint8_t addrH, uint8_t addrL )
-//	{
-//		uint8_t	read;	//return value
-//	
-//		//m2 should be low as it aids in disabling WRAM
-//		//this is also m2 state at beginging of CPU cycle
-//		//all these pins should already be in this state, but
-//		//go ahead and setup just to be sure since we're trying
-//		//to be as accurate as possible
-//		_EXP0_FLT();	//this could have been left pulled up
-//		_M2_LO();	//start of CPU cycle
-//		_ROMSEL_HI();	//trails M2
-//		_PRGRW_RD();	//happens just after M2
-//	
-//		//set address bus
-//		ADDR_OUT = addrL;
-//		_ADDRH_SET(addrH);
-//		
-//		//couple NOP's to wait a bit
-//		NOP();
-//		NOP();
-//	
-//		//set M2 and /ROMSEL
-//		if( addrH >= 0x80 ) {	//addressing cart rom space
-//			_M2_HI();	
-//			_ROMSEL_LO();	//romsel trails M2 during CPU operations
-//		} else {
-//			_M2_HI();
-//		}
-//	
-//		//couple more NOP's waiting for data
-//		NOP();
-//		NOP();
-//		NOP();
-//		NOP();
-//		NOP();
-//		NOP();
-//	
-//		//latch data
-//		read = DATA_IN;
-//	
-//		//return bus to default
-//		_M2_LO();
-//		_ROMSEL_HI();
-//		
-//		return read;
-//	}
-//	
+
+/* Desc:Emulate NES CPU Read as best possible
+ * 	decode A15 from addrH to set /ROMSEL as expected
+ * 	float EXP0
+ * 	toggle M2 as NES would
+ * 	insert some NOP's in to be slow like NES
+ * Note:not the fastest read operation
+ * Pre: nes_init() setup of io pins
+ * Post:address left on bus
+ * 	data bus left clear
+ * 	EXP0 left floating
+ * Rtn:	Byte read from PRG-ROM at addrHL
+ */
+uint8_t	emulate_nes_cpu_rd( uint16_t addr )
+{
+	uint8_t	read;	//return value
+
+	//m2 should be low as it aids in disabling WRAM
+	//this is also m2 state at beginging of CPU cycle
+	//all these pins should already be in this state, but
+	//go ahead and setup just to be sure since we're trying
+	//to be as accurate as possible
+	EXP0_IP_FL();	//this could have been left pulled up
+	M2_LO();	//start of CPU cycle
+	ROMSEL_HI();	//trails M2
+	PRGRW_HI();	//happens just after M2
+
+	//set address bus
+	ADDR_SET(addr);
+	
+	//couple NOP's to wait a bit
+	NOP();
+	NOP();
+
+	//set M2 and /ROMSEL
+	if( addr >= 0x8000 ) {	//addressing cart rom space
+		M2_HI();	
+		ROMSEL_LO();	//romsel trails M2 during CPU operations
+	} else {
+		M2_HI();
+	}
+
+	//couple more NOP's waiting for data
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+	NOP();
+
+	//latch data
+	DATA_RD(read);
+
+	//return bus to default
+	M2_LO();
+	ROMSEL_HI();
+	
+	return read;
+}
+
 /* Desc:NES CPU Read without being so slow
  * 	decode A15 from addrH to set /ROMSEL as expected
  * 	float EXP0
@@ -288,7 +298,7 @@ uint8_t	nes_cpu_rd( uint16_t addr )
 	ADDR_SET(addr);
 	
 	//set M2 and /ROMSEL
-	MCO_HI();
+	M2_HI();
 	if( addr >= 0x8000 ) {	//addressing cart rom space
 		ROMSEL_LO();	//romsel trails M2 during CPU operations
 	}
@@ -305,7 +315,7 @@ uint8_t	nes_cpu_rd( uint16_t addr )
 	DATA_RD(read);
 
 	//return bus to default
-	MCO_LO();
+	M2_LO();
 	ROMSEL_HI();
 	
 	return read;
@@ -346,7 +356,7 @@ void	nes_cpu_wr( uint16_t addr, uint8_t data )
 	DATA_SET(data);
 
 	//set M2 and /ROMSEL
-	MCO_HI();
+	M2_HI();
 	if( addr >= 0x8000 ) {	//addressing cart rom space
 		ROMSEL_LO();	//romsel trails M2 during CPU operations
 	}
@@ -356,7 +366,7 @@ void	nes_cpu_wr( uint16_t addr, uint8_t data )
 	NOP();
 
 	//latch data to cart memory/mapper
-	MCO_LO();
+	M2_LO();
 	ROMSEL_HI();
 
 	//retore PRG R/W to default
@@ -365,6 +375,7 @@ void	nes_cpu_wr( uint16_t addr, uint8_t data )
 	//Free data bus
 	DATA_IP();
 }
+
 
 /* Desc:NES PPU Read 
  * 	decode A13 from addrH to set /A13 as expected
@@ -445,6 +456,87 @@ void	nes_ppu_wr( uint16_t addr, uint8_t data )
 }
 
 
+ 
+/* Desc:NES dual port Read from the PPU 
+ * 	/A13 as ignored
+ * Pre: nes_init() setup of io pins
+ * Post:address left on bus
+ * 	data bus left clear
+ * Rtn:	Byte read from CHR-ROM/RAM at addrHL
+ */
+uint8_t	nes_dualport_rd( uint16_t addr )
+{
+	uint8_t	read;	//return value
+
+	ADDR_SET( addr );
+
+	//enable data path
+	M2_HI();	//M2 is kinda like R/W setting direction
+	ROMSEL_LO();	//enable data buffers
+	//data should now be driven on the bus but invalid
+	
+	//set CHR /RD and /WR
+	CSRD_LO();
+
+	//couple more NOP's waiting for data
+	//zero nop's returned previous databus value
+	NOP();	//one nop got most of the bits right
+	NOP();	//two nop got all the bits right
+	NOP();	//add third nop for some extra
+
+	//latch data
+	DATA_RD(read);
+
+	//return bus to default
+	CSRD_HI();
+	M2_LO();
+	ROMSEL_HI();
+	
+	return read;
+}
+
+/* Desc:NES DUALPORT Write 
+ * 	/A13 ignored
+ * Pre: nes_init() setup of io pins
+ * Post:data written to addrHL
+ *	address left on bus
+ * 	data bus left clear
+ * Rtn:	None
+ */
+
+void	nes_dualport_wr( uint16_t addr, uint8_t data )
+{
+
+	ADDR_SET( addr );
+
+	//enable data path
+	M2_LO();	//M2 is kinda like R/W setting direction
+	ROMSEL_LO();	//enable data buffers
+	//data should now be driven on the bus but invalid
+
+	//put data on bus
+	DATA_OP();
+	DATA_SET(data);
+
+	NOP();
+	
+	//set CHR /RD and /WR
+	CSWR_LO();
+
+	//might need to wait longer for some carts...
+	NOP();	//one can't hurt
+
+	//latch data to memory
+	CSWR_HI();
+
+	//clear data bus
+	DATA_IP();
+	ROMSEL_HI();
+	
+}
+
+
+
 /* Desc:PPU CIRAM A10 NT arrangement sense
  *	Toggle A11 and A10 and read back CIRAM A10
  *	report back if vert/horiz/1scnA/1scnB
@@ -460,17 +552,20 @@ uint8_t	ciram_a10_mirroring( void )
 {
 	uint16_t readV, readH;
 
+	//set A11, clear A10
+	//ADDRH(A11_BYTE); setting A11 in this manner doesn't work for some reason..
+	ADDR_SET(0x0800);
+	CIA10_RD(readH);
+
 	//set A10, clear A11
 	ADDRH(A10_BYTE);
+	//ADDR_SET(0x0400);
 	CIA10_RD(readV);
 
-	//set A11, clear A10
-	ADDRH(A11_BYTE);
-	CIA10_RD(readH);
 
 	//if CIRAM A10 was always low -> 1 screen A
 	if ((readV==0) & (readH==0))	return MIR_1SCNA;
-	//if CIRAM A10 was always hight -> 1screen B
+	//if CIRAM A10 was always high -> 1 screen B
 	if ((readV!=0) & (readH!=0))	return MIR_1SCNB;
 	//if CIRAM A10 toggled with A10 -> Vertical mirroring, horizontal arrangement
 	if ((readV!=0) & (readH==0))	return MIR_VERT;
@@ -503,7 +598,7 @@ uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	ADDRH(addrH);
 	
 	//set M2 and /ROMSEL
-	MCO_HI();
+	M2_HI();
 	if( addrH >= 0x80 ) {	//addressing cart rom space
 		ROMSEL_LO();	//romsel trails M2 during CPU operations
 	}
@@ -530,7 +625,7 @@ uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	}
 
 	//return bus to default
-	MCO_LO();
+	M2_LO();
 	ROMSEL_HI();
 	
 	//return index of last byte read
@@ -590,3 +685,95 @@ uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	//return index of last byte read
 	return i;
 }
+
+
+/* Desc:NES DUAL PORT PPU Page Read with optional USB polling
+ * 	/A13 ignored
+ *	if poll is true calls usbdrv.h usbPoll fuction
+ *	this is needed to keep from timing out when double buffering usb data
+ * Pre: nes_init() setup of io pins
+ *	num_bytes can't exceed 256B page boundary
+ * Post:address left on bus
+ * 	data bus left clear
+ *	data buffer filled starting at first for len number of bytes
+ * Rtn:	Index of last byte read
+ */
+uint8_t nes_dualport_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t len, uint8_t poll )
+{
+	uint8_t i;
+
+	//ignore /A13, board doesn't see it anyway
+	ADDRH(addrH);
+
+	//now that data bus is no longer needed, 
+	//can enable data path out of cart
+	M2_HI();
+	ROMSEL_LO();
+
+	//set CHR /RD and /WR
+	CSRD_LO();
+
+	//set lower address bits
+	ADDRL(first);		//doing this prior to entry and right after latching
+	NOP();	//adding extra NOP as it was needed on PRG
+				//gives longest delay between address out and latching data
+
+	for( i=0; i<=len; i++ ) {
+		//couple more NOP's waiting for data
+		if ( poll == FALSE ) {
+			NOP();	//one prob good enough considering the if/else
+			NOP();
+		} else {
+			usbPoll();
+		}
+		//latch data
+		DATA_RD(data[i]);
+		//set lower address bits
+		first ++;
+		ADDRL(first);
+	}
+
+	//return bus to default
+	CSRD_HI();
+	M2_LO();
+	ROMSEL_HI();
+	
+	//return index of last byte read
+	return i;
+}
+
+
+
+/* Desc:NES MMC1 Write
+ * 	write to entirety of MMC1 register
+ * 	address selects register that's written to
+ * 	address must be >= $8000 where registers are located
+ * Pre: nes_init() setup of io pins
+ * 	MMC1 shift register has been reset by writting with D7 set
+ * 	bit7 must be clear, else the shift register will be reset
+ * Post:MMC1 register contains value provided
+ * 	address left on bus
+ * 	data left on bus, but pullup only
+ * Rtn:	None
+ */
+void	mmc1_wr( uint16_t addr, uint8_t data, uint8_t reset )
+{
+	uint8_t i;
+
+	//reset shift register if requested
+	if( reset ) {
+		nes_cpu_rd(0x8000);
+		nes_cpu_wr(0x8000, 0x80);
+	}
+
+	//5 bits in register D0-4, so 5 total writes through D0
+	for( i=0; i<5; i++) {
+		//MMC1 ignores all but the first write, so perform a read first
+		nes_cpu_rd(addr);
+		nes_cpu_wr(addr, data);
+		data = data >> 1;
+	}
+
+	return;
+}
+

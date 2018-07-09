@@ -133,7 +133,7 @@ local function detect_mapper_mirroring (debug)
 
 	local rv
 
-	print("attempting to detect NES/FC mapper via mirroring...");
+	if(debug) then print("attempting to detect NES/FC mapper via mirroring...") end
 --		//TODO call mmc3 detection function
 --
 --		//TODO call mmc1 detection function
@@ -144,16 +144,20 @@ local function detect_mapper_mirroring (debug)
 		rv = dict.nes("CIRAM_A10_MIRROR")
 		if (rv == op_nes["MIR_VERT"]) then
 			if debug then print("vertical mirroring sensed") end
+			return "VERT"
 		elseif rv == op_nes["MIR_HORZ"] then
 			if debug then print("horizontal mirroring sensed") end
+			return "HORZ"
 		elseif rv == op_nes["MIR_1SCNA"] then
 			if debug then print("1screen A mirroring sensed") end
+			return "1SCNA"
 		elseif rv == op_nes["MIR_1SCNB"] then
 			if debug then print("1screen B mirroring sensed") end
+			return "1SCNB"
 		end
 
 		-- Rtn: VERT/HORIZ/1SCNA/1SCNB
-	return true
+	return nil
 end
 
 -- Desc:CHR-ROM flash manf/prod ID sense test
