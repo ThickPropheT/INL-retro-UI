@@ -51,6 +51,9 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 	local rv = nil
 	local file 
+	local size = 512
+	--local filetype = "nes"
+	local filetype = "bin"
 
 --initialize device i/o for NES
 	dict.io("IO_RESET")
@@ -58,11 +61,59 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 --test cart by reading manf/prod ID
 	if test then
+		print("mapper 30")
 		nes.detect_mapper_mirroring(true)
 		nes.ppu_ram_sense(0x1000, true)
 		print("EXP0 pull-up test:", dict.io("EXP0_PULLUP_TEST"))	
 
 		prgrom_manf_id( debug )
+
+		--test CHR-RAM banking
+		dict.nes("NES_CPU_WR", 0xC000, 0x00) --CHR bank 0
+		dict.nes("NES_PPU_WR", 0x0000, 0xAA)
+		dict.nes("NES_CPU_WR", 0xC000, 0x20) --CHR bank 1
+		dict.nes("NES_PPU_WR", 0x0000, 0x55)
+		dict.nes("NES_CPU_WR", 0xC000, 0x40) --CHR bank 2
+		dict.nes("NES_PPU_WR", 0x0000, 0xCC)
+		dict.nes("NES_CPU_WR", 0xC000, 0x60) --CHR bank 3
+		dict.nes("NES_PPU_WR", 0x0000, 0x33)
+
+		--read back
+		local test = true 
+		dict.nes("NES_CPU_WR", 0xC000, 0x00) --CHR bank 0
+		rv = dict.nes("NES_PPU_RD", 0x0000)
+		if rv ~= 0xAA then 
+			print( "\nFAIL CHR-RAM BANKING TEST!!!\n")
+			print("bank0 read:", string.format("%X", rv))
+			test = false
+		end
+		dict.nes("NES_CPU_WR", 0xC000, 0x20) --CHR bank 1
+		rv = dict.nes("NES_PPU_RD", 0x0000)
+		if rv ~= 0x55 then 
+			print( "\nFAIL CHR-RAM BANKING TEST!!!\n")
+			print("bank1 read:", string.format("%X", rv))
+			test = false
+		end
+		dict.nes("NES_CPU_WR", 0xC000, 0x40) --CHR bank 2
+		rv = dict.nes("NES_PPU_RD", 0x0000)
+		if rv ~= 0xCC then 
+			print( "\nFAIL CHR-RAM BANKING TEST!!!\n")
+			print("bank2 read:", string.format("%X", rv))
+			test = false
+		end
+		dict.nes("NES_CPU_WR", 0xC000, 0x60) --CHR bank 3
+		rv = dict.nes("NES_PPU_RD", 0x0000)
+		if rv ~= 0x33 then 
+			print( "\nFAIL CHR-RAM BANKING TEST!!!\n")
+			print("bank3 read:", string.format("%X", rv))
+			test = false
+		end
+
+		if test then
+			print("CHR-RAM BANKING TEST PASSED")
+		end
+		
+
 	end
 
 --dump the cart to dumpfile
@@ -70,7 +121,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(dumpfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 512, "MAP30", "PRGROM", true )
+		dump.dumptofile( file, size, "MAP30", "PRGROM", true )
 
 		--close file
 		assert(file:close())
@@ -124,10 +175,26 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(flashfile, "rb"))
 		--determine if auto-doubling, deinterleaving, etc, 
 		--needs done to make board compatible with rom
+		
+
+		if filetype == "nes" then
+		--advance past the 16byte header
+		--TODO set mirroring bit via ciccom
+			local buffsize = 1
+			local byte
+			local count = 1
+
+			for byte in file:lines(buffsize) do
+				local data = string.unpack("B", byte, 1)
+				--print(string.format("%X", data))
+				count = count + 1
+				if count == 17 then break end
+			end
+		end
 
 
 		--flash cart
-		flash.write_file( file, 512, "MAP30", "PRGROM", true )
+		flash.write_file( file, size, "MAP30", "PRGROM", true )
 		--close file
 		assert(file:close())
 
@@ -140,7 +207,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(verifyfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 512, "MAP30", "PRGROM", true )
+		dump.dumptofile( file, size, "MAP30", "PRGROM", true )
 
 		--close file
 		assert(file:close())

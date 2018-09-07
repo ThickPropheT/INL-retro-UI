@@ -138,7 +138,7 @@ local function write_gift(base, off)
 	--local msg1 = "Regular Edition"
 	--local msg1 = "Contributor Edition"
 	local msg1 = "Limited Edition"
-	local msg2 = "100 of 100"	--  all flashed
+	local msg2 = "82 of 100"	--  all flashed
 
 	--local msg1 = " Contributor Edition "
 	--local msg2 = " PinoBatch "	--issue if capital P or R is first char for some reason..

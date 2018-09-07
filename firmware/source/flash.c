@@ -81,8 +81,9 @@ uint8_t	write_page_bank( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t
 		//select first bank for unlock sequence
 		//needs to be written to bank table!
 //		nes_cpu_wr( (0xCC84), 0x00 );
-		nes_cpu_wr( (0xE473), 0x00 );
+//		nes_cpu_wr( (0xE473), 0x00 );
 	//	nes_cpu_wr( (0xC000), 0x00 );
+		nes_cpu_wr( (0xFD69), 0x00 );
 
 		//wr_func( 0x5555, 0xAA );
 		wr_func( unlock1, 0xAA );
@@ -94,10 +95,11 @@ uint8_t	write_page_bank( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t
 		//now need to select bank for the actual write!
 		//but this write can't be applied to the PRG-ROM 
 	//	nes_cpu_wr( (0xCC84+bank), bank );
-		nes_cpu_wr( (0xE473+bank), bank );
+	//	nes_cpu_wr( (0xE473+bank), bank );
 	//	nes_cpu_wr( (0x8000+bank), bank );
 		//nes_cpu_wr( (0xC000+bank), bank );
 	//	nes_cpu_wr( (0xFFC0+bank), bank );
+		nes_cpu_wr( (0xFD69+bank), bank );
 
 		wr_func( ((addrH<<8)| n), buff->data[n] );
 	
@@ -836,6 +838,16 @@ uint8_t flash_buff( buffer *buff ) {
 				//bank gets written inside flash algo
 				write_page_bank( bank, addrH, 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
 			}
+			if (buff->mapper == MM2) {
+				//addrH &= 0b1011 1111 A14 must always be low
+				addrH &= 0x3F;
+				addrH |= 0x80;	//A15 doesn't apply to exp0 write, but needed for read back
+				//write bank value
+				//page_num shift by 6 bits A14 >> A8(0)
+				bank = buff->page_num >> 6;
+				//bank gets written inside flash algo
+				write_page_bank( bank, addrH, 0x5555, 0x2AAA, buff, disc_push_exp0_prgrom_wr, nes_cpu_rd );
+			}
 			if (buff->mapper == MAP30) {
 				//addrH &= 0b1011 1111 A14 must always be low
 				addrH &= 0x3F;
@@ -939,14 +951,25 @@ uint8_t flash_buff( buffer *buff ) {
 		//						buff->last_idx, ~FALSE );
 			break;
 		case SNESROM:
-			addrH |= 0x80;	//$8000 LOROM space
-			//need to split page_num
-			//A14-8 page_num[7-0]
-			//A15 high (LOROM)
-			//A23-16 page_num[14-8]
-			HADDR_SET( (buff->page_num)>>7 );
-			//clear any reset state
-			//EXP0_HI();
+			if (buff->mapper == LOROM) {
+				addrH |= 0x80;	//$8000 LOROM space
+				//need to split page_num
+				//A14-8 page_num[7-0]
+				//A15 high (LOROM)
+				//A23-16 page_num[14-8]
+				bank = (buff->page_num)>>7;
+				//clear any reset state
+				//EXP0_HI();
+			}
+			if (buff->mapper == HIROM) {
+				//need to split page_num
+				//A15-8 page_num[7-0]
+				//A21-16 page_num[13-8]
+				//A22 high (HIROM)
+				//A23 ~page_num[14] (bank CO starts first half, bank 40 starts second)
+				bank = ((((buff->page_num)>>8) | 0x40) & 0x7F);
+			}
+			HADDR_SET( bank );
 			write_page_snes( 0, addrH, buff, snes_rom_wr, snes_rom_rd );
 		case SNESRAM:
 //warn			addrX = ((buff->page_num)>>8);

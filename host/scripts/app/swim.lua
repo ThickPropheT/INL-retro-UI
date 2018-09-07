@@ -317,7 +317,8 @@ local function read_stack()
 	--STM8 stack starts at $0200 which is where the CIC version 
 	--and other special data is placed starting with v2.0
 	local stack_start = 0x0200
-	local last_char = 73
+--	local last_char = 73	--73 end of copyright
+	local last_char = 74	--mirroring bit
 	local ack
 	local data = {}
 
@@ -331,6 +332,7 @@ local function read_stack()
 	local j = 1
 	while data[j] do
 		io.write(string.char(data[j]))
+		--io.write("B-",j,"=",data[j], " ")
 		j = j+1
 	end
 	print("\n")
@@ -342,7 +344,7 @@ end
 
 
 
-local function start( debug )
+local function start( debug, noreset )
 
 	--dict.io("IO_RESET")	
 
@@ -376,8 +378,15 @@ local function start( debug )
 	--by default there is now a breakpoint set at reset vector
 	
 	--reset the STM8 core
---	dict.swim("SWIM_SRST")
-	system_reset( true )
+	dict.swim("SWIM_SRST")
+	--optionally reset core below, but not of much use since a ROP enabled device
+	--will reset once SWIM comms initiate rotf/wotf
+	--if(noreset ~= true) then
+	--	if debug then print("RESETTING STM8 CPU") end
+	--	system_reset( true )
+	--else
+	--	if debug then print("STM8 CPU WASN'T reset during activation") end
+	--end
 
 	--the STM8 core is now stalled @ reset vector
 	--can read/write to any address on STM8 core
@@ -400,6 +409,7 @@ local function start( debug )
 
 	return true
 end
+
 
 local function printCSR()
 	print(cur_CSR)

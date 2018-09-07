@@ -57,7 +57,8 @@ void HardFault_Handler(void)
 #ifdef STM_INL6
 	#define XTAL_8Mhz
 #else	//kaz6 prototype & stm adapter have 16Mhz xtal
-	#define XTAL_16Mhz
+	//#define XTAL_16Mhz
+	#define XTAL_8Mhz
 #endif
 void init_clock()
 {

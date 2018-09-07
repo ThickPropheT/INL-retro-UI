@@ -103,6 +103,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 	local rv = nil
 	local file 
+	local size = 128
 
 --initialize device i/o for NES
 	dict.io("IO_RESET")
@@ -125,7 +126,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 		--TODO find bank table to avoid bus conflicts!
 		--dump cart into file
-		dump.dumptofile( file, 512, "UxROM", "PRGROM", true )
+		dump.dumptofile( file, size, "UxROM", "PRGROM", true )
 
 		--close file
 		assert(file:close())
@@ -174,14 +175,16 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--Nomolos' bank table is at $CC84 so hard code that for now
 		--wr_bank_table(0xCC84, 32)
 		--Owlia bank table
-		wr_bank_table(0xE473, 32)
+		--wr_bank_table(0xE473, 32)
 		--rushnattack
 		--wr_bank_table(0x8000, 8)
 		--twindragons
 		--wr_bank_table(0xC000, 32)
+		--Armed for Battle
+		wr_bank_table(0xFD69, 8)
 
 		--flash cart
-		flash.write_file( file, 512, "UxROM", "PRGROM", true )
+		flash.write_file( file, size, "UxROM", "PRGROM", true )
 		--close file
 		assert(file:close())
 
@@ -194,7 +197,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(verifyfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 512, "UxROM", "PRGROM", true )
+		dump.dumptofile( file, size, "UxROM", "PRGROM", true )
 
 		--close file
 		assert(file:close())

@@ -12,11 +12,17 @@ function main ()
 	local cart = require "scripts.app.cart"
 	local nes = require "scripts.app.nes"
 	local snes = require "scripts.app.snes"
+--	local gameboy = require "scripts.app.gameboy"
+--	local gba = require "scripts.app.gba"
+--	local sega = require "scripts.app.sega"
+--	local n64 = require "scripts.app.n64"
 	local dump = require "scripts.app.dump"
 	local erase = require "scripts.app.erase"
 	local flash = require "scripts.app.flash"
 	local swim = require "scripts.app.swim"
 	local jtag = require "scripts.app.jtag"
+	local ciccom = require "scripts.app.ciccom"
+--	local bootload = require "scripts.app.bootload"
 --	local crc32 = require "scripts.app.crc32"
 
 
@@ -25,7 +31,7 @@ function main ()
 	--local curcart = require "scripts.nes.mmc1"
 	--local curcart = require "scripts.nes.unrom"
 	--local curcart = require "scripts.nes.mm2"
-	--local curcart = require "scripts.nes.mapper30"
+	local curcart = require "scripts.nes.mapper30"
 	--local curcart = require "scripts.nes.bnrom"
 	--local curcart = require "scripts.nes.cdream"
 	--local curcart = require "scripts.nes.cninja"
@@ -33,7 +39,7 @@ function main ()
 	--local curcart = require "scripts.nes.action53_tsop"
 	--local curcart = require "scripts.nes.easyNSF"
 	--local curcart = require "scripts.nes.dualport"
-	local curcart = require "scripts.snes.v3"
+	--local curcart = require "scripts.snes.v3"
 
 	local rv
 --	rv = dict.pinport( "DATA_SET", 0xAA )
@@ -65,6 +71,19 @@ function main ()
 --	print(dict.io("EXP0_PULLUP_TEST"))	
 --
 
+	--BOOTLOADER TEST
+	--print("jumping...")
+
+	--jump to 0xDEADBEEF
+	--dict.bootload("LOAD_ADDRH", 0xDEAD)	
+	--dict.bootload("JUMP_ADDR",  0xBEEF)	--for ARM LSbit must be odd (Thumb mode)
+--	dict.bootload("LOAD_ADDRH", 0x1FFF)	
+--	dict.bootload("JUMP_ADDR",  0xCAC5)	
+--	dict.bootload("LOAD_ADDRH", 0x0800)	
+--	dict.bootload("JUMP_ADDR",  0x00C1)	
+
+	--dict.bootload("JUMP_BL")	
+	--print("jumped")
 
 --	debug = true
 --	rv = cart.detect(debug)
@@ -78,16 +97,17 @@ function main ()
 --PROCESS USER ARGS ON WHAT IS TO BE DONE WITH CART
 
 	local force_cart = true
-	cart_console = "SNES"
+	cart_console = "NES"
 
 	if (force_cart or cart.detect_console(true)) then
 		if cart_console == "NES" or cart_console == "Famicom" then
 			dict.io("IO_RESET")	
 			dict.io("NES_INIT")	
 			
-		--[[
+		---[[
 			--NES detect mirroring to gain mapper info
 			nes.detect_mapper_mirroring(true)
+		--[[
 			--NES detect memories to gain more mapper/board info	
 				--check for CHR-RAM
 			nes.ppu_ram_sense(0x1000, true)
@@ -159,9 +179,27 @@ function main ()
 
 			--]]
 
-		--[[
+		---[[
+		
+
+			ciccom.start()
+			ciccom.set_opcode("M")
+			--now send operand "V" (0x56) or "H" (0x48)
+			ciccom.write("H")
+
+			
+
+			dict.io("IO_RESET")	
+			jtag.sleep(0.01) --10msec to be overly safe
+
+
+		---[[
+			--the CIC won't update the H/V stack flag unless it's reset
+			--reset caused during swim init doesn't count either bc it halts at reset vector
+
 			--test reading back CIC version
 			dict.io("SWIM_INIT", "SWIM_ON_A0")	
+			--dict.io("SWIM_INIT", "SWIM_ON_EXP0")	
 			if swim.start(true) then
 
 				swim.read_stack()
@@ -169,6 +207,7 @@ function main ()
 			else
 				print("ERROR trying to read back CIC signature stack data")
 			end
+			swim.stop_and_reset()
 
 			print("done reading STM8 stack on A0\n")
 
@@ -190,6 +229,7 @@ function main ()
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/Zelda2.bin", "ignore/verifyout.bin")
 
 			--UxROM
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/AFB_128.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/nomolosFINAL.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/owlia_revb.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/rushnattack.prg", "ignore/verifyout.bin")
@@ -200,7 +240,9 @@ function main ()
 			--curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/mm2_i0.prg", "ignore/verifyout.bin")
 
 			--UNROM512 mapper 30
-			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/MysticOrigins.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/BBC_nonJW.bin", "ignore/verifyout.bin")
+			curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/MysticOrigins.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/NESmaker.nes", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/tb_map30.prg", "ignore/verifyout.bin")
 
 
@@ -266,8 +308,9 @@ function main ()
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/MMXdump.bin", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/smw.sfc", "ignore/verifyout.bin")
 			--curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/hsbm_4Mbit_Lo.sfc", "ignore/verifyout.bin")
-			curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_4Mbit_Lo.sfc", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_4Mbit_Lo.sfc", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_4Mbit_Hi.sfc", "ignore/verifyout.bin")
+			curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_32Mbit_Hi.sfc", "ignore/verifyout.bin")
 
 
 --			--old SNES code

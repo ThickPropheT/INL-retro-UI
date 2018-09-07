@@ -32,6 +32,9 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 		case DISCRETE_EXP0_PRGROM_WR:	
 			discrete_exp0_prgrom_wr( operand, miscdata );
 			break;
+		case DISC_PUSH_EXP0_PRGROM_WR:	
+			disc_push_exp0_prgrom_wr( operand, miscdata );
+			break;
 		case NES_PPU_WR:	
 			nes_ppu_wr( operand, miscdata );
 			break;
@@ -111,6 +114,24 @@ void	discrete_exp0_prgrom_wr( uint16_t addr, uint8_t data )
 	//16Mhz avr clk = 62.5ns period guarantees timing reqts
 	DATA_IP();
 }
+
+
+//like above, but push on EXP0 instead of pullup
+void	disc_push_exp0_prgrom_wr( uint16_t addr, uint8_t data )
+{
+	ADDR_SET(addr);
+
+	DATA_OP();
+	DATA_SET(data);
+
+	EXP0_OP();	//Tas = 0ns, Tah = 30ns
+	EXP0_LO();
+	//EXP0_IP_PU();	//Twp = 40ns, Tds = 40ns, Tdh = 0ns
+	EXP0_HI();	//Twp = 40ns, Tds = 40ns, Tdh = 0ns
+	//16Mhz avr clk = 62.5ns period guarantees timing reqts
+	DATA_IP();
+}
+
 
 
 /* Desc: Discrete board MAPPER write without bus conflicts

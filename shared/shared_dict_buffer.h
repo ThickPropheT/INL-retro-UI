@@ -152,6 +152,7 @@
 	#define FME7	69	//SUNSOFT-5 with synth
 	#define HDIVER	78
 	#define DxROM	205
+	#define MM2	253
 	#define DPROM	254	//just a random mapper number for whatever I need it for
 	//	UNKNOWN 255	don't assign to something meaningful
 	//operand LSB mapper variant
@@ -159,7 +160,10 @@
 
 
 	#define LOROM	0
-	#define HIROM	1
+	#define HIROM	1	//file starts at bank 40 and is mirrored to C0
+	#define EXHIROM	2	//file starts at bank C0
+	#define SOROM	3	//12MB star ocean mapping
+
 
 //set function
 //miscdata: buffer number

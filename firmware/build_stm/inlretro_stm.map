@@ -1,7 +1,7 @@
 Archive member included to satisfy reference by file (symbol)
 
 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
-                              C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o (__aeabi_unwind_cpp_pr0)
+                              C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o (__aeabi_unwind_cpp_pr0)
 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(libunwind.o)
                               c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o) (restore_core_regs)
 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(pr-support.o)
@@ -51,11 +51,11 @@ c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3
 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libnosys.a(_exit.o)
                               c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-abort.o) (_exit)
 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uqi.o)
-                              C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o (__gnu_thumb1_case_uqi)
+                              C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o (__gnu_thumb1_case_uqi)
 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_shi.o)
-                              C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o (__gnu_thumb1_case_shi)
+                              C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o (__gnu_thumb1_case_shi)
 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uhi.o)
-                              C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o (__gnu_thumb1_case_uhi)
+                              C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o (__gnu_thumb1_case_uhi)
 
 Allocating common symbols
 Common symbol       size              file
@@ -65,6 +65,7 @@ __lock___atexit_recursive_mutex
 __lock___arc4random_mutex
                     0x1               c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-lock.o)
 errno               0x4               c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-reent.o)
+addrh               0x4               source/bootload.o (symbol from plugin)
 incoming_bytes_remain
                     0x1               source/buffer.o (symbol from plugin)
 __lock___env_recursive_mutex
@@ -107,39 +108,48 @@ Discarded input sections
  .ARM.exidx     0x00000000        0x8 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/crt0.o
  .ARM.attributes
                 0x00000000       0x1b c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/crt0.o
- .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
- .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
- .text          0x00000000        0x0 source/buffer.o (symbol from plugin)
- .text          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+ .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
+ .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
+ .text          0x00000000        0x0 source/bootload.o (symbol from plugin)
+ .text          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .rodata.oper_info
-                0x00000000        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .text          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .text          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .text          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
- .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
- .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
+                0x00000000        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .text          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .text          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .text          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+ .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+ .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+ .text          0x00000000        0x0 source/buffer.o (symbol from plugin)
+ .text          0x00000000        0x0 source/ciccom.o (symbol from plugin)
  .text          0x00000000        0x0 source/dump.o (symbol from plugin)
  .text          0x00000000        0x0 source/flash.o (symbol from plugin)
+ .text          0x00000000        0x0 source/gameboy.o (symbol from plugin)
+ .text          0x00000000        0x0 source/gba.o (symbol from plugin)
  .text          0x00000000        0x0 source/io.o (symbol from plugin)
  .text          0x00000000        0x0 source/jtag.o (symbol from plugin)
  .text          0x00000000        0x0 source/main.o (symbol from plugin)
+ .text          0x00000000        0x0 source/n64.o (symbol from plugin)
  .text          0x00000000        0x0 source/nes.o (symbol from plugin)
  .text          0x00000000        0x0 source/operation.o (symbol from plugin)
  .text          0x00000000        0x0 source/pinport.o (symbol from plugin)
+ .text          0x00000000        0x0 source/sega.o (symbol from plugin)
  .text          0x00000000        0x0 source/snes.o (symbol from plugin)
  .text          0x00000000        0x0 source/swim.o (symbol from plugin)
  .text          0x00000000        0x0 source/usb.o (symbol from plugin)
  .text          0x00000000        0x0 source_stm_only/stm_init.o (symbol from plugin)
  .text          0x00000000        0x0 source_stm_only/usbstm.o (symbol from plugin)
- .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
- .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
- .ARM.extab     0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
+ .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+ .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+ .ARM.extab     0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+ .data          0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
+ .bss           0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
+ .ARM.extab     0x00000000        0x0 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
  .data          0x00000000        0x0 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
  .bss           0x00000000        0x0 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
  .debug_frame   0x00000000      0x2c4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
@@ -405,26 +415,33 @@ Linker script and memory map
 LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crti.o
 LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtbegin.o
 LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/crt0.o
-LOAD C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
+LOAD C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
+LOAD source/bootload.o
+LOAD C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+LOAD C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+LOAD C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+LOAD C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
 LOAD source/buffer.o
-LOAD C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-LOAD C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
-LOAD C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-LOAD C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
+LOAD source/ciccom.o
 LOAD source/dump.o
 LOAD source/flash.o
+LOAD source/gameboy.o
+LOAD source/gba.o
 LOAD source/io.o
 LOAD source/jtag.o
 LOAD source/main.o
+LOAD source/n64.o
 LOAD source/nes.o
 LOAD source/operation.o
 LOAD source/pinport.o
+LOAD source/sega.o
 LOAD source/snes.o
 LOAD source/swim.o
 LOAD source/usb.o
 LOAD source_stm_only/stm_init.o
 LOAD source_stm_only/usbstm.o
-LOAD C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
+LOAD C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+LOAD C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
 START GROUP
 LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a
 LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a
@@ -438,12 +455,12 @@ END GROUP
 LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtend.o
 LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtn.o
 
-.text           0x08000000     0x462c
+.text           0x08000000     0x477c
  *(.isr_vector)
- .isr_vector    0x08000000       0xc0 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
+ .isr_vector    0x08000000       0xc0 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
                 0x08000000                __isr_vector
  *(.text*)
- .text          0x080000c0       0x40 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
+ .text          0x080000c0       0x40 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
                 0x080000c0                Reset_Handler
                 0x080000fc                TSC_IRQHandler
                 0x080000fc                ADC1_COMP_IRQHandler
@@ -483,164 +500,172 @@ LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eab
                 0x080000fc                USART1_IRQHandler
                 0x080000fc                TIM1_BRK_UP_TRG_COM_IRQHandler
  .text.USB_IRQHandler
-                0x08000100     0x18bc C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x08000100     0x1970 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
                 0x08000100                USB_IRQHandler
  .text.pbje_scan
-                0x080019bc      0x12c C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
+                0x08001a70      0x12c C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
  .text.pbje_state_change
-                0x08001ae8       0x98 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
+                0x08001b9c       0x98 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
  .text.get_next_buff
-                0x08001b80       0x54 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
+                0x08001c34       0x54 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
  .text.jtag_init_pbje
-                0x08001bd4       0xe0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
-                0x08001bd4                jtag_init_pbje
+                0x08001c88       0xe0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+                0x08001c88                jtag_init_pbje
  .text.jtag_run_pbje.part.0
-                0x08001cb4       0xd8 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
-                0x08001cb4                jtag_run_pbje.part.0
+                0x08001d68       0xd8 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+                0x08001d68                jtag_run_pbje.part.0
  .text.io_reset
-                0x08001d8c      0x148 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
-                0x08001d8c                io_reset
+                0x08001e40      0x148 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+                0x08001e40                io_reset
  .text.startup.main
-                0x08001ed4      0xe14 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
-                0x08001ed4                main
+                0x08001f88      0xda8 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+                0x08001f88                main
  .text.append_pairity
-                0x08002ce8       0x1e C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- *fill*         0x08002d06        0x2 
+                0x08002d30       0x1e C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ *fill*         0x08002d4e        0x2 
  .text.nes_cpu_wr
-                0x08002d08       0x6c C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08002d08                nes_cpu_wr
+                0x08002d50       0x6c C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08002d50                nes_cpu_wr
  .text.nes_cpu_rd
-                0x08002d74       0x40 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08002d74                nes_cpu_rd
+                0x08002dbc       0x40 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08002dbc                nes_cpu_rd
+ .text.disc_push_exp0_prgrom_wr
+                0x08002dfc       0x48 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08002dfc                disc_push_exp0_prgrom_wr
  .text.discrete_exp0_prgrom_wr
-                0x08002db4       0x58 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08002db4                discrete_exp0_prgrom_wr
- .text.control_xfr_in.lto_priv.33
-                0x08002e0c       0xbc C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08002e0c                control_xfr_in.lto_priv.33
+                0x08002e44       0x58 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08002e44                discrete_exp0_prgrom_wr
+ .text.control_xfr_in.lto_priv.39
+                0x08002e9c       0xbc C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08002e9c                control_xfr_in.lto_priv.39
  .text.HardFault_Handler
-                0x08002ec8        0x2 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08002ec8                HardFault_Handler
- *fill*         0x08002eca        0x2 
+                0x08002f58        0x2 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08002f58                HardFault_Handler
+ *fill*         0x08002f5a        0x2 
  .text.swim_wotf
-                0x08002ecc       0xb4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08002ecc                swim_wotf
+                0x08002f5c       0xb4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08002f5c                swim_wotf
  .text.swim_rotf
-                0x08002f80       0xac C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08002f80                swim_rotf
+                0x08003010       0xac C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08003010                swim_rotf
  .text.delay_us
-                0x0800302c       0x16 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x0800302c                delay_us
- *fill*         0x08003042        0x2 
+                0x080030bc       0x16 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x080030bc                delay_us
+ *fill*         0x080030d2        0x2 
  .text.snes_rom_wr
-                0x08003044       0x4c C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08003044                snes_rom_wr
+                0x080030d4       0x4c C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x080030d4                snes_rom_wr
  .text.snes_rom_rd
-                0x08003090       0x40 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08003090                snes_rom_rd
- .text.mmc1_wr  0x080030d0       0x38 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x080030d0                mmc1_wr
+                0x08003120       0x40 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08003120                snes_rom_rd
+ .text.mmc1_wr  0x08003160       0x38 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08003160                mmc1_wr
  .text.nes_dualport_wr
-                0x08003108       0x50 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08003108                nes_dualport_wr
+                0x08003198       0x50 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08003198                nes_dualport_wr
  .text.nes_dualport_rd
-                0x08003158       0x38 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08003158                nes_dualport_rd
+                0x080031e8       0x38 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x080031e8                nes_dualport_rd
  .text.nes_ppu_wr
-                0x08003190       0x50 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x08003190                nes_ppu_wr
+                0x08003220       0x50 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08003220                nes_ppu_wr
  .text.nes_ppu_rd
-                0x080031e0       0x38 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                0x080031e0                nes_ppu_rd
- .text.write_page.constprop.23
-                0x08003218       0x68 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
-                0x08003218                write_page.constprop.23
- .text.nes_cpu_page_rd_poll.constprop.17
-                0x08003280       0x6c C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
-                0x08003280                nes_cpu_page_rd_poll.constprop.17
- .text.nes_ppu_page_rd_poll.constprop.16
-                0x080032ec       0x68 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
-                0x080032ec                nes_ppu_page_rd_poll.constprop.16
- *fill*         0x08003354        0xc 
- .text          0x08003360      0x154 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
-                0x08003360                swim_xfr
- .text          0x080034b4      0xa38 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
-                0x08003784                _Unwind_GetCFA
-                0x08003788                __gnu_Unwind_RaiseException
-                0x080037dc                __gnu_Unwind_ForcedUnwind
-                0x080037f0                __gnu_Unwind_Resume
-                0x08003838                __gnu_Unwind_Resume_or_Rethrow
-                0x08003854                _Unwind_Complete
-                0x08003858                _Unwind_DeleteException
-                0x08003868                _Unwind_VRS_Get
-                0x080038b4                _Unwind_VRS_Set
-                0x08003900                __gnu_Unwind_Backtrace
-                0x08003c60                __aeabi_unwind_cpp_pr0
-                0x08003c6c                __aeabi_unwind_cpp_pr1
-                0x08003c78                __aeabi_unwind_cpp_pr2
-                0x08003c84                _Unwind_VRS_Pop
- .text          0x08003eec      0x144 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(libunwind.o)
-                0x08003eec                __restore_core_regs
-                0x08003eec                restore_core_regs
-                0x08003f18                __gnu_Unwind_Restore_VFP
-                0x08003f1c                __gnu_Unwind_Save_VFP
-                0x08003f20                __gnu_Unwind_Restore_VFP_D
-                0x08003f24                __gnu_Unwind_Save_VFP_D
-                0x08003f28                __gnu_Unwind_Restore_VFP_D_16_to_31
-                0x08003f2c                __gnu_Unwind_Save_VFP_D_16_to_31
-                0x08003f30                __gnu_Unwind_Restore_WMMXD
-                0x08003f34                __gnu_Unwind_Save_WMMXD
-                0x08003f38                __gnu_Unwind_Restore_WMMXC
-                0x08003f3c                __gnu_Unwind_Save_WMMXC
-                0x08003f40                ___Unwind_RaiseException
-                0x08003f40                _Unwind_RaiseException
-                0x08003f70                _Unwind_Resume
-                0x08003f70                ___Unwind_Resume
-                0x08003fa0                _Unwind_Resume_or_Rethrow
-                0x08003fa0                ___Unwind_Resume_or_Rethrow
-                0x08003fd0                _Unwind_ForcedUnwind
-                0x08003fd0                ___Unwind_ForcedUnwind
-                0x08004000                ___Unwind_Backtrace
-                0x08004000                _Unwind_Backtrace
- .text          0x08004030      0x3a8 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(pr-support.o)
-                0x08004084                __gnu_unwind_execute
-                0x08004380                __gnu_unwind_frame
-                0x080043a8                _Unwind_GetRegionStart
-                0x080043b4                _Unwind_GetLanguageSpecificData
-                0x080043c8                _Unwind_GetTextRelBase
-                0x080043d0                _Unwind_GetDataRelBase
- .text.abort    0x080043d8       0x10 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-abort.o)
-                0x080043d8                abort
- .text.memcpy   0x080043e8       0x84 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-memcpy-stub.o)
-                0x080043e8                memcpy
+                0x08003270       0x38 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                0x08003270                nes_ppu_rd
+ .text.write_page.constprop.28
+                0x080032a8       0x68 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+                0x080032a8                write_page.constprop.28
+ .text.write_page_bank.constprop.26
+                0x08003310       0xbc C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+                0x08003310                write_page_bank.constprop.26
+ .text.nes_cpu_page_rd_poll.constprop.22
+                0x080033cc       0x6c C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+                0x080033cc                nes_cpu_page_rd_poll.constprop.22
+ .text.nes_ppu_page_rd_poll.constprop.21
+                0x08003438       0x68 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+                0x08003438                nes_ppu_page_rd_poll.constprop.21
+ .text          0x080034a0        0x4 C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+                0x080034a0                jump2addr
+ *fill*         0x080034a4        0xc 
+ .text          0x080034b0      0x154 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
+                0x080034b0                swim_xfr
+ .text          0x08003604      0xa38 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
+                0x080038d4                _Unwind_GetCFA
+                0x080038d8                __gnu_Unwind_RaiseException
+                0x0800392c                __gnu_Unwind_ForcedUnwind
+                0x08003940                __gnu_Unwind_Resume
+                0x08003988                __gnu_Unwind_Resume_or_Rethrow
+                0x080039a4                _Unwind_Complete
+                0x080039a8                _Unwind_DeleteException
+                0x080039b8                _Unwind_VRS_Get
+                0x08003a04                _Unwind_VRS_Set
+                0x08003a50                __gnu_Unwind_Backtrace
+                0x08003db0                __aeabi_unwind_cpp_pr0
+                0x08003dbc                __aeabi_unwind_cpp_pr1
+                0x08003dc8                __aeabi_unwind_cpp_pr2
+                0x08003dd4                _Unwind_VRS_Pop
+ .text          0x0800403c      0x144 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(libunwind.o)
+                0x0800403c                __restore_core_regs
+                0x0800403c                restore_core_regs
+                0x08004068                __gnu_Unwind_Restore_VFP
+                0x0800406c                __gnu_Unwind_Save_VFP
+                0x08004070                __gnu_Unwind_Restore_VFP_D
+                0x08004074                __gnu_Unwind_Save_VFP_D
+                0x08004078                __gnu_Unwind_Restore_VFP_D_16_to_31
+                0x0800407c                __gnu_Unwind_Save_VFP_D_16_to_31
+                0x08004080                __gnu_Unwind_Restore_WMMXD
+                0x08004084                __gnu_Unwind_Save_WMMXD
+                0x08004088                __gnu_Unwind_Restore_WMMXC
+                0x0800408c                __gnu_Unwind_Save_WMMXC
+                0x08004090                ___Unwind_RaiseException
+                0x08004090                _Unwind_RaiseException
+                0x080040c0                _Unwind_Resume
+                0x080040c0                ___Unwind_Resume
+                0x080040f0                _Unwind_Resume_or_Rethrow
+                0x080040f0                ___Unwind_Resume_or_Rethrow
+                0x08004120                _Unwind_ForcedUnwind
+                0x08004120                ___Unwind_ForcedUnwind
+                0x08004150                ___Unwind_Backtrace
+                0x08004150                _Unwind_Backtrace
+ .text          0x08004180      0x3a8 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(pr-support.o)
+                0x080041d4                __gnu_unwind_execute
+                0x080044d0                __gnu_unwind_frame
+                0x080044f8                _Unwind_GetRegionStart
+                0x08004504                _Unwind_GetLanguageSpecificData
+                0x08004518                _Unwind_GetTextRelBase
+                0x08004520                _Unwind_GetDataRelBase
+ .text.abort    0x08004528       0x10 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-abort.o)
+                0x08004528                abort
+ .text.memcpy   0x08004538       0x84 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-memcpy-stub.o)
+                0x08004538                memcpy
  .text._raise_r
-                0x0800446c       0x5c c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-signal.o)
-                0x0800446c                _raise_r
- .text.raise    0x080044c8       0x14 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-signal.o)
-                0x080044c8                raise
- .text._kill_r  0x080044dc       0x28 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-signalr.o)
-                0x080044dc                _kill_r
+                0x080045bc       0x5c c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-signal.o)
+                0x080045bc                _raise_r
+ .text.raise    0x08004618       0x14 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-signal.o)
+                0x08004618                raise
+ .text._kill_r  0x0800462c       0x28 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-signalr.o)
+                0x0800462c                _kill_r
  .text._getpid_r
-                0x08004504        0x8 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-signalr.o)
-                0x08004504                _getpid_r
- .text._getpid  0x0800450c       0x10 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libnosys.a(getpid.o)
-                0x0800450c                _getpid
- .text._kill    0x0800451c       0x10 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libnosys.a(kill.o)
-                0x0800451c                _kill
- .text._exit    0x0800452c        0x4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libnosys.a(_exit.o)
-                0x0800452c                _exit
- .text          0x08004530       0x14 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uqi.o)
-                0x08004530                __gnu_thumb1_case_uqi
- .text          0x08004544       0x14 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_shi.o)
-                0x08004544                __gnu_thumb1_case_shi
- .text          0x08004558       0x14 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uhi.o)
-                0x08004558                __gnu_thumb1_case_uhi
+                0x08004654        0x8 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-signalr.o)
+                0x08004654                _getpid_r
+ .text._getpid  0x0800465c       0x10 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libnosys.a(getpid.o)
+                0x0800465c                _getpid
+ .text._kill    0x0800466c       0x10 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libnosys.a(kill.o)
+                0x0800466c                _kill
+ .text._exit    0x0800467c        0x4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libnosys.a(_exit.o)
+                0x0800467c                _exit
+ .text          0x08004680       0x14 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uqi.o)
+                0x08004680                __gnu_thumb1_case_uqi
+ .text          0x08004694       0x14 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_shi.o)
+                0x08004694                __gnu_thumb1_case_shi
+ .text          0x080046a8       0x14 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uhi.o)
+                0x080046a8                __gnu_thumb1_case_uhi
  *(.init)
- .init          0x0800456c        0x4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crti.o
-                0x0800456c                _init
+ .init          0x080046bc        0x4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crti.o
+                0x080046bc                _init
  *(.fini)
- .fini          0x08004570        0x4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crti.o
-                0x08004570                _fini
+ .fini          0x080046c0        0x4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crti.o
+                0x080046c0                _fini
  *crtbegin.o(.ctors)
  *crtbegin?.o(.ctors)
  *(EXCLUDE_FILE(*crtend.o *crtend?.o) .ctors)
@@ -653,53 +678,54 @@ LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eab
  *(.dtors)
  *(.rodata*)
  .rodata.config_desc
-                0x08004574       0x12 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x080046c4       0x12 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .rodata.device_desc
-                0x08004586       0x12 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x080046d6       0x12 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .rodata.string0_desc
-                0x08004598        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x080046e8        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .rodata.string1_desc
-                0x0800459c       0x54 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x080046ec       0x54 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .rodata.string2_desc
-                0x080045f0       0x3c C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x08004740       0x3c C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  *(.eh_frame*)
 
-.glue_7         0x0800462c        0x0
- .glue_7        0x0800462c        0x0 linker stubs
+.glue_7         0x0800477c        0x0
+ .glue_7        0x0800477c        0x0 linker stubs
 
-.glue_7t        0x0800462c        0x0
- .glue_7t       0x0800462c        0x0 linker stubs
+.glue_7t        0x0800477c        0x0
+ .glue_7t       0x0800477c        0x0 linker stubs
 
-.vfp11_veneer   0x0800462c        0x0
- .vfp11_veneer  0x0800462c        0x0 linker stubs
+.vfp11_veneer   0x0800477c        0x0
+ .vfp11_veneer  0x0800477c        0x0 linker stubs
 
-.v4_bx          0x0800462c        0x0
- .v4_bx         0x0800462c        0x0 linker stubs
+.v4_bx          0x0800477c        0x0
+ .v4_bx         0x0800477c        0x0 linker stubs
 
-.iplt           0x0800462c        0x0
- .iplt          0x0800462c        0x0 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtbegin.o
+.iplt           0x0800477c        0x0
+ .iplt          0x0800477c        0x0 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtbegin.o
 
-.ARM.extab      0x0800462c       0x30
+.ARM.extab      0x0800477c       0x30
  *(.ARM.extab* .gnu.linkonce.armextab.*)
- .ARM.extab     0x0800462c       0x24 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
- .ARM.extab     0x08004650        0xc c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(pr-support.o)
-                0x0800465c                __exidx_start = .
+ .ARM.extab     0x0800477c       0x24 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
+ .ARM.extab     0x080047a0        0xc c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(pr-support.o)
+                0x080047ac                __exidx_start = .
 
-.ARM.exidx      0x0800465c       0xd0
+.ARM.exidx      0x080047ac       0xd0
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
- .ARM.exidx     0x0800465c        0x8 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
+ .ARM.exidx     0x080047ac        0x8 C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+ .ARM.exidx     0x080047b4        0x0 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
                                  0x10 (size before relaxing)
- .ARM.exidx     0x08004664       0x98 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
+ .ARM.exidx     0x080047b4       0x98 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(unwind-arm.o)
                                  0xd8 (size before relaxing)
- .ARM.exidx     0x080046fc       0x30 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(pr-support.o)
+ .ARM.exidx     0x0800484c       0x30 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(pr-support.o)
                                  0x48 (size before relaxing)
-                0x0800472c                __exidx_end = .
-                0x0800472c                __etext = ALIGN (0x4)
+                0x0800487c                __exidx_end = .
+                0x0800487c                __etext = ALIGN (0x4)
 
-.rel.dyn        0x0800472c        0x0
- .rel.iplt      0x0800472c        0x0 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtbegin.o
+.rel.dyn        0x0800487c        0x0
+ .rel.iplt      0x0800487c        0x0 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtbegin.o
 
-.data           0x20000000      0x430 load address 0x0800472c
+.data           0x20000000      0x430 load address 0x0800487c
                 0x20000000                __data_start__ = .
  *(vtable)
  *(.data*)
@@ -727,115 +753,116 @@ LOAD c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eab
                 0x20000430                . = ALIGN (0x4)
                 0x20000430                __data_end__ = .
 
-.igot.plt       0x20000430        0x0 load address 0x08004b5c
+.igot.plt       0x20000430        0x0 load address 0x08004cac
  .igot.plt      0x20000430        0x0 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtbegin.o
 
-.bss            0x20000430      0x2fc load address 0x08004b5c
+.bss            0x20000430      0x300 load address 0x08004cac
                 0x20000430                . = ALIGN (0x4)
                 0x20000430                __bss_start__ = .
  *(.bss*)
- .bss.buff0     0x20000430       0x14 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000430                buff0
- .bss.buff1     0x20000444       0x14 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000444                buff1
- .bss.buff2     0x20000458       0x14 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000458                buff2
- .bss.buff3     0x2000046c       0x14 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x2000046c                buff3
- .bss.cur_buff  0x20000480        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000480                cur_buff
+ .bss.addrh     0x20000430        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .bss.buff0     0x20000434       0x14 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000434                buff0
+ .bss.buff1     0x20000448       0x14 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000448                buff1
+ .bss.buff2     0x2000045c       0x14 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x2000045c                buff2
+ .bss.buff3     0x20000470       0x14 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000470                buff3
+ .bss.cur_buff  0x20000484        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000484                cur_buff
  .bss.cur_usb_load_buff
-                0x20000484        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x20000488        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .bss.incoming_bytes_remain
-                0x20000488        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- *fill*         0x20000489        0x3 
- .bss.log       0x2000048c        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x2000048c        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ *fill*         0x2000048d        0x3 
+ .bss.log       0x20000490        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .bss.new_address
-                0x20000490        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- *fill*         0x20000491        0x1 
- .bss.num_bytes_req.lto_priv.36
-                0x20000492        0x2 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000492                num_bytes_req.lto_priv.36
- .bss.num_bytes_sending.lto_priv.35
-                0x20000494        0x2 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000494                num_bytes_sending.lto_priv.35
- .bss.num_bytes_xfrd.lto_priv.34
-                0x20000496        0x2 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000496                num_bytes_xfrd.lto_priv.34
+                0x20000494        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ *fill*         0x20000495        0x1 
+ .bss.num_bytes_req.lto_priv.42
+                0x20000496        0x2 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000496                num_bytes_req.lto_priv.42
+ .bss.num_bytes_sending.lto_priv.41
+                0x20000498        0x2 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000498                num_bytes_sending.lto_priv.41
+ .bss.num_bytes_xfrd.lto_priv.40
+                0x2000049a        0x2 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x2000049a                num_bytes_xfrd.lto_priv.40
  .bss.oper_info_struct
-                0x20000498       0x20 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000498                oper_info_struct
+                0x2000049c       0x20 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x2000049c                oper_info_struct
  .bss.pbje_command
-                0x200004b8        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x200004b8                pbje_command
+                0x200004bc        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x200004bc                pbje_command
  .bss.pbje_data
-                0x200004b9       0x20 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x200004b9                pbje_data
+                0x200004bd       0x20 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x200004bd                pbje_data
  .bss.pbje_numclk
-                0x200004d9        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x200004d9                pbje_numclk
+                0x200004dd        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x200004dd                pbje_numclk
  .bss.pbje_status
-                0x200004da        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x200004da                pbje_status
+                0x200004de        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x200004de                pbje_status
  .bss.raw_bank_status
-                0x200004db       0x10 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- *fill*         0x200004eb        0x1 
+                0x200004df       0x10 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ *fill*         0x200004ef        0x1 
  .bss.raw_buffer16
-                0x200004ec      0x200 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .bss.req_dir   0x200006ec        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .bss.reqdir    0x200006ed        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .bss.reqtype   0x200006ee        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- *fill*         0x200006ef        0x1 
- .bss.rv16.4882
-                0x200006f0        0x8 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x200004f0      0x200 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .bss.req_dir   0x200006f0        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .bss.reqdir    0x200006f1        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .bss.reqtype   0x200006f2        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ *fill*         0x200006f3        0x1 
+ .bss.rv16.4938
+                0x200006f4        0x8 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .bss.swim_base
-                0x200006f8        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x200006f8                swim_base
- .bss.swim_pin  0x200006fc        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x200006fc                swim_pin
- *fill*         0x200006fd        0x3 
- .bss.tck_base  0x20000700        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000700                tck_base
- .bss.tck_pin   0x20000704        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000704                tck_pin
- *fill*         0x20000705        0x3 
- .bss.tdi_base  0x20000708        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000708                tdi_base
- .bss.tdi_pin   0x2000070c        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x2000070c                tdi_pin
- *fill*         0x2000070d        0x3 
- .bss.tdo_base  0x20000710        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000710                tdo_base
- .bss.tdo_pin   0x20000714        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000714                tdo_pin
- *fill*         0x20000715        0x3 
- .bss.tms_base  0x20000718        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000718                tms_base
- .bss.tms_pin   0x2000071c        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x2000071c                tms_pin
- *fill*         0x2000071d        0x3 
+                0x200006fc        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x200006fc                swim_base
+ .bss.swim_pin  0x20000700        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000700                swim_pin
+ *fill*         0x20000701        0x3 
+ .bss.tck_base  0x20000704        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000704                tck_base
+ .bss.tck_pin   0x20000708        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000708                tck_pin
+ *fill*         0x20000709        0x3 
+ .bss.tdi_base  0x2000070c        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x2000070c                tdi_base
+ .bss.tdi_pin   0x20000710        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000710                tdi_pin
+ *fill*         0x20000711        0x3 
+ .bss.tdo_base  0x20000714        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000714                tdo_base
+ .bss.tdo_pin   0x20000718        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000718                tdo_pin
+ *fill*         0x20000719        0x3 
+ .bss.tms_base  0x2000071c        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x2000071c                tms_base
+ .bss.tms_pin   0x20000720        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000720                tms_pin
+ *fill*         0x20000721        0x3 
  .bss.usbMsgPtr
-                0x20000720        0x4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                0x20000720                usbMsgPtr
- .bss.num_buff.4962
-                0x20000724        0x1 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
+                0x20000724        0x4 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                0x20000724                usbMsgPtr
+ .bss.num_buff.5018
+                0x20000728        0x1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
  *(COMMON)
- *fill*         0x20000725        0x3 
- COMMON         0x20000728        0x4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-reent.o)
-                0x20000728                errno
-                0x2000072c                . = ALIGN (0x4)
-                0x2000072c                __bss_end__ = .
+ *fill*         0x20000729        0x3 
+ COMMON         0x2000072c        0x4 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libg.a(lib_a-reent.o)
+                0x2000072c                errno
+                0x20000730                . = ALIGN (0x4)
+                0x20000730                __bss_end__ = .
 
 .heap           0x20000730        0x0
                 0x20000730                __end__ = .
                 0x20000730                PROVIDE (end, .)
  *(.heap*)
- .heap          0x20000730        0x0 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
+ .heap          0x20000730        0x0 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
                 0x20000730                __HeapLimit = .
 
 .stack_dummy    0x20000730      0xc00
  *(.stack*)
- .stack         0x20000730      0xc00 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
+ .stack         0x20000730      0xc00 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
                 0x20001800                __StackTop = (ORIGIN (RAM) + LENGTH (RAM))
                 0x20000c00                __StackLimit = (__StackTop - SIZEOF (.stack_dummy))
                 0x20001800                PROVIDE (__stack, __StackTop)
@@ -847,96 +874,103 @@ OUTPUT(build_stm/inlretro_stm.elf elf32-littlearm)
  .ARM.attributes
                 0x00000000       0x1e c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crti.o
  .ARM.attributes
-                0x0000001e       0x1b C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
+                0x0000001e       0x1b C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
  .ARM.attributes
-                0x00000039       0x2f C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x00000039       0x2f C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .ARM.attributes
-                0x00000068       0x2f C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
+                0x00000068       0x2f C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
  .ARM.attributes
-                0x00000097       0x2f C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
+                0x00000097       0x2f C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
  .ARM.attributes
-                0x000000c6       0x2f C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
+                0x000000c6       0x2f C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
  .ARM.attributes
-                0x000000f5       0x21 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
+                0x000000f5       0x21 C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
  .ARM.attributes
-                0x00000116       0x1e c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uqi.o)
+                0x00000116       0x21 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
  .ARM.attributes
-                0x00000134       0x1e c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_shi.o)
+                0x00000137       0x1e c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uqi.o)
  .ARM.attributes
-                0x00000152       0x1e c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uhi.o)
+                0x00000155       0x1e c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_shi.o)
+ .ARM.attributes
+                0x00000173       0x1e c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a(_thumb1_case_uhi.o)
 
 .comment        0x00000000       0x7f
- .comment       0x00000000       0x7f C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+ .comment       0x00000000       0x7f C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
                                  0x80 (size before relaxing)
- .comment       0x0000007f       0x80 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .comment       0x0000007f       0x80 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .comment       0x0000007f       0x80 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
+ .comment       0x0000007f       0x80 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .comment       0x0000007f       0x80 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .comment       0x0000007f       0x80 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
 
-.debug_line     0x00000000     0x18dc
- .debug_line    0x00000000       0x6f C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
- .debug_line    0x0000006f      0xa19 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .debug_line    0x00000a88      0x815 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .debug_line    0x0000129d      0x3a8 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .debug_line    0x00001645      0x1a4 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
- .debug_line    0x000017e9       0xf3 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
+.debug_line     0x00000000     0x19fd
+ .debug_line    0x00000000       0x6f C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
+ .debug_line    0x0000006f      0xab1 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .debug_line    0x00000b20      0x7ec C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .debug_line    0x0000130c      0x3ce C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .debug_line    0x000016da      0x1e6 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+ .debug_line    0x000018c0       0x4a C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+ .debug_line    0x0000190a       0xf3 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
 
-.debug_info     0x00000000     0x38f0
- .debug_info    0x00000000       0x82 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
- .debug_info    0x00000082     0x14d6 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .debug_info    0x00001558     0x18c6 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .debug_info    0x00002e1e      0x632 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .debug_info    0x00003450      0x425 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
- .debug_info    0x00003875       0x7b C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
+.debug_info     0x00000000     0x3d46
+ .debug_info    0x00000000       0x82 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
+ .debug_info    0x00000082     0x1823 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .debug_info    0x000018a5     0x177e C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .debug_info    0x00003023      0x66d C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .debug_info    0x00003690      0x5bc C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+ .debug_info    0x00003c4c       0x7f C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+ .debug_info    0x00003ccb       0x7b C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
 
-.debug_abbrev   0x00000000      0xa81
- .debug_abbrev  0x00000000       0x14 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
- .debug_abbrev  0x00000014      0x387 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .debug_abbrev  0x0000039b      0x396 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .debug_abbrev  0x00000731      0x1ba C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .debug_abbrev  0x000008eb      0x182 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
- .debug_abbrev  0x00000a6d       0x14 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
+.debug_abbrev   0x00000000      0xabf
+ .debug_abbrev  0x00000000       0x14 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
+ .debug_abbrev  0x00000014      0x3a8 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .debug_abbrev  0x000003bc      0x396 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .debug_abbrev  0x00000752      0x1ba C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .debug_abbrev  0x0000090c      0x18b C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+ .debug_abbrev  0x00000a97       0x14 C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+ .debug_abbrev  0x00000aab       0x14 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
 
-.debug_aranges  0x00000000      0x178
+.debug_aranges  0x00000000      0x1a8
  .debug_aranges
-                0x00000000       0x20 C:\Users\Paul\AppData\Local\Temp\cceBaBiJ.o
+                0x00000000       0x20 C:\Users\Paul\AppData\Local\Temp\cceBDSbg.o
  .debug_aranges
-                0x00000020       0x20 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
+                0x00000020       0x20 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
  .debug_aranges
-                0x00000040       0x50 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
+                0x00000040       0x50 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
  .debug_aranges
-                0x00000090       0x98 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
+                0x00000090       0xa0 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
  .debug_aranges
-                0x00000128       0x30 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
+                0x00000130       0x38 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
  .debug_aranges
-                0x00000158       0x20 C:\Users\Paul\AppData\Local\Temp\cclhBf2A.o
+                0x00000168       0x20 C:\Users\Paul\AppData\Local\Temp\ccRslRPq.o
+ .debug_aranges
+                0x00000188       0x20 C:\Users\Paul\AppData\Local\Temp\ccj81ITq.o
 
-.debug_loc      0x00000000     0x3cfd
- .debug_loc     0x00000000     0x2457 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .debug_loc     0x00002457      0xfc0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .debug_loc     0x00003417      0x61e C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .debug_loc     0x00003a35      0x2c8 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
+.debug_loc      0x00000000     0x404b
+ .debug_loc     0x00000000     0x2691 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .debug_loc     0x00002691      0xf75 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .debug_loc     0x00003606      0x660 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .debug_loc     0x00003c66      0x3e5 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
 
-.debug_ranges   0x00000000     0x1608
- .debug_ranges  0x00000000     0x12d0 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .debug_ranges  0x000012d0      0x290 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .debug_ranges  0x00001560       0x88 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .debug_ranges  0x000015e8       0x20 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
+.debug_ranges   0x00000000     0x1708
+ .debug_ranges  0x00000000     0x13e8 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .debug_ranges  0x000013e8      0x268 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .debug_ranges  0x00001650       0x90 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .debug_ranges  0x000016e0       0x28 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
 
-.debug_str      0x00000000      0xc68
- .debug_str     0x00000000      0x87d C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
-                                0x8e2 (size before relaxing)
- .debug_str     0x0000087d      0x247 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
-                                0x4d9 (size before relaxing)
- .debug_str     0x00000ac4      0x113 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
-                                0x2f8 (size before relaxing)
- .debug_str     0x00000bd7       0x91 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
-                                0x307 (size before relaxing)
+.debug_str      0x00000000      0xd18
+ .debug_str     0x00000000      0x8f7 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+                                0x95c (size before relaxing)
+ .debug_str     0x000008f7      0x237 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+                                0x4d2 (size before relaxing)
+ .debug_str     0x00000b2e      0x12c C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+                                0x311 (size before relaxing)
+ .debug_str     0x00000c5a       0xbe C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
+                                0x33d (size before relaxing)
 
-.debug_frame    0x00000000      0x2ec
- .debug_frame   0x00000000       0x30 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans0.ltrans.o
- .debug_frame   0x00000030       0xd8 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans1.ltrans.o
- .debug_frame   0x00000108      0x174 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans2.ltrans.o
- .debug_frame   0x0000027c       0x70 C:\Users\Paul\AppData\Local\Temp\ccHx4fn8.ltrans3.ltrans.o
+.debug_frame    0x00000000      0x31c
+ .debug_frame   0x00000000       0x30 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans0.ltrans.o
+ .debug_frame   0x00000030       0xd8 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans1.ltrans.o
+ .debug_frame   0x00000108      0x184 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans2.ltrans.o
+ .debug_frame   0x0000028c       0x90 C:\Users\Paul\AppData\Local\Temp\cc6CqT8m.ltrans3.ltrans.o
 
 .stabstr        0x00000000       0x76
  .stabstr       0x00000000       0x76 c:/arm/gcc-arm-none-eabi-6-2017-q2-update-win32/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v6-m\libnosys.a(getpid.o)

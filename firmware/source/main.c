@@ -2,6 +2,7 @@
 #include "usb.h"
 #include "io.h"
 #include "buffer.h"
+#include "bootload.h"
 #include "jtag.h"
 
 #ifdef AVR_CORE
@@ -53,6 +54,15 @@ int main(void)
 #endif
 
 #ifdef STM_CORE
+
+	//remap system memory (including vector table)
+//	SYSCFG->CFGR1 = 0x00000002;	//boot value (BOOT1:0 = 0b10	
+//	SYSCFG->CFGR1 = 0x00000001;	//map sysmem bootloader to 0x00000000
+	//SYSCFG->CFGR1 |= SYSCFG_CFGR1_MEM_MODE_ | 0x0001;	
+	//jump to bootloader
+//	jump_to_bootloader();
+//	jump_to_addr(0x1FFFC519);
+
 	//System is running at reset defaults
 	
 	//Default clock is in operation

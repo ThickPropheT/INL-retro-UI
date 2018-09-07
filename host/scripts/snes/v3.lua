@@ -113,12 +113,21 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 	dict.io("IO_RESET")
 	dict.io("SNES_INIT")
 
+--	local snes_mapping = "LOROM"
+	local snes_mapping = "HIROM"
+--	local rom_size = 512
+--	local rom_size = 1024
+--	local rom_size = 2048
+	local rom_size = 4096
+--	local rom_size = 8192
+--	local rom_size = 12288
+--	local rom_size = 16384
+
 --test cart by reading manf/prod ID
 	if test then
 
 		--SNES detect HiROM or LoROM 
 		--nes.detect_mapper_mirroring(true)
-		local snes_mapping = "LOROM"
 		--SNES detect if there's save ram and size
 
 		--SNES detect if able to read flash ID's
@@ -148,13 +157,13 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 --dump the cart to dumpfile
 	if read then
 		--initialize the mapper for dumping
-		init_mapper(debug)
+		--init_mapper(debug)
 
 		file = assert(io.open(dumpfile, "wb"))
 
 		--TODO find bank table to avoid bus conflicts!
 		--dump cart into file
-		dump.dumptofile( file, 512, "LOROM", "SNESROM", true )
+		dump.dumptofile( file, rom_size, snes_mapping, "SNESROM", true )
 
 		--close file
 		assert(file:close())
@@ -215,7 +224,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 	if program then
 
 		--initialize the mapper for dumping
-		init_mapper(debug)
+		--init_mapper(debug)
 
 		--open file
 		file = assert(io.open(flashfile, "rb"))
@@ -225,7 +234,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--not susceptible to bus conflicts
 
 		--flash cart
-		flash.write_file( file, 512, "LOROM", "SNESROM", true )
+		flash.write_file( file, rom_size, snes_mapping, "SNESROM", true )
 		--close file
 		assert(file:close())
 
@@ -238,7 +247,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(verifyfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 512, "LOROM", "SNESROM", true )
+		dump.dumptofile( file, rom_size, snes_mapping, "SNESROM", true )
 
 		--close file
 		assert(file:close())

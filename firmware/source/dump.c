@@ -38,13 +38,15 @@ uint8_t dump_buff( buffer *buff ) {
 				//Nomolos bank table @ CC84
 				//nes_cpu_wr( (0xCC84+bank), bank );
 				//Owlia bank table @ CC84
-				nes_cpu_wr( (0xE473+bank), bank );
+				//nes_cpu_wr( (0xE473+bank), bank );
 				//Rushnattack
 				//nes_cpu_wr( (0x8000+bank), bank );
 				//twindragons
 				//nes_cpu_wr( (0xC000+bank), bank );
 				//h1
 				//nes_cpu_wr( (0xFFC0+bank), bank );
+				//AFB
+				nes_cpu_wr( (0xFD69+bank), bank );
 
 				buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id, 
 								//id contains MSb of page when <256B buffer
@@ -159,15 +161,26 @@ uint8_t dump_buff( buffer *buff ) {
 								buff->last_idx, ~FALSE );
 			break;
 		case SNESROM:
-			addrH |= 0x80;	//$8000 LOROM space
-			//need to split page_num
-			//A14-8 page_num[7-0]
-			//A15 high (LOROM)
-			//A23-16 page_num[14-8]
-			HADDR_SET( (buff->page_num)>>7 );
+			if (buff->mapper == LOROM) {
+				addrH |= 0x80;	//$8000 LOROM space
+				//need to split page_num
+				//A14-8 page_num[6-0]
+				//A15 high (LOROM)
+				//A23-16 page_num[14-7]
+				bank = (buff->page_num)>>7;
+			}
+			if (buff->mapper == HIROM) {
+				//need to split page_num
+				//A15-8 page_num[7-0]
+				//A21-16 page_num[13-8]
+				//A22 high (HIROM)
+				//A23 ~page_num[14] (bank CO starts first half, bank 40 starts second)
+				bank = ((((buff->page_num)>>8) | 0x40) & 0x7F);
+			}
+			HADDR_SET( bank );
 			buff->cur_byte = snes_rom_page_rd_poll( buff->data, addrH, buff->id, 
-								//id contains MSb of page when <256B buffer
-								buff->last_idx, ~FALSE );
+									//id contains MSb of page when <256B buffer
+									buff->last_idx, ~FALSE );
 		case SNESRAM:
 //warn			addrX = ((buff->page_num)>>8);
 			break;

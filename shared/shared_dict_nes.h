@@ -43,6 +43,8 @@
 
 #define NES_DUALPORT_WR			0x05
 
+#define DISC_PUSH_EXP0_PRGROM_WR	0x06
+
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================
