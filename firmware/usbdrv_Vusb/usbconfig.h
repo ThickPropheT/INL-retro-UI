@@ -238,7 +238,8 @@ section at the end of this file).
  * with libusb: 0x16c0/0x5dc.  Use this VID/PID pair ONLY if you understand
  * the implications!
  */
-#define USB_CFG_DEVICE_VERSION  0x00, 0x02
+//#define USB_CFG_DEVICE_VERSION  0x00, 0x02 early development version
+#define USB_CFG_DEVICE_VERSION  0x01, 0x02 //first public release 7SEP2018
 //INL Retro-Prog firmwares released in 2016 and earlier are v1.0 (0x00, 0x01)
 //INL Retro-Prog firmware rebuild with new USB interface and host app starting
 //	development in late 2016 are v2.0 (0x00, 0x02)

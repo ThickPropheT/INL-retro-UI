@@ -179,7 +179,7 @@ libusb_device_handle * open_usb_device( libusb_context *context, int log_level )
 	//     As an implementation detail, libusb_open() actually adds a reference to the device in question. This is because the device remains available through the handle via libusb_get_device(). The reference is deleted during libusb_close(). 
 
 	//report successful connection to INL retro-prog
-	printf("Successfully found and connected to INL retro-prog with firmware version 2.0\n");
+	printf("Successfully found and connected to INL retro-prog\n");//TODO with firmware version 2.0\n");
 
 	//free device list if it was left open
 	if (device_list) {
