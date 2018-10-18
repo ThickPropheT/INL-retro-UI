@@ -1,3 +1,49 @@
+===================================
+RUNNING THE HOST APPLICATION:
+===================================
+
+On windows install device drivers by running InstallDriver.exe from WindowsDriverPackage folder.
+
+An easy way to open the commandline in windows 10 is to open the host folder in explorer.
+Then click on the address bar at the top, the address should highlight, simply type the
+3 letters "cmd" in the address bar and hit enter.
+
+From the host folder, run the main application from the commandline by typing:
+inlretro.exe -s scripts\inlretro.lua
+
+This will run the main application and after the device is detected and USB comms established,
+control is passed to the main lua script.
+
+See the USER notes at the top of scripts\inlretro.lua file for how to select different mappers,
+cartridges, etc.  You'll need to modify inlretro.lua with your favorite text editor or even
+something as simple as notepad included with windows.  If you don't have a favorite text editor,
+I recommend something like notepad++ which color codes lua files/code for easier reading.
+https://notepad-plus-plus.org/download
+
+If the device errors out, or is not responding you may have to press the RESET button near the
+USB connector on the INLretro programmer/dumper to reset the device, and try again.
+
+
+===================================
+UPDATING DEVICE FIRMWARE
+===================================
+This is done via USB using STmicro DfuSe:
+https://www.st.com/en/development-tools/stsw-stm32080.html
+
+Detailed instructions to come, will update this section with the next firmware update.
+
+
+
+===================================
+SOFTWARE & FIRMWARE BUILDING
+===================================
+Some build instructions follow, but they shouldn't be needed if you're running the
+released firmware on Windows.
+
+This section needs some updating....  Don't be afraid to contact me if you'd like to build
+your own firmware.  Or are having issues building the host application on linux/mac
+
+
 ===================
 Linux
 ===================
