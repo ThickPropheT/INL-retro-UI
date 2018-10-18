@@ -141,6 +141,31 @@ local function detect_mapper_mirroring (debug)
 --		//fme7 and many other ASIC mappers
 --
 --		//none of ASIC mappers passed, assume fixed/discrete style mirroring
+
+		dict.pinport("ADDR_SET", 0x0800)
+		local readH = dict.pinport("CTL_RD", "CIA10")
+		dict.pinport("ADDR_SET", 0x0400)
+		local readV = dict.pinport("CTL_RD", "CIA10")
+
+		--print(readH, readV)
+
+		---[[
+		if readV == 0 and readH == 0 then
+			if debug then print("1screen A mirroring sensed") end
+			return "1SCNA"
+		elseif readV ~= 0 and readH ~= 0 then
+			if debug then print("1screen B mirroring sensed") end
+			return "1SCNB"
+		elseif readV ~= 0 and readH == 0 then
+			if debug then print("vertical mirroring sensed") end
+			return "VERT"
+		elseif readV == 0 and readH ~= 0 then
+			if debug then print("horizontal mirroring sensed") end
+			return "HORIZ"
+		end
+		--]]
+
+		--[[
 		rv = dict.nes("CIRAM_A10_MIRROR")
 		if (rv == op_nes["MIR_VERT"]) then
 			if debug then print("vertical mirroring sensed") end
@@ -155,9 +180,15 @@ local function detect_mapper_mirroring (debug)
 			if debug then print("1screen B mirroring sensed") end
 			return "1SCNB"
 		end
+		--]]
 
 		-- Rtn: VERT/HORIZ/1SCNA/1SCNB
 	return nil
+end
+
+
+-- verify the ciccom software mirroring switch is working properly
+local function test_cic_soft_switch (debug)
 end
 
 -- Desc:CHR-ROM flash manf/prod ID sense test
@@ -310,6 +341,7 @@ nes.jumper_ciramce_ppuA13n = jumper_ciramce_ppuA13n
 nes.ciramce_inv_ppuA13 = ciramce_inv_ppuA13 
 nes.jumper_famicom_sound = jumper_famicom_sound
 nes.detect_mapper_mirroring = detect_mapper_mirroring
+nes.test_cic_soft_switch = test_cic_soft_switch
 nes.ppu_ram_sense = ppu_ram_sense
 nes.read_flashID_chrrom_8K = read_flashID_chrrom_8K
 nes.read_flashID_prgrom_exp0 = read_flashID_prgrom_exp0

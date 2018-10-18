@@ -1,5 +1,36 @@
 -- main script that runs application logic and flow
 
+-- =====================================================
+-- USER NOTES
+-- =====================================================
+-- 1- set 'curcart' to point to desired mapper script (around line 60 currently)
+-- 2- set 'cart_console' to the currently inserted cartridge (arond line 80 currently)
+-- 	this will control flow of the script later on which is the 
+-- 	location of what you'll need to modify in the next step.
+-- 3- call curcart.process function to actually run something:
+-- 	Here are a few NES NROM examples:
+--
+--	--NROM test & dump to dump.bin file
+--	curcart.process( true, true, false, false, false, "ignore/dump.bin", nil, nil)
+--
+--	--NROM test, erase, & flash flash.bin file
+--	curcart.process( true, false, true, true, false, nil, "ignore/flash.bin", nil)
+--
+--	--NROM test, dump (to dump.bin), then erase.  Next flash flash.bin, lastly dump again to verify.bin
+--	curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/flash.bin, "ignore/verify.bin)
+--
+--	Here is the nrom.process function definition:
+--	local function process( test, read, erase, program, verify, dumpfile, flashfile, verifyfile)
+--	arg 1 - test: this will run some tests on the cart to help determine things like mirroring & flash type
+--	arg 2 - read: this will dump the rom memories on the cartridge to 'dumpfile', (done before subequent steps)
+--	*The remaining args are only for flash boards purchased from our site:
+--	arg 3 - erase: this will erase flash roms on the cartridge
+--	arg 4 - program: this will write 'flashfile' to the cartridge
+--	arg 5 - verify: this will dump the memories to 'verifyfile', just like read could/did, but done last.
+--	arg 6,7,8 files: The relative path of where the files can be found/created from steps above.
+--			 You don't have to set unused file names to nil, that was just done for the examples.
+--
+-- =====================================================
 
 
 -- initial function called from C main
@@ -26,6 +57,10 @@ function main ()
 --	local crc32 = require "scripts.app.crc32"
 
 
+-- =====================================================
+-- USERS: set curcart to point to the mapper script you would like to use here.
+--	The -- comments out a line, so you can add/remove the -- to select/deselect mapper scripts
+-- =====================================================
 	--cart/mapper specific scripts
 	--local curcart = require "scripts.nes.nrom"
 	--local curcart = require "scripts.nes.mmc1"
@@ -40,6 +75,17 @@ function main ()
 	--local curcart = require "scripts.nes.easyNSF"
 	--local curcart = require "scripts.nes.dualport"
 	--local curcart = require "scripts.snes.v3"
+	
+-- =====================================================
+-- USERS: set cart_console to the  to point to the mapper script you would like to use here.
+-- =====================================================
+	local cart_console = "NES" 	--includes Famicom
+	--local cart_console = "SNES"
+	--local cart_console = "SEGA"
+	--local cart_console = "N64"
+	--local cart_console = "DMG"
+	--local cart_console = "GBA"
+	--local cart_console = "SMS"
 
 	local rv
 --	rv = dict.pinport( "DATA_SET", 0xAA )
@@ -97,7 +143,6 @@ function main ()
 --PROCESS USER ARGS ON WHAT IS TO BE DONE WITH CART
 
 	local force_cart = true
-	cart_console = "NES"
 
 	if (force_cart or cart.detect_console(true)) then
 		if cart_console == "NES" or cart_console == "Famicom" then
@@ -179,7 +224,7 @@ function main ()
 
 			--]]
 
-		---[[
+		--[[
 		
 
 			ciccom.start()
@@ -464,7 +509,7 @@ function main ()
 
 			dict.io("IO_RESET")	
 
-		elseif cart_console == "SegaGen" then
+		elseif cart_console == "SEGA" then
 
 		elseif cart_console == "N64" then
 
