@@ -576,22 +576,25 @@ uint8_t	ciram_a10_mirroring( void )
 	//set A11, clear A10
 	//ADDRH(A11_BYTE); setting A11 in this manner doesn't work for some reason..
 	ADDR_SET(0x0800);
-	CIA10_RD(readH);
+	//CIA10_RD(readH);
+	readH = (C11bank->IDR & (1<<C11));
 
 	//set A10, clear A11
-	ADDRH(A10_BYTE);
+	//ADDRH(A10_BYTE);
+	ADDR_SET(0x0400);
 	//ADDR_SET(0x0400);
-	CIA10_RD(readV);
+	readV = (C11bank->IDR & (1<<C11));
+	//CIA10_RD(readV);
 
 
 	//if CIRAM A10 was always low -> 1 screen A
-	if ((readV==0) & (readH==0))	return MIR_1SCNA;
+	if ((readV==0) && (readH==0))	return MIR_1SCNA;
 	//if CIRAM A10 was always high -> 1 screen B
-	if ((readV!=0) & (readH!=0))	return MIR_1SCNB;
+	if ((readV!=0) && (readH!=0))	return MIR_1SCNB;
 	//if CIRAM A10 toggled with A10 -> Vertical mirroring, horizontal arrangement
-	if ((readV!=0) & (readH==0))	return MIR_VERT;
+	if ((readV!=0) && (readH==0))	return MIR_VERT;
 	//if CIRAM A10 toggled with A11 -> Horizontal mirroring, vertical arrangement
-	if ((readV==0) & (readH!=0))	return MIR_HORZ;
+	if ((readV==0) && (readH!=0))	return MIR_HORZ;
 
 	//shouldn't be here...
 	return GEN_FAIL;

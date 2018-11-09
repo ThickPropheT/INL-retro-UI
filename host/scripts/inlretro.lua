@@ -4,10 +4,11 @@
 -- USER NOTES
 -- =====================================================
 -- 1- set 'curcart' to point to desired mapper script (around line 60 currently)
--- 2- set 'cart_console' to the currently inserted cartridge (arond line 80 currently)
+-- 2- set 'cart_console' to the currently inserted cartridge (around line 80 currently)
 -- 	this will control flow of the script later on which is the 
 -- 	location of what you'll need to modify in the next step.
 -- 3- call curcart.process function to actually run something:
+-- 	NES for example, this is done around line 270ish currently..
 -- 	Here are a few NES NROM examples:
 --
 --	--NROM test & dump to dump.bin file
@@ -286,13 +287,15 @@ function main ()
 
 			--UNROM512 mapper 30
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/BBC_nonJW.bin", "ignore/verifyout.bin")
-			curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/MysticOrigins.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/MysticOrigins.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/NESmaker.nes", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/tb_map30.prg", "ignore/verifyout.bin")
+			curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/tb_map30.prg", "ignore/verifyout.bin")
 
 
 			--BNROM
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/lizard_PG.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/PJB_PRGE.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/SHBWar.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/lizard_v2_fr.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/hh85.prg", "ignore/verifyout.bin")
 			--COLOR DREAMS
