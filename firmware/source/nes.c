@@ -9,6 +9,12 @@
 //
 //=================================================================================================
 
+
+//global variables
+uint8_t cur_bank;	//used by some flash algos, must be initialized prior to depending on it
+uint16_t bank_table;	//address offset of bank table for mapper writes with bus conflicts
+
+
 /* Desc:Function takes an opcode which was transmitted via USB
  * 	then decodes it to call designated function.
  * 	shared_dict_nes.h is used in both host and fw to ensure opcodes/names align
@@ -50,6 +56,31 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 		case NES_MMC1_WR:	
 			mmc1_wr( operand, miscdata, 0 );
 			break;
+		case SET_CUR_BANK:	
+			cur_bank = operand;
+			break;
+		case SET_BANK_TABLE:	
+			bank_table = operand;
+			break;
+		case NROM_PRG_FLASH_WR:	
+			nrom_prgrom_flash_wr( operand, miscdata );
+			break;
+		case NROM_CHR_FLASH_WR:	
+			nrom_chrrom_flash_wr( operand, miscdata );
+			break;
+		case CNROM_CHR_FLASH_WR:	
+			cnrom_chrrom_flash_wr( operand, miscdata );
+			break;
+		case MMC3_PRG_FLASH_WR:	
+			mmc3_prgrom_flash_wr( operand, miscdata );
+			break;
+		case MMC3_CHR_FLASH_WR:	
+			mmc3_chrrom_flash_wr( operand, miscdata );
+			break;
+		case CDREAM_CHR_FLASH_WR:	
+			cdream_chrrom_flash_wr( operand, miscdata );
+			break;
+
 
 		//8bit return values:
 		case EMULATE_NES_CPU_RD:
@@ -68,9 +99,18 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 			rdata[RD_LEN] = BYTE_LEN;
 			rdata[RD0] = nes_dualport_rd( operand );
 			break;
-		case CIRAM_A10_MIRROR:
+	//	case CIRAM_A10_MIRROR:
+	//		rdata[RD_LEN] = BYTE_LEN;
+	//		rdata[RD0] = ciram_a10_mirroring( );
+	//		break;
+		case GET_CUR_BANK:	
 			rdata[RD_LEN] = BYTE_LEN;
-			rdata[RD0] = ciram_a10_mirroring( );
+			rdata[RD0] = cur_bank;
+			break;
+		case GET_BANK_TABLE:	
+			rdata[RD_LEN] = HWORD_LEN;
+			rdata[RD0] = bank_table;
+			rdata[RD1] = bank_table>>8;
 			break;
 		default:
 			 //macro doesn't exist
@@ -569,36 +609,37 @@ void	nes_dualport_wr( uint16_t addr, uint8_t data )
  *	errors not really possible since all combinations
  *	of CIRAM A10 level designate something valid
  */
-uint8_t	ciram_a10_mirroring( void )
-{
-	uint16_t readV, readH;
+//uint8_t	ciram_a10_mirroring( void )
+//{
+//	uint16_t readV, readH;
+//
+//	//set A11, clear A10
+//	//ADDRH(A11_BYTE); setting A11 in this manner doesn't work for some reason..
+//	ADDR_SET(0x0800);
+//	//CIA10_RD(readH);
+//	readH = (C11bank->IDR & (1<<C11));
+//
+//	//set A10, clear A11
+//	//ADDRH(A10_BYTE);
+//	ADDR_SET(0x0400);
+//	//ADDR_SET(0x0400);
+//	readV = (C11bank->IDR & (1<<C11));
+//	//CIA10_RD(readV);
+//
+//
+//	//if CIRAM A10 was always low -> 1 screen A
+//	if ((readV==0) && (readH==0))	return MIR_1SCNA;
+//	//if CIRAM A10 was always high -> 1 screen B
+//	if ((readV!=0) && (readH!=0))	return MIR_1SCNB;
+//	//if CIRAM A10 toggled with A10 -> Vertical mirroring, horizontal arrangement
+//	if ((readV!=0) && (readH==0))	return MIR_VERT;
+//	//if CIRAM A10 toggled with A11 -> Horizontal mirroring, vertical arrangement
+//	if ((readV==0) && (readH!=0))	return MIR_HORZ;
+//
+//	//shouldn't be here...
+//	return GEN_FAIL;
+//}
 
-	//set A11, clear A10
-	//ADDRH(A11_BYTE); setting A11 in this manner doesn't work for some reason..
-	ADDR_SET(0x0800);
-	//CIA10_RD(readH);
-	readH = (C11bank->IDR & (1<<C11));
-
-	//set A10, clear A11
-	//ADDRH(A10_BYTE);
-	ADDR_SET(0x0400);
-	//ADDR_SET(0x0400);
-	readV = (C11bank->IDR & (1<<C11));
-	//CIA10_RD(readV);
-
-
-	//if CIRAM A10 was always low -> 1 screen A
-	if ((readV==0) && (readH==0))	return MIR_1SCNA;
-	//if CIRAM A10 was always high -> 1 screen B
-	if ((readV!=0) && (readH!=0))	return MIR_1SCNB;
-	//if CIRAM A10 toggled with A10 -> Vertical mirroring, horizontal arrangement
-	if ((readV!=0) && (readH==0))	return MIR_VERT;
-	//if CIRAM A10 toggled with A11 -> Horizontal mirroring, vertical arrangement
-	if ((readV==0) && (readH!=0))	return MIR_HORZ;
-
-	//shouldn't be here...
-	return GEN_FAIL;
-}
 
 /* Desc:NES CPU Page Read with optional USB polling
  * 	decode A15 from addrH to set /ROMSEL as expected
@@ -800,4 +841,199 @@ void	mmc1_wr( uint16_t addr, uint8_t data, uint8_t reset )
 
 	return;
 }
+
+
+/* Desc:NES NROM PRG-ROM FLASH Write
+ * 	Also used for discrete mappers with 32KB banking (CNROM, BxROM, etc)
+ * Pre: nes_init() setup of io pins
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void nrom_prgrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock and write data
+	discrete_exp0_prgrom_wr(0x5555, 0xAA);
+	discrete_exp0_prgrom_wr(0x2AAA, 0x55);
+	discrete_exp0_prgrom_wr(0x5555, 0xA0);
+	discrete_exp0_prgrom_wr(addr, data);
+
+	do {
+		rv = nes_cpu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_cpu_rd(addr));
+	//TODO handle timeout
+
+	return;
+}
+
+
+/* Desc:NES NROM CHR-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void nrom_chrrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock and write data
+	nes_ppu_wr(0x1555, 0xAA);
+	nes_ppu_wr(0x0AAA, 0x55);
+	nes_ppu_wr(0x1555, 0xA0);
+	nes_ppu_wr(addr, data);
+
+	do {
+		rv = nes_ppu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_ppu_rd(addr));
+	//TODO handle timeout
+
+	return;
+}
+
+
+/* Desc:NES CNROM CHR-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	cur_bank global var must be set to desired mapper register value
+ * 	bank_table global var must be set to base address of the bank table
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void cnrom_chrrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock the flash
+	nes_cpu_wr(bank_table+2, 0x02);
+	nes_ppu_wr(0x1555, 0xAA);
+
+	nes_cpu_wr(bank_table+1, 0x01);
+	nes_ppu_wr(0x0AAA, 0x55);
+
+	nes_cpu_wr(bank_table+2, 0x02);
+	nes_ppu_wr(0x1555, 0xA0);
+
+	//select desired bank for the write
+	nes_cpu_wr(bank_table+cur_bank, cur_bank);
+	//write the byte
+	nes_ppu_wr(addr, data);
+
+	do {
+		rv = nes_ppu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_ppu_rd(addr));
+	//TODO handle timeout
+
+	return;
+}
+
+
+
+/* Desc:NES MMC3 PRG-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	MMC3 must be properly inialized for flashing
+ * 	addr must be between $8000-9FFF as prescribed by init
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void mmc3_prgrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock and write data
+	nes_cpu_wr(0xD555, 0xAA);
+	nes_cpu_wr(0xAAAA, 0x55);
+	nes_cpu_wr(0xD555, 0xA0);
+	nes_cpu_wr(addr, data);
+
+	//reset $8000 bank select register to a CHR reg
+	nes_cpu_wr(0x8000, 0x00);
+
+	do {
+		rv = nes_cpu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_cpu_rd(addr));
+	//TODO handle timeout
+
+	return;
+}
+
+
+/* Desc:NES MMC3 CHR-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	MMC3 must be properly inialized for flashing
+ * 	addr must be between $0000-0FFF as prescribed by init
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void mmc3_chrrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock and write data
+	nes_ppu_wr(0x1555, 0xAA);
+	nes_ppu_wr(0x1AAA, 0x55);
+	nes_ppu_wr(0x1555, 0xA0);
+	nes_ppu_wr(addr, data);
+
+	do {
+		rv = nes_ppu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_ppu_rd(addr));
+	//TODO handle timeout
+
+	return;
+}
+
+
+/* Desc:NES ColorDreams CHR-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	cur_bank global var must be set to desired mapper register value
+ * 	bank_table global var must be set to base address of the bank table
+ * 	The first PRG-ROM bank must be selected and bank table present
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void cdream_chrrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//the CHR-ROM bank is in mapper register bits 4-7
+	uint8_t mapper_val = cur_bank << 4;
+
+	//unlock the flash
+	nes_cpu_wr(bank_table+0x20, 0x20);
+	nes_ppu_wr(0x1555, 0xAA);
+
+	nes_cpu_wr(bank_table+0x10, 0x10);
+	nes_ppu_wr(0x0AAA, 0x55);
+
+	nes_cpu_wr(bank_table+0x20, 0x20);
+	nes_ppu_wr(0x1555, 0xA0);
+
+	//select desired bank for the write
+	nes_cpu_wr(bank_table+mapper_val, mapper_val);
+	//write the byte
+	nes_ppu_wr(addr, data);
+
+	do {
+		rv = nes_ppu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_ppu_rd(addr));
+	//TODO handle timeout
+
+	return;
+}
+
+
+
+
 

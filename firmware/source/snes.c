@@ -35,6 +35,12 @@ uint8_t snes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 		case SNES_ROM_WR:	
 			snes_rom_wr( operand, miscdata );
 			break;
+		case FLASH_WR_5V:	
+			snes_5v_flash_wr( operand, miscdata );
+			break;
+		case FLASH_WR_3V:	
+			snes_3v_flash_wr( operand, miscdata );
+			break;
 
 		//8bit return values:
 		case SNES_ROM_RD:
@@ -53,6 +59,7 @@ uint8_t snes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 /* Desc:SNES ROM Read without changing high bank
  * 	/ROMSEL always set low
  * 	EXP0/RESET not affected
+ * 	NOTE: this will access addresses when /ROMSEL isn't low on the console
  * Pre: snes_init() setup of io pins
  * Post:address left on bus
  * 	data bus left clear
@@ -106,6 +113,7 @@ uint8_t	snes_rom_rd( uint16_t addr )
  * 	/ROMSEL always set low
  * 	EXP0/RESET unaffected
  * 	write value to currently selected bank
+ * 	NOTE: this will access addresses when /ROMSEL isn't low on the console
  * Pre: snes_init() setup of io pins
  * Post:data latched by anything listening on the bus
  * 	address left on bus
@@ -227,6 +235,14 @@ uint8_t snes_rom_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint
 			NOP();
 			NOP();
 		}
+
+		//gameboy needed some extra NOPS
+		NOP();
+		NOP();
+		NOP();
+		NOP();
+		NOP();
+		NOP();
 		//latch data
 		DATA_RD(data[i]);
 
@@ -244,4 +260,60 @@ uint8_t snes_rom_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint
 	return i;
 }
 
+
+/* Desc:SNES 5v ROM FLASH Write
+ * 	NOTE: /ROMSEL is always taken low
+ * 	NOTE: if the byte isn't erased it will stop over current value
+ * 	NOTE: doesn't hang if write fails, just returns, goal is to be fast
+ * Pre: snes_init() setup of io pins
+ * 	desired bank must already be selected
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void snes_5v_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock and write data
+	snes_rom_wr(0x5555, 0xAA);
+	snes_rom_wr(0x2AAA, 0x55);
+	snes_rom_wr(0x5555, 0xA0);
+	snes_rom_wr(addr, data);
+
+	do {
+		rv = snes_rom_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != snes_rom_rd(addr));
+
+	return;
+}
+
+/* Desc:SNES 3v ROM FLASH Write
+ * 	NOTE: /ROMSEL is always taken low
+ * 	NOTE: if the byte isn't erased it will stop over current value
+ * 	NOTE: doesn't hang if write fails, just returns, goal is to be fast
+ * Pre: snes_init() setup of io pins
+ * 	desired bank must already be selected
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void snes_3v_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock and write data
+	snes_rom_wr(0x8AAA, 0xAA);
+	snes_rom_wr(0x8555, 0x55);
+	snes_rom_wr(0x8AAA, 0xA0);
+	snes_rom_wr(addr, data);
+
+	do {
+		rv = snes_rom_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != snes_rom_rd(addr));
+
+	return;
+}
 

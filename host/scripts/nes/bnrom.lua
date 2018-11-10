@@ -8,11 +8,51 @@ local nes = require "scripts.app.nes"
 local dump = require "scripts.app.dump"
 local flash = require "scripts.app.flash"
 
--- file constants
+-- file constants & variables
+local mapname = "BxROM"
+local banktable_base = 0xFF94 --Lizard
+--local rom_FF_addr = 0x8000
 
 -- local functions
-local function wr_flash_byte(addr, value, debug)
 
+
+--read PRG-ROM flash ID
+local function prgrom_manf_id( debug )
+
+	--init_mapper()
+
+	if debug then print("reading PRG-ROM manf ID") end
+
+	--enter software mode
+	--ROMSEL controls PRG-ROM /OE which needs to be low for flash writes
+	--So unlock commands need to be addressed below $8000
+	--DISCRETE_EXP0_PRGROM_WR doesn't toggle /ROMSEL by definition though, so A15 is unused
+	--	    15 14 13 12
+	-- 0x5 = 0b  0  1  0  1	-> $5555
+	-- 0x2 = 0b  0  0  1  0	-> $2AAA
+	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xAA)
+	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x2AAA, 0x55)
+	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0x90)
+
+	--read manf ID
+	local rv = dict.nes("NES_CPU_RD", 0x8000)
+	if debug then print("attempted read PRG-ROM manf ID:", string.format("%X", rv)) end
+
+	--read prod ID
+	rv = dict.nes("NES_CPU_RD", 0x8001)
+	if debug then print("attempted read PRG-ROM prod ID:", string.format("%X", rv)) end
+
+	--exit software
+	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x8000, 0xF0)
+
+end
+
+
+
+--writes a byte to the currently selected bank
+local function wr_prg_flash_byte(addr, value, debug)
+
+	--same as NROM, but desired bank must already be selected
 	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xAA)
 	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x2AAA, 0x55)
 	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xA0)
@@ -41,7 +81,7 @@ local function wr_bank_table(base, entries)
 --
 --	--write bank table to selected bank
 --	while( i < entries) do
---		wr_flash_byte(base+i, i)
+--		wr_prg_flash_byte(base+i, i)
 --		i = i+1;
 --	end
 --	--now we can use that bank table to jump to any other bank
@@ -58,7 +98,7 @@ local function wr_bank_table(base, entries)
 		--write bank table to selected bank
 		local i = 0
 		while( i < entries) do
-			wr_flash_byte(base+i, i)
+			wr_prg_flash_byte(base+i, i)
 			i = i+1;
 		end
 
@@ -67,12 +107,114 @@ local function wr_bank_table(base, entries)
 
 end
 
+
+--dump the PRG ROM
+local function dump_prgrom( file, rom_size_KB, debug )
+
+	local KB_per_read = 32
+	local num_reads = rom_size_KB / KB_per_read
+	local read_count = 0
+	local addr_base = 0x08	-- $8000
+
+	while ( read_count < num_reads ) do
+
+		if debug then print( "dump PRG part ", read_count, " of ", num_reads) end
+
+		--select desired bank(s) to dump
+		dict.nes("NES_CPU_WR", banktable_base+read_count, read_count)	--32KB @ CPU $8000
+
+		dump.dumptofile( file, KB_per_read, addr_base, "NESCPU_4KB", false )
+
+		read_count = read_count + 1
+	end
+
+end
+
+
+--host flash one byte/bank at a time...
+--this is controlled from the host side one bank at a time
+--but requires mapper specific firmware flashing functions
+local function flash_prgrom(file, rom_size_KB, debug)
+
+	--init_mapper()
+	
+	--bank table should already be written
+	
+	--test some bytes
+	--wr_prg_flash_byte(0x0000, 0xA5, true)
+	--wr_prg_flash_byte(0xFFFF, 0x5A, true)
+
+	print("\nProgramming PRG-ROM flash")
+
+	local base_addr = 0x8000 --writes occur $8000-9FFF
+	local bank_size = 32*1024 --BNROM 32KByte per PRG bank
+	local buff_size = 1      --number of bytes to write at a time
+	local cur_bank = 0
+	local total_banks = rom_size_KB*1024/bank_size
+
+	local byte_num --byte number gets reset for each bank
+	local byte_str, data, readdata
+
+	while cur_bank < total_banks do
+
+		if (cur_bank %4 == 0) then
+			print("writting PRG bank: ", cur_bank, " of ", total_banks-1)
+		end
+
+		--write the current bank to the mapper register
+		dict.nes("NES_CPU_WR", banktable_base+cur_bank, cur_bank)
+
+		--program the entire bank's worth of data
+
+		--[[  This version of the code programs a single byte at a time but doesn't require 
+		--	MMC3 specific functions in the firmware
+		print("This is slow as molasses, but gets the job done")
+		byte_num = 0  --current byte within the bank
+		while byte_num < bank_size do
+
+			--read next byte from the file and convert to binary
+			byte_str = file:read(buff_size)
+			data = string.unpack("B", byte_str, 1)
+
+			--write the data
+			--SLOWEST OPTION: no firmware MMC3 specific functions 100% host flash algo:
+			--wr_prg_flash_byte(base_addr+byte_num, data, false)   --0.7KBps
+			--EASIEST FIRMWARE SPEEDUP: 5x faster, create MMC3 write byte function:
+			--can use same write function as NROM
+			dict.nes("NROM_PRG_FLASH_WR", base_addr+byte_num, data)  --3.8KBps (5.5x faster than above)
+
+			if (verify) then
+				readdata = dict.nes("NES_CPU_RD", base_addr+byte_num)
+				if readdata ~= data then
+					print("ERROR flashing byte number", byte_num, " in bank",cur_bank, " to flash ", data, readdata)
+				end
+			end
+
+			byte_num = byte_num + 1
+		end
+		--]]
+
+		--Have the device write a banks worth of data
+		--Same as NROM
+		flash.write_file( file, bank_size/1024, "NROM", "PRGROM", false )
+
+		cur_bank = cur_bank + 1
+	end
+
+	print("Done Programming PRG-ROM flash")
+
+end
+
+
 --Cart should be in reset state upon calling this function 
 --this function processes all user requests for this specific board/mapper
 local function process( test, read, erase, program, verify, dumpfile, flashfile, verifyfile)
 
 	local rv = nil
 	local file 
+	local prg_size = 512
+	local chr_size = 0
+	local wram_size = 0
 
 --initialize device i/o for NES
 	dict.io("IO_RESET")
@@ -80,22 +222,29 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 --test cart by reading manf/prod ID
 	if test then
+		print("Testing ", mapname)
+
 		nes.detect_mapper_mirroring(true)
 		nes.ppu_ram_sense(0x1000, true)
+
 		print("EXP0 pull-up test:", dict.io("EXP0_PULLUP_TEST"))	
-		nes.read_flashID_prgrom_exp0(true)
+		--nes.read_flashID_prgrom_exp0(true)
+		prgrom_manf_id(true)
+
 	end
 
 --dump the cart to dumpfile
 	if read then
+		print("\nDumping PRG-ROM...")
 		file = assert(io.open(dumpfile, "wb"))
 
 		--TODO find bank table to avoid bus conflicts!
 		--dump cart into file
-		dump.dumptofile( file, 512, "BxROM", "PRGROM", true )
+		dump_prgrom(file, prg_size, false)
 
 		--close file
 		assert(file:close())
+		print("DONE Dumping PRG-ROM")
 	end
 
 
@@ -133,15 +282,13 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--determine if auto-doubling, deinterleaving, etc, 
 		--needs done to make board compatible with rom
 
-		--find bank table in the rom
 		--write bank table to all banks of cartridge
-		--Lizard's bank table is at $FF94 so hard code that for now
-		wr_bank_table(0xFF94, 16)
-		--hh85 bank table at $FFE0
-		--wr_bank_table(0xFFE0, 16)
+		wr_bank_table(banktable_base, 16)
+		--TODO need to verify where bank table belongs and properly determine number of banks
 
 		--flash cart
-		flash.write_file( file, 512, "BxROM", "PRGROM", true )
+		flash_prgrom(file, prg_size, true)
+
 		--close file
 		assert(file:close())
 
@@ -150,14 +297,17 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 --verify flashfile is on the cart
 	if verify then
 		--for now let's just dump the file and verify manually
+		print("\nPost dumping PRG-ROM")
 
 		file = assert(io.open(verifyfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 512, "BxROM", "PRGROM", true )
+		dump_prgrom(file, prg_size, false)
 
 		--close file
 		assert(file:close())
+
+		print("DONE post dumping PRG-ROM")
 	end
 
 	dict.io("IO_RESET")

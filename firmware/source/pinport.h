@@ -148,7 +148,17 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 
 //     PC15 "AUDR"
 
-//     PC16 "CIN" 
+//     PC16 "GBP" 
+#ifndef	C16nodef
+#define	GBP_IP_PU()	CTL_IP_PU(GBPbank, GBP)
+#define	GBP_IP_FL()	CTL_IP_FL(GBPbank, GBP)
+#define	GBP_OP()	CTL_OP(GBPbank, GBP)
+#define GBP_LO()	CTL_SET_LO(GBPbank, GBP)
+#define GBP_HI()	CTL_SET_HI(GBPbank, GBP)
+#define GBP_3V()	GBP_HI()
+#define GBP_5V()	GBP_LO()
+#define GBP_RD(val)	CTL_RD(GBPbank, GBP, val)
+#endif
 
 //     PC17 "SWD" 
 

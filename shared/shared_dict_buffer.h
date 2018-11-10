@@ -106,6 +106,20 @@
 	#define SNESROM		0x13
 	#define SNESRAM		0x14
 
+	//Read specific sections of memory map
+	// 4KB/1KB naming designates the granularity of the starting address
+	// Any amount can be read, but unexpected behavior will result when reading past memory map limits
+	// designate the address base with mapper since this read is mapper independent
+	#define NESCPU_4KB	0x20 	//mapper (bits 3-0) specifies A12-15 (4bits)
+	#define NESPPU_1KB	0x21	//mapper (bits 5-2) specifies A10-13 (4bits)
+
+	//since the types above only specify the granularity of the read, there is no reason
+	//to limit it to 1-4KByte.  May as well give page granularity and use the whole mapper byte!
+	#define NESCPU_PAGE	0x22	//mapper byte specifies A15-8
+	#define NESPPU_PAGE	0x23	//mapper byte specifies A13-8	 bits 6 & 7 can't be set
+	#define SNESROM_PAGE	0x24	//mapper byte specifies A15-8
+	
+
 	//operand LSB
 	//SST 39SF0x0 manf/prod IDs
 	#define SST_MANF_ID	0xBF
@@ -163,6 +177,12 @@
 	#define HIROM	1	//file starts at bank 40 and is mirrored to C0
 	#define EXHIROM	2	//file starts at bank C0
 	#define SOROM	3	//12MB star ocean mapping
+
+	#define	LOROM_5VOLT	4	//Catskull 5v SNES board with SST PLCC flash
+	#define	HIROM_5VOLT	5
+
+	#define	LOROM_3VOLT	6
+	#define	HIROM_3VOLT	7
 
 
 //set function

@@ -65,17 +65,17 @@ local function read_flashID( debug )
 --	play_mode()
 
 	--read manf ID
-	local manf_id = dict.snes("SNES_ROM_RD", 0x8000)
+	local manf_id = dict.snes("SNES_ROM_RD", 0x8000) --0x01 Cypress Manf ID
 	if debug then print("attempted read SNES ROM manf ID:", string.format("%X", manf_id)) end
 
 	--read prod ID
-	local prod_id = dict.snes("SNES_ROM_RD", 0x8002)
+	local prod_id = dict.snes("SNES_ROM_RD", 0x8002) --0x7E Prod ID S29GL
 	if debug then print("attempted read SNES ROM prod ID:", string.format("%X", prod_id)) end
 
-	local density_id = dict.snes("SNES_ROM_RD", 0x801C)
+	local density_id = dict.snes("SNES_ROM_RD", 0x801C) --density 0x10=8MB 0x1A=4MB
 	if debug then print("attempted read SNES density ID: ", string.format("%X", density_id)) end
 
-	local boot_sect = dict.snes("SNES_ROM_RD", 0x801E)
+	local boot_sect = dict.snes("SNES_ROM_RD", 0x801E) --boot sector 0x00=top 0x01=bottom
 	if debug then print("attempted read SNES boot sect ID:", string.format("%X", boot_sect)) end
 
 	--put cart in program mode
@@ -115,10 +115,11 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 --	local snes_mapping = "LOROM"
 	local snes_mapping = "HIROM"
+	local rom_size = 32
 --	local rom_size = 512
 --	local rom_size = 1024
 --	local rom_size = 2048
-	local rom_size = 4096
+--	local rom_size = 4096
 --	local rom_size = 8192
 --	local rom_size = 12288
 --	local rom_size = 16384

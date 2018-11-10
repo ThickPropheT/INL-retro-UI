@@ -18,11 +18,21 @@ uint8_t	nes_ppu_rd( uint16_t addr );
 void	nes_ppu_wr( uint16_t addr, uint8_t data );
 uint8_t	nes_dualport_rd( uint16_t addr );
 void	nes_dualport_wr( uint16_t addr, uint8_t data );
-uint8_t	ciram_a10_mirroring( void );
+//uint8_t	ciram_a10_mirroring( void );
 uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last, uint8_t poll );
 uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t last, uint8_t poll );
 uint8_t nes_dualport_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t len, uint8_t poll );
+
 void	mmc1_wr( uint16_t addr, uint8_t data, uint8_t reset );
+
+void 	nrom_prgrom_flash_wr( uint16_t addr, uint8_t data );
+void 	nrom_chrrom_flash_wr( uint16_t addr, uint8_t data );
+void 	cnrom_chrrom_flash_wr( uint16_t addr, uint8_t data );
+void	mmc3_prgrom_flash_wr( uint16_t addr, uint8_t data );
+void	mmc3_chrrom_flash_wr( uint16_t addr, uint8_t data );
+void 	cdream_chrrom_flash_wr( uint16_t addr, uint8_t data );
+
+
 
 #define A10_BYTE 	0x04
 #define A11_BYTE 	0x08

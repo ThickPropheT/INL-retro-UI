@@ -15,3 +15,5 @@ stm6p:
 	make -f Make_stm_inl6p clean program
 stmad:
 	make -f Make_stm_adapter clean program
+stmn:
+	make -f Make_stm_nes clean program

@@ -17,6 +17,57 @@ uint8_t dump_buff( buffer *buff ) {
 	//use mem_type to set addrH/X as needed for dump loop
 	//also use to get read function pointer
 	switch ( buff->mem_type ) {
+		case NESCPU_4KB:
+			//mapper lower nibble specifies NES CPU A12-15
+			if (buff->mapper > 0x0F) { 
+				//mapper can only be 4bits (0-15)
+				return ERR_BUFF_PART_NUM_RANGE;
+			}
+			addrH |= (buff->mapper << 4); // 8 << 12 = shift by 4
+			buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id, 
+							//id contains MSb of page when <256B buffer
+							buff->last_idx, ~FALSE );
+			break;
+
+		case NESPPU_1KB:
+			//mapper bits 2-5 specifies NES PPU A10-13
+			if (buff->mapper & 0xC3) { //make sure bits 7, 6, 1, & 0 aren't set
+				//mapper can only have bits 2-5 set
+				return ERR_BUFF_PART_NUM_RANGE;
+			}
+			addrH |= buff->mapper; // PPU A10-13 get set based on mapper
+			buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
+								buff->last_idx, ~FALSE );
+			break;
+
+		case NESCPU_PAGE:
+			//mapper byte specifies CPU A15-8
+			addrH |= buff->mapper;
+			buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id, 
+							//id contains MSb of page when <256B buffer
+							buff->last_idx, ~FALSE );
+			break;
+
+		case NESPPU_PAGE:
+			//mapper byte specifies PPU A13-8
+			if (buff->mapper & 0xC0) { //make sure bits 7, 6 aren't set
+				//mapper can only have bits 5-0 set
+				return ERR_BUFF_PART_NUM_RANGE;
+			}
+			addrH |= buff->mapper; // PPU A10-13 get set based on mapper
+			buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
+								buff->last_idx, ~FALSE );
+			break;
+
+		case SNESROM_PAGE:	//ROMSEL is always taken low
+			//mapper byte specifies SNES CPU A15-8
+			addrH |= (buff->mapper); //no shift needed
+			buff->cur_byte = snes_rom_page_rd_poll( buff->data, addrH, buff->id, 
+							//id contains MSb of page when <256B buffer
+							buff->last_idx, ~FALSE );
+			break;
+
+
 		case PRGROM:
 			addrH |= 0x80;	//$8000
 			if (buff->mapper == MMC1) {
@@ -53,6 +104,9 @@ uint8_t dump_buff( buffer *buff ) {
 								buff->last_idx, ~FALSE );
 				break;
 			}
+			//if (buff->mapper == MMC3) {
+			//	THIS IS HANDLED from the host side using NESCPU_4KB
+			//}
 			if (buff->mapper == MAP30) {
 				//addrH &= 0b1011 1111 A14 must always be low
 				addrH &= 0xBF;
@@ -67,18 +121,18 @@ uint8_t dump_buff( buffer *buff ) {
 								buff->last_idx, ~FALSE );
 				break;
 			}
-			if ((buff->mapper == BxROM) || (buff->mapper == CDREAM)) {
-				//write bank value to bank table
-				//page_num shift by 7 bits A15 >> A8(0)
-				bank = (buff->page_num)>>7;
-				//Lizard bank table @ FF94
-				nes_cpu_wr( (0xFF94+bank), bank );
-				//HH85
-				//nes_cpu_wr( (0xFFE0+bank), bank );
-				//Mojon bank table @ FF94
-				//nes_cpu_wr( 0x800C, 0x00);	//select first bank (only one with table)
-				//nes_cpu_wr( (0xCC43+bank), bank );	//then select desired bank
-			}
+			//if ((buff->mapper == BxROM) || (buff->mapper == CDREAM)) {
+			//	//write bank value to bank table
+			//	//page_num shift by 7 bits A15 >> A8(0)
+			//	bank = (buff->page_num)>>7;
+			//	//Lizard bank table @ FF94
+			//	nes_cpu_wr( (0xFF94+bank), bank );
+			//	//HH85
+			//	//nes_cpu_wr( (0xFFE0+bank), bank );
+			//	//Mojon bank table @ FF94
+			//	//nes_cpu_wr( 0x800C, 0x00);	//select first bank (only one with table)
+			//	//nes_cpu_wr( (0xCC43+bank), bank );	//then select desired bank
+			//}
 			if (buff->mapper == A53) {
 				//write bank value to bank table
 				//page_num shift by 7 bits A15 >> A8(0)
@@ -105,25 +159,44 @@ uint8_t dump_buff( buffer *buff ) {
 			break;
 
 		case CHRROM:		//$0000
-			if (buff->mapper == NROM) {
-				buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
-									buff->last_idx, ~FALSE );
-			}
+			//if (buff->mapper == NROM) {
+			//	buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
+			//						buff->last_idx, ~FALSE );
+			//}
 
-			if (buff->mapper == CDREAM) {
-				//select bank
-				//8KB banks $0000-1FFF
-				//page_num shift by 5 bits A13 >> A8(0)
-				bank = (buff->page_num)>>5;
+			//if (buff->mapper == MMC3) {
+			//	THIS IS HANDLED from the host side using NESPPU_4KB
+			//}
 
-				//write bank to register
-				//TODO account for bus conflicts
-				nes_cpu_wr(0xFFFF, bank<<4);
-				
-				addrH &= 0x1F;	//only A12-8 are directly addressable
-				buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
-									buff->last_idx, ~FALSE );
-			}
+			//if (buff->mapper == CNROM) {
+			//	//select bank
+			//	//8KB banks $0000-1FFF
+			//	//page_num shift by 5 bits A13 >> A8(0)
+			//	bank = (buff->page_num)>>5;
+
+			//	//write bank to register
+			//	//TODO account for bus conflicts
+			//	nes_cpu_wr(0x8000, bank);
+			//	
+			//	addrH &= 0x1F;	//only A12-8 are directly addressable
+			//	buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
+			//						buff->last_idx, ~FALSE );
+			//}
+
+			//if (buff->mapper == CDREAM) {
+			//	//select bank
+			//	//8KB banks $0000-1FFF
+			//	//page_num shift by 5 bits A13 >> A8(0)
+			//	bank = (buff->page_num)>>5;
+
+			//	//write bank to register
+			//	//TODO account for bus conflicts
+			//	nes_cpu_wr(0xFFFF, bank<<4);
+			//	
+			//	addrH &= 0x1F;	//only A12-8 are directly addressable
+			//	buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
+			//						buff->last_idx, ~FALSE );
+			//}
 
 			if (buff->mapper == DPROM) {
 				//select bank

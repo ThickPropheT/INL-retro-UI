@@ -28,6 +28,9 @@
 //SNES reset is unaffected
 #define SNES_ROM_WR			0x02
 
+#define FLASH_WR_5V			0x03	//5v PLCC flash algo
+#define FLASH_WR_3V			0x04	//3v TSSOP flash algo
+
 
 
 

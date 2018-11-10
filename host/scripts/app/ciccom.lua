@@ -179,6 +179,11 @@ local function write(data)
 end
 
 
+local clock = os.clock
+local function sleep(n)  -- seconds
+	local t0 = clock()
+	while clock() - t0 <= n do end
+end
 
 -- global variables so other modules can use them
 
@@ -192,6 +197,7 @@ ciccom.set_opcode = set_opcode
 ciccom.write = write
 ciccom.wotf = wotf
 ciccom.rotf = rotf
+ciccom.sleep = sleep
 
 -- return the module's table
 return ciccom

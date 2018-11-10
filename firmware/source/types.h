@@ -41,23 +41,27 @@ typedef struct buffer {
 
 	uint8_t		reload;		//add this number to page_num for next loading
 
-
-
 	uint8_t		mem_type;	//SNES ROM, SNES RAM, PRG ROM, PRG RAM, CHR ROM, CHR RAM, CPLD, SPI
 	
 	uint8_t		part_num;	//used to define unlock commands, sector erase, etc
 
+	//currently unused
 	uint8_t		multiple;	//number of times to program this page
 
+	//currently unused
 	uint8_t		add_mult;	//add this number to page_num for multiple programs
 					//CHR shift LSb to A13 (max 2MByte)
 					//PRG shift LSb to A14 (max 4MByte)
 					//SNES add to MSB of page_num (max 16MByte)
 
 	uint8_t		mapper;		//mapper number of board
+					//some mem_types like NESCPU_4KB use this to specify address range
+					//because they're mapper independent
 
+	//currently unused
 	uint8_t		mapvar;		//mapper variant 
 
+	//currently unused
 	uint8_t		function;	//function "pointer" for flash/dump operation control
 }buffer;
 

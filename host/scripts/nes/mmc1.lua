@@ -173,7 +173,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(dumpfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 128, "MMC1", "PRGROM", true )
+		dump.dumptofile( file, 256, "MMC1", "PRGROM", true )
 		dump.dumptofile( file, 128, "MMC1", "CHRROM", true )
 
 		--close file
@@ -243,8 +243,8 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--needs done to make board compatible with rom
 
 		--flash cart
-		flash.write_file( file, 128, "MMC1", "PRGROM", true )
-		--flash.write_file( file, 128, "MMC1", "CHRROM", true )
+		flash.write_file( file, 256, "MMC1", "PRGROM", true )
+		flash.write_file( file, 128, "MMC1", "CHRROM", true )
 		--close file
 		assert(file:close())
 
@@ -257,7 +257,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(verifyfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 128, "MMC1", "PRGROM", true )
+		dump.dumptofile( file, 256, "MMC1", "PRGROM", true )
 		dump.dumptofile( file, 128, "MMC1", "CHRROM", true )
 
 		--close file

@@ -29,11 +29,11 @@ local function write_file( file, sizeKB, map, mem, debug )
 	--2x 256Byte buffers
 	local num_buffers = 2
 	local buff_size = 256	
-	print("allocating buffers")
+	if debug then print("allocating buffers") end
 	assert(buffers.allocate( num_buffers, buff_size ), "fail to allocate buffers")
 
 	--set mem_type and part_num to designate how to get/write data
-	print("setting map n part")
+	if debug then print("setting map n part") end
 	dict.buffer("SET_MEM_N_PART", (op_buffer[mem]<<8 | op_buffer["MASKROM"]), buff0 )
 	dict.buffer("SET_MEM_N_PART", (op_buffer[mem]<<8 | op_buffer["MASKROM"]), buff1 )
 	--set multiple and add_mult only when flashing
@@ -41,11 +41,11 @@ local function write_file( file, sizeKB, map, mem, debug )
 	
 	--set mapper, map_var, and function to designate read/write algo
 	--just dump visible NROM memory to start
-	print("setting map n mapvar")
+	if debug then print("setting map n mapvar") end
 	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer[map]<<8 | op_buffer["NOVAR"]), buff0 )
 	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer[map]<<8 | op_buffer["NOVAR"]), buff1 )
 
-	print("\n\nsetting operation STARTFLASH");
+	if debug then print("\n\nsetting operation STARTFLASH"); end
 	--inform buffer manager to start flashing operation now that buffers are initialized
 	dict.operation("SET_OPERATION", op_buffer["STARTFLASH"] )
 
@@ -74,11 +74,11 @@ local function write_file( file, sizeKB, map, mem, debug )
 	--		tlast = os.clock();
 	--	end
 	end
-	print("FLASHING DONE")
-	print("number of naks", nak)
+	if debug then print("FLASHING DONE") end
+	if debug then print("number of naks", nak) end
 	tstop = os.clock()
 	timediff = ( tstop-tstart)
-	print("total time:", timediff, "seconds, average speed:", (sizeKB/timediff), "KBps")
+	if debug then print("total time:", timediff, "seconds, average speed:", (sizeKB/timediff), "KBps") end
 
 	-- wait till all buffers are done
 	--while flashing buffer manager updates from USB_FULL -> FLASHING -> FLASHED

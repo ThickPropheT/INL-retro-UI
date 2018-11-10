@@ -27,7 +27,7 @@ local function dumptofile( file, sizeKB, map, mem, debug )
 	--2x 128Byte buffers
 	local num_buffers = 2
 	local buff_size = 128	
-	print("allocating buffers")
+	if debug then print("allocating buffers") end
 	assert(buffers.allocate( num_buffers, buff_size ), "fail to allocate buffers")
 
 	--set buffer elements as needed
@@ -35,15 +35,24 @@ local function dumptofile( file, sizeKB, map, mem, debug )
 	--set reload to 256 = 1 when translated to page_num (done in allocate buffers funct)
 	--set page_num to non-zero if offset arg sent
 	--set mem_type and part_num to designate how to get/write data
-	print("setting map n part")
+	if debug then print("setting map n part") end
 	dict.buffer("SET_MEM_N_PART", (op_buffer[mem]<<8 | op_buffer["MASKROM"]), buff0 )
 	dict.buffer("SET_MEM_N_PART", (op_buffer[mem]<<8 | op_buffer["MASKROM"]), buff1 )
 	--set multiple and add_mult only when flashing
 	--set mapper, map_var, and function to designate read/write algo
 	
-	print("setting map n mapvar")
-	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer[map]<<8 | op_buffer["NOVAR"]), buff0 )
-	dict.buffer("SET_MAP_N_MAPVAR", (op_buffer[map]<<8 | op_buffer["NOVAR"]), buff1 )
+	if debug then print("setting map n mapvar") end
+	--need to handle raw data, or defines being used for mapper
+	--op_buffer[map] will be nil for raw values
+	local mapper = op_buffer[map]
+	if not mapper then
+		if debug then print("mapper isn't defined, evaluated as raw number") end
+		mapper = map
+	end
+	--dict.buffer("SET_MAP_N_MAPVAR", (op_buffer[map]<<8 | op_buffer["NOVAR"]), buff0 )
+	--dict.buffer("SET_MAP_N_MAPVAR", (op_buffer[map]<<8 | op_buffer["NOVAR"]), buff1 )
+	dict.buffer("SET_MAP_N_MAPVAR", (mapper<<8 | op_buffer["NOVAR"]), buff0 )
+	dict.buffer("SET_MAP_N_MAPVAR", (mapper<<8 | op_buffer["NOVAR"]), buff1 )
 
 	--tell buffers what function to use for dumping
 	--TODO when start implementing other mappers
@@ -62,7 +71,7 @@ local function dumptofile( file, sizeKB, map, mem, debug )
 	--dict.buffer("GET_PAGE_NUM", nil, buff0 )
 	--dict.buffer("GET_PAGE_NUM", nil, buff1 )
 	
-	print("\n\nsetting operation STARTDUMP");
+	if debug then print("\n\nsetting operation STARTDUMP") end
 	--inform buffer manager to start dumping operation now that buffers are initialized
 	dict.operation("SET_OPERATION", op_buffer["STARTDUMP"] )
 
@@ -74,7 +83,7 @@ local function dumptofile( file, sizeKB, map, mem, debug )
 	local tstart = os.clock();
 	local tlast = tstart
 
-	print("starting first payload");
+	if debug then print("starting first payload") end
 	--now just need to call series of payload IN transfers to retrieve data
 	for i=1, (sizeKB*1024/buff_size) do	--dump next buff
 		--stm adapter had trouble dumping
@@ -103,18 +112,18 @@ local function dumptofile( file, sizeKB, map, mem, debug )
 		--if ( (i % (1024*1024/buff_size/16)) == 0) then
 		if ( (i % (4*2024*1024/buff_size/16)) == 0) then
 			local tdelta = os.clock() - tlast
-			print("time delta:", tdelta, "seconds, speed:", (1024/16/tdelta), "KBps");
+			if debug then print("time delta:", tdelta, "seconds, speed:", (1024/16/tdelta), "KBps") end
 			--print("dumped part:", i/1024, "of 16 \n") 
-			print("dumped part:", i/(4*1024), "of 4 \n") 
+			if debug then print("dumped part:", i/(4*1024), "of 4 \n") end
 			tlast = os.clock();
 		end
 	end
 
-	print("DUMPING DONE")
+	if debug then print("DUMPING DONE") end
 
 	tstop = os.clock()
 	timediff = ( tstop-tstart)
-	print("total time:", timediff, "seconds, average speed:", (sizeKB/timediff), "KBps")
+	if debug then print("total time:", timediff, "seconds, average speed:", (sizeKB/timediff), "KBps") end
 
 	--buffer manager updates from USB_UNLOADING -> DUMPING -> DUMPED
 	--while one buffer is unloading, it sends next buffer off to dump

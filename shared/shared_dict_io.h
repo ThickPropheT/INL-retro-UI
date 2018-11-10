@@ -36,7 +36,6 @@
 //reset high disables SRAM and puts INL carts in PRGM mode
 #define SNES_INIT	2
 
-
 //SWIM protocol init
 //"single wire interface module"
 //different INL boards have this signal on different pins
@@ -57,6 +56,14 @@
 #define JTAG_INIT	4
 	//	don't define    0x00 to protect from forgetting to pass jtag lane
 	#define	JTAG_ON_EXP0_3	0x01	//Most NES carts with CPLDs
+
+
+
+#define GAMEBOY_INIT	5
+#define GBA_INIT	6
+#define SEGA_INIT	7
+#define N64_INIT	8
+
 
 //Test EXP0 drive with pull up 
 //This is an important test if reling on pulling up EXP0 pin to drive the cart's pin.

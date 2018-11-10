@@ -45,6 +45,18 @@
 
 #define DISC_PUSH_EXP0_PRGROM_WR	0x06
 
+
+#define MMC3_PRG_FLASH_WR		0x07
+#define MMC3_CHR_FLASH_WR		0x08
+#define NROM_PRG_FLASH_WR		0x09
+#define NROM_CHR_FLASH_WR		0x0A
+#define CNROM_CHR_FLASH_WR		0x0B	//needs cur_bank & bank_table prior to calling
+#define CDREAM_CHR_FLASH_WR		0x0C	//needs cur_bank & bank_table prior to calling
+
+
+#define	SET_CUR_BANK			0x20
+#define	SET_BANK_TABLE			0x21
+
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================
@@ -61,13 +73,16 @@
 #define NES_PPU_RD			0x82	//RL=3
 
 //doesn't have operands just returns sensed CIRAM A10 mirroring 
-#define CIRAM_A10_MIRROR		0x83	//RL=3
-//returns VERT/HORIZ/1SCNA/1SCNB values:
-	#define	MIR_1SCNA	0x10
-	#define	MIR_1SCNB	0x11
-	#define	MIR_VERT	0x12
-	#define	MIR_HORZ	0x13
+//#define CIRAM_A10_MIRROR		0x83	//RL=3
+////returns VERT/HORIZ/1SCNA/1SCNB values:
+//	#define	MIR_1SCNA	0x10
+//	#define	MIR_1SCNB	0x11
+//	#define	MIR_VERT	0x12
+//	#define	MIR_HORZ	0x13
 
 #define NES_DUALPORT_RD			0x84	//RL=3
+
+#define	GET_CUR_BANK			0x85	//RL=3
+#define	GET_BANK_TABLE			0x86	//RL=4 16bit value so 2 bytes need returned
 
 #endif

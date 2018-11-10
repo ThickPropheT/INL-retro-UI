@@ -1,44 +1,36 @@
 #include "flash.h"
 
-
-uint8_t	write_page( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlock2, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
+uint8_t	write_page( uint8_t addrH, buffer *buff, write_funcptr wr_func )
 {
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
 	uint8_t read;
-//	extern operation_info *oper_info;
-//
+
+	while ( cur <= buff->last_idx ) {
+
+		wr_func( ((addrH<<8)| n), buff->data[n] );
+		//write function returns when it's complete or errors out
+	
+    		n++;
+    		cur++;
+	}
+	buff->cur_byte = n;
+
+	//TODO error check/report
+	return SUCCESS;
+} 
+
+uint8_t	write_page_old( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlock2, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
+{
+	uint16_t cur = buff->cur_byte;
+	uint8_t	n = buff->cur_byte;
+	uint8_t read;
 
 	while ( cur <= buff->last_idx ) {
 		//write unlock sequence
-		//need to make address and unlock data variable
-		//best for host to communcate these values
-		//actual value is part mapper dependent and part flash dependent
-		//mapper controlled address bits dictate where split is
-		//32KB banking A14-0 NES ctl, A15+ mapper ctl "bank" NROM, BNROM, ANROM
-		//addrH_dmask   = 0b0111 1111 directly addressable addrH bits
-		//page2bankshft = A14->A8 = 7 shifts (equal to number of set bits in addrH_mask
-		//16KB banking A13-0 NES ctl, A14+ mapper ctl "bank" UxROM, MMC1
-		//addrH_dmask   = 0b0011 1111
-		//page2bankshft = A13->A8 = 6 shifts
-		// 8KB banking A12-0 NES ctl, A13+ mapper ctl "bank" MMC3, FME7
-		//addrH_dmask   = 0b0001 1111
-		//page2bankshft = A12->A8 = 5 shifts
-		// 4KB banking A11-0 NES ctl, A12+ mapper ctl "bank" ezNSF
-		//addrH_dmask   = 0b0000 1111
-		//page2bankshft = A11->A8 = 4 shifts
-		//wr_func( 0x5555, 0xAA );
-		//wr_func( 0xD555, 0xAA );
 		wr_func( unlock1, 0xAA );
-//		wr_func( oper_info->unlock1_AH, oper_info->unlock1_AL, oper_info->unlock1_data );
-		//wr_func( 0x2AAA, 0x55 );
-		//wr_func( 0xAAAA, 0x55 );
 		wr_func( unlock2, 0x55 );
-//		wr_func( oper_info->unlock2_AH, oper_info->unlock2_AL, oper_info->unlock2_data );
-		//wr_func( 0x5555, 0xA0 );
-		//wr_func( 0xD555, 0xA0 );
 		wr_func( unlock1, 0xA0 );
-//		wr_func( oper_info->command_AH, oper_info->command_AL, oper_info->command1_data );
 		wr_func( ((addrH<<8)| n), buff->data[n] );
 	
 		do {
@@ -57,7 +49,7 @@ uint8_t	write_page( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlo
 //		} else {
 //			nes_cpu_wr(0x5000, 0x81); //outer reg select mode
 //			nes_cpu_wr(0x8000, bank);	  //outer bank
-//			nes_cpu_wr(0x5000, 0x00); //chr reg select act like CNROM
+//			nes_cpu_wr(0x5000, 0x00); //chr reg select act like cnrom
 //			LED_OP();
 //			LED_HI();
 //		}
@@ -237,8 +229,6 @@ uint8_t	write_page_a53( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
 	uint8_t read;
-//	extern operation_info *oper_info;
-//
 
 	//enter unlock bypass mode
 	wr_func( 0x8AAA, 0xAA );
@@ -246,33 +236,6 @@ uint8_t	write_page_a53( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr
 	wr_func( 0x8AAA, 0x20 );
 
 	while ( cur <= buff->last_idx ) {
-		//write unlock sequence
-		//need to make address and unlock data variable
-		//best for host to communcate these values
-		//actual value is part mapper dependent and part flash dependent
-		//mapper controlled address bits dictate where split is
-		//32KB banking A14-0 NES ctl, A15+ mapper ctl "bank" NROM, BNROM, ANROM
-		//addrH_dmask   = 0b0111 1111 directly addressable addrH bits
-		//page2bankshft = A14->A8 = 7 shifts (equal to number of set bits in addrH_mask
-		//16KB banking A13-0 NES ctl, A14+ mapper ctl "bank" UxROM, MMC1
-		//addrH_dmask   = 0b0011 1111
-		//page2bankshft = A13->A8 = 6 shifts
-		// 8KB banking A12-0 NES ctl, A13+ mapper ctl "bank" MMC3, FME7
-		//addrH_dmask   = 0b0001 1111
-		//page2bankshft = A12->A8 = 5 shifts
-		// 4KB banking A11-0 NES ctl, A12+ mapper ctl "bank" ezNSF
-		//addrH_dmask   = 0b0000 1111
-		//page2bankshft = A11->A8 = 4 shifts
-		//wr_func( 0x5555, 0xAA );
-//		wr_func( 0x8AAA, 0xAA );
-////		wr_func( oper_info->unlock1_AH, oper_info->unlock1_AL, oper_info->unlock1_data );
-//		//wr_func( 0x2AAA, 0x55 );
-//		wr_func( 0x8555, 0x55 );
-////		wr_func( oper_info->unlock2_AH, oper_info->unlock2_AL, oper_info->unlock2_data );
-//		//wr_func( 0x5555, 0xA0 );
-//		wr_func( 0x8AAA, 0xA0 );
-////		wr_func( oper_info->command_AH, oper_info->command_AL, oper_info->command1_data );
-//		wr_func( ((addrH<<8)| n), buff->data[n] );
 
 
 		//TODO FIX THIS!  It shouldn't be needed!
@@ -332,8 +295,6 @@ uint8_t	write_page_tssop( uint8_t bank, uint8_t addrH, buffer *buff, write_funcp
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
 	uint8_t read;
-//	extern operation_info *oper_info;
-//
 
 	//enter unlock bypass mode
 	wr_func( 0x8AAA, 0xAA );
@@ -342,15 +303,6 @@ uint8_t	write_page_tssop( uint8_t bank, uint8_t addrH, buffer *buff, write_funcp
 
 	while ( cur <= buff->last_idx ) {
 
-		//TODO FIX THIS!  It shouldn't be needed!
-		//but for some reason the mapper is loosing it's setting for $5000 register to 
-		//permit flash writes.  Many writes go through, but at somepoint it gets lost..
-		//maybe the best fix it to require address to be equal to $5555 to write to flash enable register..
-		//but for now, this rewrite hack solves the issue.
-		//nes_cpu_wr(0x5000, 0x54); //chr reg select act like CNROM & enable flash writes
-		//AVR didn't need this patch so maybe is a speed issue
-		//stmadapter didn't have problems either..
-		//added time delay before m2 rising edge and it didn't change anything for stm6
 
 	//	curaddresswrite( 0xA0 );	//gained ~3KBps (59.13KBps) inl6 with v3.0 proto
 		wr_func( ((addrH<<8)| n), 0xA0  );
@@ -400,35 +352,13 @@ uint8_t	write_page_chr( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
 	uint8_t read;
-//	extern operation_info *oper_info;
 
 	while ( cur <= buff->last_idx ) {
 		//write unlock sequence
-		//need to make address and unlock data variable
-		//best for host to communcate these values
-		//actual value is part mapper dependent and part flash dependent
-		//mapper controlled address bits dictate where split is
-		//32KB banking A14-0 NES ctl, A15+ mapper ctl "bank" NROM, BNROM, ANROM
-		//addrH_dmask   = 0b0111 1111 directly addressable addrH bits
-		//page2bankshft = A14->A8 = 7 shifts (equal to number of set bits in addrH_mask
-		//16KB banking A13-0 NES ctl, A14+ mapper ctl "bank" UxROM, MMC1
-		//addrH_dmask   = 0b0011 1111
-		//page2bankshft = A13->A8 = 6 shifts
-		// 8KB banking A12-0 NES ctl, A13+ mapper ctl "bank" MMC3, FME7
-		//addrH_dmask   = 0b0001 1111
-		//page2bankshft = A12->A8 = 5 shifts
-		// 4KB banking A11-0 NES ctl, A12+ mapper ctl "bank" ezNSF
-		//addrH_dmask   = 0b0000 1111
-		//page2bankshft = A11->A8 = 4 shifts
 		wr_func( 0x1555, 0xAA );
-//		wr_func( oper_info->unlock1_AH, oper_info->unlock1_AL, oper_info->unlock1_data );
 		wr_func( 0x0AAA, 0x55 );
-//		wr_func( oper_info->unlock2_AH, oper_info->unlock2_AL, oper_info->unlock2_data );
 		wr_func( 0x1555, 0xA0 );
-//		wr_func( oper_info->command_AH, oper_info->command_AL, oper_info->command1_data );
 		wr_func( ((addrH<<8)| n), buff->data[n] );
-		//wr_func( ((addrH<<8)| n), buff->page_num );
-		//wr_func( ((addrH<<8)| n),  addrH);
 	
 		do {
 			usbPoll();
@@ -457,44 +387,67 @@ uint8_t	write_page_chr( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr
 
 } 
 
+uint8_t	write_page_chr_cnrom( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
+{
+	uint16_t cur = buff->cur_byte;
+	uint8_t	n = buff->cur_byte;
+	uint8_t read;
+
+	while ( cur <= buff->last_idx ) {
+		//write unlock sequence
+		nes_cpu_wr( 0x8000, 0x02 );
+		wr_func( 0x1555, 0xAA );
+		nes_cpu_wr( 0x8000, 0x01 );
+		wr_func( 0x0AAA, 0x55 );
+		nes_cpu_wr( 0x8000, 0x02 );
+		wr_func( 0x1555, 0xA0 );
+		nes_cpu_wr( 0x8000, bank );
+		wr_func( ((addrH<<8)| n), buff->data[n] );
+	
+		do {
+			usbPoll();
+			nes_cpu_wr( 0x8000, bank );
+			read = rd_func((addrH<<8)|n);
+	
+		} while( read != rd_func((addrH<<8)|n) );
+		//TODO verify byte is value that was trying to be flashed
+		//move on to next byte
+		//n++;
+		//cur++;
+		if (read == buff->data[n]) {
+		//	n++;
+		//	cur++;
+			LED_IP_PU();	
+			LED_LO();
+		} else {
+			LED_OP();
+			LED_HI();
+		}
+
+	}
+
+	buff->cur_byte = n;
+
+	return SUCCESS;
+
+} 
+
 uint8_t	write_page_chr_cdream( uint8_t bank, uint8_t addrH, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
 {
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
 	uint8_t read;
-//	extern operation_info *oper_info;
 
 	while ( cur <= buff->last_idx ) {
 		//write unlock sequence
-		//need to make address and unlock data variable
-		//best for host to communcate these values
-		//actual value is part mapper dependent and part flash dependent
-		//mapper controlled address bits dictate where split is
-		//32KB banking A14-0 NES ctl, A15+ mapper ctl "bank" NROM, BNROM, ANROM
-		//addrH_dmask   = 0b0111 1111 directly addressable addrH bits
-		//page2bankshft = A14->A8 = 7 shifts (equal to number of set bits in addrH_mask
-		//16KB banking A13-0 NES ctl, A14+ mapper ctl "bank" UxROM, MMC1
-		//addrH_dmask   = 0b0011 1111
-		//page2bankshft = A13->A8 = 6 shifts
-		// 8KB banking A12-0 NES ctl, A13+ mapper ctl "bank" MMC3, FME7
-		//addrH_dmask   = 0b0001 1111
-		//page2bankshft = A12->A8 = 5 shifts
-		// 4KB banking A11-0 NES ctl, A12+ mapper ctl "bank" ezNSF
-		//addrH_dmask   = 0b0000 1111
-		//page2bankshft = A11->A8 = 4 shifts
 		nes_cpu_wr(0x8000, 0x20);
 		wr_func( 0x1555, 0xAA );
-//		wr_func( oper_info->unlock1_AH, oper_info->unlock1_AL, oper_info->unlock1_data );
 		nes_cpu_wr(0x8000, 0x10);
 		wr_func( 0x0AAA, 0x55 );
-//		wr_func( oper_info->unlock2_AH, oper_info->unlock2_AL, oper_info->unlock2_data );
 		nes_cpu_wr(0x8000, 0x20);
 		wr_func( 0x1555, 0xA0 );
-//		wr_func( oper_info->command_AH, oper_info->command_AL, oper_info->command1_data );
 		nes_cpu_wr(0x8000, bank<<4);
 		wr_func( ((addrH<<8)| n), buff->data[n] );
-		//wr_func( ((addrH<<8)| n), buff->page_num );
-		//wr_func( ((addrH<<8)| n),  addrH);
 	
 		do {
 			usbPoll();
@@ -528,7 +481,6 @@ uint8_t	write_page_dualport( uint8_t bank, uint8_t addrH, buffer *buff, write_fu
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
 	uint8_t read;
-//	extern operation_info *oper_info;
 
 	//enter unlock bypass mode
 	wr_func( 0x0AAA, 0xAA );
@@ -588,8 +540,6 @@ uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcpt
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
 	uint8_t read;
-//	extern operation_info *oper_info;
-//	uint8_t cur_data = buff->data[n];
 
 #ifdef AVR_CORE
 		wdt_reset();	
@@ -619,23 +569,6 @@ uint8_t	write_page_snes( uint8_t bank, uint8_t addrH, buffer *buff, write_funcpt
 
 	while ( cur <= buff->last_idx ) {
 		//write unlock sequence
-		//need to make address and unlock data variable
-		//best for host to communcate these values
-		//actual value is part mapper dependent and part flash dependent
-		//mapper controlled address bits dictate where split is
-		//32KB banking A14-0 NES ctl, A15+ mapper ctl "bank" NROM, BNROM, ANROM
-		//addrH_dmask   = 0b0111 1111 directly addressable addrH bits
-		//page2bankshft = A14->A8 = 7 shifts (equal to number of set bits in addrH_mask
-		//16KB banking A13-0 NES ctl, A14+ mapper ctl "bank" UxROM, MMC1
-		//addrH_dmask   = 0b0011 1111
-		//page2bankshft = A13->A8 = 6 shifts
-		// 8KB banking A12-0 NES ctl, A13+ mapper ctl "bank" MMC3, FME7
-		//addrH_dmask   = 0b0001 1111
-		//page2bankshft = A12->A8 = 5 shifts
-		// 4KB banking A11-0 NES ctl, A12+ mapper ctl "bank" ezNSF
-		//addrH_dmask   = 0b0000 1111
-		//page2bankshft = A11->A8 = 4 shifts
-		//
 
 		//unlocked	wr_func( 0x0AAA, 0xAA );
 		//unlocked	wr_func( 0x0555, 0x55 );
@@ -816,7 +749,8 @@ uint8_t flash_buff( buffer *buff ) {
 	switch ( buff->mem_type ) {
 		case PRGROM:		//$8000
 			if (buff->mapper == NROM) {
-				write_page( 0, (0x80 | addrH), 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
+				//write_page_old( 0, (0x80 | addrH), 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
+				write_page( (0x80+addrH), buff, nrom_prgrom_flash_wr);
 			}
 			if (buff->mapper == MMC1) {
 				//write bank value
@@ -838,6 +772,16 @@ uint8_t flash_buff( buffer *buff ) {
 				//bank gets written inside flash algo
 				write_page_bank( bank, addrH, 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
 			}
+
+			if (buff->mapper == MMC3) {
+				//Latest method used here!
+				//leave the host responsible for init & banking
+				//we just need to call a page write algo and give it mmc3_prgrom_flash_wr function
+				//think of this only as an 8KB ROM
+				//MMC3 flash writes are always $8000-9FFF, but the host arranges this
+				write_page( (0x80+addrH), buff, mmc3_prgrom_flash_wr);
+			}
+
 			if (buff->mapper == MM2) {
 				//addrH &= 0b1011 1111 A14 must always be low
 				addrH &= 0x3F;
@@ -858,19 +802,20 @@ uint8_t flash_buff( buffer *buff ) {
 				//bank gets written inside flash algo
 				write_page_bank_map30( bank, addrH, 0x9555, 0xAAAA, buff, nes_cpu_wr, nes_cpu_rd );
 			}
-			if ((buff->mapper == BxROM) || (buff->mapper == CDREAM)) {
-				//write bank value
-				//page_num shift by 7 bits A15 >> A8(0)
-				bank = buff->page_num >> 7;
-				//Lizard banktable location
-				nes_cpu_wr( (0xFF94+bank), bank );
-				//hh85
-				//nes_cpu_wr( (0xFFE0+bank), bank );
-				//Mojontales
-				//nes_cpu_wr( 0x800C, 0x00);	//select first bank (only bank with table)
-				//nes_cpu_wr( (0xCC43+bank), bank );	//then select desired bank
-				write_page( 0, (0x80 | addrH), 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
-			}
+			//if ((buff->mapper == BxROM) || (buff->mapper == CDREAM)) {
+			//new method uses same algo as NROM, host handles all the banking!
+			//	//write bank value
+			//	//page_num shift by 7 bits A15 >> A8(0)
+			//	bank = buff->page_num >> 7;
+			//	//Lizard banktable location
+			//	nes_cpu_wr( (0xFF94+bank), bank );
+			//	//hh85
+			//	//nes_cpu_wr( (0xFFE0+bank), bank );
+			//	//Mojontales
+			//	//nes_cpu_wr( 0x800C, 0x00);	//select first bank (only bank with table)
+			//	//nes_cpu_wr( (0xCC43+bank), bank );	//then select desired bank
+			//	write_page_old( 0, (0x80 | addrH), 0x5555, 0x2AAA, buff, discrete_exp0_prgrom_wr, nes_cpu_rd );
+			//}
 			if (buff->mapper == CNINJA) {
 				//addrH &= 0b1001 1111 A14-13 must always be low
 				addrH &= 0x1F;
@@ -881,7 +826,7 @@ uint8_t flash_buff( buffer *buff ) {
 				bank = buff->page_num >> 5;
 				nes_cpu_wr( (0x6000), 0xA5 );	//select desired bank
 				nes_cpu_wr( (0xFFFF), bank );	//select desired bank
-				write_page( 0, addrH, 0xD555, 0xAAAA, buff, nes_cpu_wr, nes_cpu_rd );
+				write_page_old( 0, addrH, 0xD555, 0xAAAA, buff, nes_cpu_wr, nes_cpu_rd );
 			}
 			if (buff->mapper == A53) {
 				//write bank value to bank table
@@ -896,11 +841,11 @@ uint8_t flash_buff( buffer *buff ) {
 				nes_cpu_wr(0x5000, 0x54); //chr reg select act like CNROM & enable flash writes
 
 				//need to use standard CPU writes
-				//write_page( 0, (0x80 | addrH), buff, nes_cpu_wr, nes_cpu_rd );
+				//write_page_old( 0, (0x80 | addrH), buff, nes_cpu_wr, nes_cpu_rd );
 				//break;
 				//WORKS PLCC Action53:
 				//had problems later not all bytes getting programmed..
-				//write_page( bank, (0x80 | addrH), 0xD555, 0xAAAA, buff, nes_cpu_wr, nes_cpu_rd );
+				//write_page_old( bank, (0x80 | addrH), 0xD555, 0xAAAA, buff, nes_cpu_wr, nes_cpu_rd );
 				//TSSOP-28 action53:
 				write_page_a53( bank, (0x80 | addrH), buff, nes_cpu_wr, nes_cpu_rd );
 			}
@@ -917,20 +862,35 @@ uint8_t flash_buff( buffer *buff ) {
 			break;
 		case CHRROM:		//$0000
 			if (buff->mapper == NROM) {
-				write_page_chr( 0, addrH, buff, nes_ppu_wr, nes_ppu_rd );
+				//write_page_chr( 0, addrH, buff, nes_ppu_wr, nes_ppu_rd );
+				write_page( addrH, buff, nrom_chrrom_flash_wr);
+			}
+
+			if (buff->mapper == CNROM) {
+				//cur_bank and bank_table must be set in nes.c prior to calling
+				write_page( addrH, buff, cnrom_chrrom_flash_wr);
+			}
+			if (buff->mapper == MMC3) {
+				//Latest method used here!
+				//leave the host responsible for init & banking
+				//we just need to call a page write algo and give it mmc3_prgrom_flash_wr function
+				//think of this only as an 8KB ROM
+				//MMC3 flash writes are always $8000-9FFF
+				write_page( addrH, buff, mmc3_chrrom_flash_wr);
 			}
 			if (buff->mapper == CDREAM) {
-				//select bank
-				//8KB banks $0000-1FFF
-				//page_num shift by 5 bits A13 >> A8(0)
-				bank = (buff->page_num)>>5;
-
-				//write bank to register
-				//done inside write routine
-				//nes_cpu_wr(0x8000, bank<<4);
-				
-				addrH &= 0x1F;	//only A12-8 are directly addressable
-				write_page_chr_cdream( bank, addrH, buff, nes_ppu_wr, nes_ppu_rd );
+//				//select bank
+//				//8KB banks $0000-1FFF
+//				//page_num shift by 5 bits A13 >> A8(0)
+//				bank = (buff->page_num)>>5;
+//
+//				//write bank to register
+//				//done inside write routine
+//				//nes_cpu_wr(0x8000, bank<<4);
+//				
+//				addrH &= 0x1F;	//only A12-8 are directly addressable
+//				write_page_chr_cdream( bank, addrH, buff, nes_ppu_wr, nes_ppu_rd );
+				write_page( addrH, buff, cdream_chrrom_flash_wr);
 			}
 			if (buff->mapper == DPROM) {
 				//select bank
@@ -945,12 +905,29 @@ uint8_t flash_buff( buffer *buff ) {
 				write_page_dualport( 0, addrH, buff, nes_dualport_wr, nes_dualport_rd );
 			}
 			break;
+
 		case PRGRAM:
-			//addrH |= 0x60;	//$6000
-			//buff->cur_byte = nes_cpu_page_wr_poll( buff->data, addrH, buff->id,
-		//						buff->last_idx, ~FALSE );
+			write_page( addrH+0x60, buff, nes_cpu_wr);
 			break;
+
 		case SNESROM:
+			if (buff->mapper == LOROM_5VOLT) {
+				//LOROM banks start at $XX:8000
+				write_page( addrH+0x80, buff, snes_5v_flash_wr);
+			}
+			if (buff->mapper == HIROM_5VOLT) {
+				//HIROM banks start at $XX:0000
+				write_page( addrH, buff, snes_5v_flash_wr);
+			}
+			if (buff->mapper == LOROM_3VOLT) {
+				//LOROM banks start at $XX:8000
+				write_page( addrH+0x80, buff, snes_3v_flash_wr);
+			}
+			if (buff->mapper == HIROM_3VOLT) {
+				//HIROM banks start at $XX:0000
+				write_page( addrH, buff, snes_3v_flash_wr);
+			}
+
 			if (buff->mapper == LOROM) {
 				addrH |= 0x80;	//$8000 LOROM space
 				//need to split page_num
@@ -960,6 +937,8 @@ uint8_t flash_buff( buffer *buff ) {
 				bank = (buff->page_num)>>7;
 				//clear any reset state
 				//EXP0_HI();
+			HADDR_SET( bank );
+			write_page_snes( 0, addrH, buff, snes_rom_wr, snes_rom_rd );
 			}
 			if (buff->mapper == HIROM) {
 				//need to split page_num
@@ -968,9 +947,9 @@ uint8_t flash_buff( buffer *buff ) {
 				//A22 high (HIROM)
 				//A23 ~page_num[14] (bank CO starts first half, bank 40 starts second)
 				bank = ((((buff->page_num)>>8) | 0x40) & 0x7F);
-			}
 			HADDR_SET( bank );
 			write_page_snes( 0, addrH, buff, snes_rom_wr, snes_rom_rd );
+			}
 		case SNESRAM:
 //warn			addrX = ((buff->page_num)>>8);
 			break;
@@ -978,14 +957,6 @@ uint8_t flash_buff( buffer *buff ) {
 			return ERR_BUFF_UNSUP_MEM_TYPE;
 	}
 
-
-	//lets start just reading first page of PRG-ROM then get fancy
-//	while (buff->cur_byte < buff->last_idx) {
-//
-//		//might be faster to put some of these in new pointers, but not sure..
-//		buff->data[buff->cur_byte] = nes_cpu_rd( addrH, buff->cur_byte );
-//		buff->cur_byte++;
-//	}
 
 	return SUCCESS;
 }

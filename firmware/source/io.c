@@ -29,6 +29,10 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 		case IO_RESET:	io_reset();			break;
 		case NES_INIT:	nes_init();			break;
 		case SNES_INIT:	snes_init();			break;
+		case GAMEBOY_INIT:	gameboy_init();			break;
+//		case GBA_INIT:	gba_init();			break;
+		case SEGA_INIT:	sega_init();			break;
+//		case N64_INIT:	n64_init();			break;
 		case SWIM_INIT:	
 			return swim_init(operand);		break;
 		case JTAG_INIT:	
@@ -60,14 +64,11 @@ void io_reset()
 	RCC->AHBRSTR &= ~( RCC_AHBRSTR_GPIOARST | RCC_AHBRSTR_GPIOBRST | RCC_AHBRSTR_GPIOCRST | RCC_AHBRSTR_GPIODRST | RCC_AHBRSTR_GPIOFRST );
 #endif
 
-	//pull up addr[7:0] bus
-	ADDR_ENABLE();
-	ADDR_IP();
-	ADDR_PU();
-
-	//pull up data bus
-	DATA_ENABLE();
-	DATA_IP_PU();
+	//First set gameboy/GBA power, default to 3v (safe for both)
+#ifndef C16nodef
+	GBP_OP();
+	GBP_3V();
+#endif
 
 	//pull up control port
 	CTL_ENABLE();
@@ -103,6 +104,16 @@ void io_reset()
 	//Famicom carts have APU sound (EXP6) shorted to RF sound (EXP0)
 	//	-enabling EXP FF output will drive EXP0 to value of A21/EXP6
 	EXP0_IP_FL();
+
+
+	//pull up addr[7:0] bus
+	ADDR_ENABLE();
+	ADDR_IP();
+	ADDR_PU();
+
+	//pull up data bus
+	DATA_ENABLE();
+	DATA_IP_PU();
 
 	//LED LAST displaying complete..
 	//planning to have LED DIM at power on to signify kazzo is in default
@@ -163,7 +174,7 @@ void nes_init()
 //latch address of $00:0000
 //disable cart memories
 //reset high disables SRAM and puts INL carts in PRGM mode
-//Excersize extreme caution calling this while NES/FC cart inserted
+//Excersize caution calling this while NES/FC cart inserted on old kazzo versions
 //probably won't work if FC inserted due to EXP0-EXP6 short due to audio jumper on cart
 void snes_init() 
 {
@@ -201,6 +212,133 @@ void snes_init()
 	HADDR_SET(0x00);
 
 }
+
+//GAMEBOY cartridge interfacing setup
+//set outputs as required
+//latch address of $0000
+//disable cart memories
+void gameboy_init() 
+{
+	//start with a reset
+	//expecting user to do this but just to be sure
+	io_reset();
+
+	//enable control outputs and disable memories
+	//ROM
+	ROMSEL_OP();
+	ROMSEL_HI();
+	CSRD_OP();
+	CSRD_HI();
+	CSWR_OP();
+	CSWR_HI();
+
+	//Set #RESET pin low
+	EXP0_LO();
+	EXP0_OP();
+	//if SWIM is active, EXP0 must be set to pullup prior to SWIM transfers
+
+	//other control pins are inputs or unused, leave as IP pullup from reset
+
+	//memories are now disabled Data bus should be clear
+	DATA_ENABLE();
+	DATA_IP_PU();
+
+	//now meet conditions to call other macros
+	//setup address $0000
+	ADDR_ENABLE();
+	ADDR_SET(0x0000);
+
+#ifndef C16nodef
+	//set GB/GBA power to 5v
+	GBP_OP();
+	GBP_5V();
+#endif
+
+}
+
+
+//GBA cartridge interfacing setup
+//set outputs as required
+//latch address of $0000
+//disable cart memories
+void gba_init() 
+{
+	//start with a reset
+	//expecting user to do this but just to be sure
+	//this also sets power to 3v
+	io_reset();
+
+	//enable control outputs and disable memories
+	//ROM
+	ROMSEL_OP();
+	ROMSEL_HI();
+	CSRD_OP();
+	CSRD_HI();
+	CSWR_OP();
+	CSWR_HI();
+
+	//Set #RESET pin low
+	EXP0_LO();
+	EXP0_OP();
+	//if SWIM is active, EXP0 must be set to pullup prior to SWIM transfers
+
+	//other control pins are inputs or unused, leave as IP pullup from reset
+
+	//memories are now disabled Data bus should be clear
+	DATA_ENABLE();
+	DATA_IP_PU();
+
+	//now meet conditions to call other macros
+	//setup address $0000
+	ADDR_ENABLE();
+	ADDR_SET(0x0000);
+
+}
+
+
+//SEGA Genesis/MegaDrive cartridge interfacing setup
+//set outputs as required
+//latch address of $00:0000
+//disable cart memories
+void sega_init() 
+{
+	//start with a reset
+	//expecting user to do this but just to be sure
+	io_reset();
+
+	//enable control outputs and disable memories
+	//ROM
+	ROMSEL_OP();
+	ROMSEL_HI();	// #C_CE
+	CSRD_OP();
+	CSRD_HI();	// #C_OE
+	CSWR_OP();
+	CSWR_HI();	// #UDSW
+	PRGRW_OP();
+	PRGRW_HI();	// #LDSW
+
+	//disable SRAM and put cart in PLAY mode
+	EXP0_HI();
+	EXP0_OP();
+	//if SWIM is active, EXP0 must be set to pullup prior to SWIM transfers
+
+	//other control pins are inputs or unused, leave as IP pullup from reset
+
+	//memories are now disabled Data bus should be clear
+	DATA_ENABLE();
+	DATA_IP_PU();
+
+	//now meet conditions to call other macros
+	//setup address $0000
+	ADDR_ENABLE();
+	ADDR_SET(0x0000);
+
+	//setup HIGH ADDR with bank $00
+	HADDR_ENABLE();
+	HADDR_SET(0x00);
+
+}
+
 
 //Initialization of SWIM "single wire interface module" communications
 //the SWIM pin depends on INL board design.

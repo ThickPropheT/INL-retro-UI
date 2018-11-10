@@ -6,6 +6,7 @@
 //#define STM_ADAPTER
 //#define STM_INL6_PROTO
 //#define STM_INL6 
+//#define STM_NES 
 
 #ifdef AVR_CORE
 	#include "avr_gpio.h"
@@ -296,6 +297,11 @@ void software_AXL_CLK();
 //
 //
 //
+// STM32F070C6T6 "INL RETRO NES" V2.0N NESmaker edition
+// Comparable to INL6, but only has NES connector
+// uses Flipflop for io expansion for A8-15 similar to original kazzos
+// this device is setup very similarly to STM_ADAPTER
+// AHL/AHLOE, AXL, EXP port, and CIC port are main differences
 //
 
 
@@ -594,6 +600,109 @@ void software_AXL_CLK();
 
 
 #endif //STM_INL6 & PROTO
+
+
+#ifdef STM_NES
+
+	//     PC0  "M2"	mcupinA3
+	#define C0bank 		GPIOA 
+	#define C0		(3U)
+	
+	//     PC1  "ROMSEL"	mcupinA4
+	#define C1bank 		GPIOA 
+	#define C1		(4U)
+	
+	//     PC2  "PRGRW"	mcupinA5
+	#define C2bank 		GPIOA 
+	#define C2		(5U)
+	
+	//     PC3  "FREE"	mcupinA6
+	#define C3bank 		GPIOA 
+	#define C3		(6U)
+	
+	//     PC4  "CSRD"	mcupinA7
+	#define C4bank 		GPIOA 
+	#define C4		(7U)
+	
+	//     PC5  "CSWR"	mcupinB0
+	#define C5bank 		GPIOB 
+	#define C5		(0U)
+
+	//     PC6  "CICE" 	mcupinA10
+	#define C6bank 		GPIOA 
+	#define C6		(10U)
+
+	//     PC7  "AHL"	mcupinB1
+	//     THIS IS FLIPFLOP /OE pin as well!
+	#define C7bank 		GPIOB 
+	#define C7		(1U)
+
+	//     PC8  "EXP0" 	mcupinA0
+	#define C8bank 		GPIOA 
+	#define C8		(0U)
+	
+	//     PC9  "LED" 	mcupinC13
+	#define C9bank 		GPIOC 
+	#define C9		(13U)
+
+	//     PC10 "IRQ"	mcupinA15
+	#define C10bank 	GPIOA 
+	#define C10		(15U)
+
+	//     PC11 "CIA10" 	mcupinA13
+	#define C11bank 	GPIOA 
+	#define C11		(13U)
+
+	//     PC12 "BL" 
+	//     Not defined
+	#define C12nodef
+
+	//     PC13 "AXL"
+	//     Not present on STM_NES
+	#define C13nodef
+
+	//     PC14 "AUDL"
+	//     Not defined
+	#define C14nodef
+	
+	//     PC15 "AUDR"
+	//     Not defined
+	#define C15nodef
+
+	//     PC16 "GBP" 
+	//     Not defined
+	#define C16nodef
+
+	//     PC17 "SWD" 	mcupinA13
+	//     Not defined due to shared with CIRAM A10
+	#define C17nodef
+	
+	//     PC18 "SWC" 	mcupinA14
+	#define C18bank 	GPIOA 
+	#define C18		(14U)
+	
+	//     PC19 "AFL" 
+	//     Not defined
+	#define C19nodef
+
+	//     PC20 "COUT" 
+	//     Not defined
+	#define C20nodef
+
+	//     PC21 "FCAPU" 	double mapping of EXP0
+	#define C21bank 	C8bank 
+	#define C21		C8
+
+
+#define RCC_AHBENR_CTL	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN)
+#define RCC_AHBENR_ADDR	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
+#define RCC_AHBENR_DATA	 RCC_AHBENR_GPIOBEN
+
+#endif	//STM_NES
+
+
+//TODO combine STM_NES & STM_ADAPTER, they're predominantly the same
+//AHL-AHLOE, AXL, EXP port, and CIC port are only differences
 
 #ifdef STM_ADAPTER
 
@@ -1030,7 +1139,7 @@ void software_AXL_CLK();
 
 #endif	//STM_INL6_PROTO
 
-#ifdef STM_ADAPTER
+#if defined(STM_ADAPTER) || defined(STM_NES)
 
 	//All 8bits are on GPIOB in order, but mapped to bits15-8
 	#define Dbank 		GPIOB 
@@ -1047,7 +1156,7 @@ void software_AXL_CLK();
 	#define DATA_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_DATA
 	#define DATA_ENABLE()	DATA_EN_CLK(); DATA_IP_PU()
 
-#endif	//STM_ADAPTER
+#endif	//STM_ADAPTER or STM_NES
 
 #ifdef AVR_KAZZO
 
@@ -1063,6 +1172,7 @@ void software_AXL_CLK();
 	#define DATA_ENABLE()	DATA_IP_PU()
 
 #endif	//AVR_KAZZO
+
 
 
 //	---------------------------------------------------------------------------------------
@@ -1098,7 +1208,7 @@ void software_AXL_CLK();
 
 #endif	//STM_INL6 & PROTO
 
-#ifdef STM_ADAPTER
+#if defined(STM_ADAPTER) || defined(STM_NES)
 
 	// A15-8 are behind AHL flipflop
 	// A7-6 are on GPIO A9-8 
@@ -1119,7 +1229,7 @@ void software_AXL_CLK();
 	#define ADDR_EN_FF()	CTL_OP(AHLbank, AHL); CTL_SET_LO(AHLbank, AHL)
 	#define ADDR_ENABLE()	DATA_ENABLE(); ADDR_EN_CLK(); ADDR_EN_FF(); ADDR_OP()
 
-#endif	//STM_ADAPTER
+#endif	//STM_ADAPTER or STM_NES
 
 #ifdef AVR_KAZZO
 
@@ -1164,7 +1274,7 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 
-#if defined (STM_INL6_PROTO) || defined(STM_INL6)
+#ifdef STM_INL6_PROTO
 
 	//pins1-5 = GPIOB10-14 (D8-12), pin6 = GPIOA4 (AUDL), pin7 = GPIOB15 (D13), pin8 = GPIOA14 (SWCLK)
 	//these defines are quite the mess currently due to pins all over the place
@@ -1184,8 +1294,39 @@ void software_AXL_CLK();
 	#define EXP_ENABLE()	ADDR_EN_CLK(); EXP_OP()
 	#define EXP_DISABLE()	EXP_PU(); EXP_IP()
 
-//end STM_INL6 & PROTO
-#else	//AVR_KAZZO or STM_ADAPTER
+#endif	//STM_INL6_PROTO
+
+#ifdef STM_INL6
+
+	//pins1-5 = GPIOB2-6 (D8-12), pin6 = GPIOA4 (AUDL), pin7 = GPIOB7 (D13), pin8 = GPIOA14 (SWCLK)
+	//these defines are quite the mess currently due to pins all over the place
+	//there is no real benefit to defining this port as byte wide but defining them this way 'degrades' 
+	//them to the same quality as AVR making all devices mostly compatible.
+	//These can be redefined as CONTROL PORT for simpler pin granuarity access
+	#define E157bank 	GPIOB 
+	#define E68bank 	GPIOA 
+
+	//TODO this is not complete!!!  it's still a copy paste from the prototype
+	#define EXP_PU()	E157bank->PUPDR |= (PUPDR_PU_ALL & 0xFFF00000); E68bank->PUPDR |= (PUPDR_PU_ALL & 0x30000300)
+	#define EXP_IP()	E157bank->MODER &=~(MODER_OP_ALL & 0xFFF00000); E68bank->MODER &=~(MODER_OP_ALL & 0x30000300)
+	#define EXP_OP()	E157bank->MODER |= (MODER_OP_ALL & 0xFFF00000); E68bank->MODER |= (MODER_OP_ALL & 0x30000300)
+	//not sure these bit shift accesses will work if the value passed in is a uint8_t variable...
+	#define EXP_SET(val)	E157bank->ODR = ((E157bank->ODR & 0x03FF) | (val<<10 & 0x7C00) | (val<<9 & 0x8000)); E68bank->ODR = ((E68bank->ODR & 0xBFEF) | (val>>1 & 0x0010) | (val<<7 & 0x4000))
+
+	#define EXP_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_EXP
+	#define EXP_ENABLE()	ADDR_EN_CLK(); EXP_OP()
+	#define EXP_DISABLE()	EXP_PU(); EXP_IP()
+
+#endif	//STM_INL6
+
+
+#ifdef STM_NES
+	//TODO
+
+#endif	//STM_NES
+
+
+#if defined(STM_ADAPTER) || defined(AVR_KAZZO)
 
 
 	// EXP1-8 are behind AXL flipflop
@@ -1204,6 +1345,41 @@ void software_AXL_CLK();
 	#define EXP_ENABLE()	DATA_ENABLE(); CTL_ENABLE(); EXP_EN_FF()
 
 #endif	//AVR_KAZZO or STM_ADAPTER
+
+
+//	---------------------------------------------------------------------------------------
+//	DATA PORT 16bit
+//	
+//	This port is only present on later devices typically with Sega connectors
+//	Even though early devices have DATA0-7 + EXP1-8, the EXP port is unidirectional
+//	Directionality: All pins are bidirectional controlled as a whole
+//	Driver: All pins are push-pull, and unknown floating/pull-up when input
+//		main reason to be unknown is AVR uses PORT for pull-up enable
+//		don't want to require re-enabling pullups for every data access
+//		STM32 are default to pull-up, AVR requires manually pulling up
+//		by calling DATA16_IP_PU() if pullups required, otherwise unknown
+//	Write/Output: Byte access only, no bit accesses.  Must be returned to input after read!
+//	Read/Input: Default condition, byte access only
+//
+//	---------------------------------------------------------------------------------------
+//
+#ifdef STM_INL6 
+
+	//Combine 8bit DATA0-7 and 8bit EXP1-8
+
+	//IP and OP assume MODER[1] is clear (ie not set to Alt Func)
+	//also assume PUPDR is reset default floating
+//	#define DATA16_IP_PU()	DATA_IP_PU(); = ~(MODER_OP_ALL & 0xFFFF0000); Dbank->PUPDR |= (PUPDR_PU_ALL & 0xFFFF0000)
+//	#define DATA_IP()	Dbank->MODER &= ~(MODER_OP_ALL & 0xFFFF0000)
+//	#define DATA_OP()	Dbank->MODER |=  (MODER_OP_ALL & 0xFFFF0000)
+//	#define DATA_SET(data)	Dbank->ODR = (Dbank->ODR & 0x00FF) | (data<<8)			
+//	#define DATA_RD(data)	data = (Dbank->IDR>>8) & 0x00FF
+//
+//	#define DATA_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_DATA
+//	#define DATA_ENABLE()	DATA_EN_CLK(); DATA_IP_PU();
+
+
+#endif	//STM_INL6
 
 
 //	---------------------------------------------------------------------------------------
@@ -1260,6 +1436,10 @@ void software_AXL_CLK();
 	#define HADDR_DISABLE()	HADDR_PU(); HADDR_IP()
 
 //end STM_INL6 & PROTO
+
+//TODO STM_NES
+
+
 #else	//AVR_KAZZO or STM_ADAPTER
 
 
@@ -1326,6 +1506,7 @@ void software_AXL_CLK();
 
 #endif //STM_INL6 & PROTO
 
+//TODO STM_NES
 
 #ifdef STM_ADAPTER
 
