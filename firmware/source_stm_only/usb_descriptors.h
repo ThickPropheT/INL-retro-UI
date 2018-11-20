@@ -43,7 +43,8 @@ const uint8_t device_desc[DEVICE_DESC_LEN] = {
 					0xDC, 0x05,
 // 12 	bcdDevice 		2 	BCD 		Device Release Number
 					//0x00, 0x02,	early development version
-					0x01, 0x02,	//first public release 7SEP2018
+					//0x01, 0x02,	//first public release 7SEP2018
+					0x02, 0x02,	//second public release 16NOV2018
 // 14 	iManufacturer 		1 	Index 		Index of Manufacturer String Descriptor
 					0x01,
 // 15 	iProduct 		1 	Index 		Index of Product String Descriptor
