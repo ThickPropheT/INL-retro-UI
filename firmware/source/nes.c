@@ -68,6 +68,15 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 		case NROM_CHR_FLASH_WR:	
 			nrom_chrrom_flash_wr( operand, miscdata );
 			break;
+		case MMC1_PRG_FLASH_WR:	
+			mmc1_prgrom_flash_wr( operand, miscdata );
+			break;
+		case MMC1_CHR_FLASH_WR:	
+			mmc1_chrrom_flash_wr( operand, miscdata );
+			break;
+		case UNROM_PRG_FLASH_WR:	
+			unrom_prgrom_flash_wr( operand, miscdata );
+			break;
 		case CNROM_CHR_FLASH_WR:	
 			cnrom_chrrom_flash_wr( operand, miscdata );
 			break;
@@ -76,6 +85,12 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 			break;
 		case MMC3_CHR_FLASH_WR:	
 			mmc3_chrrom_flash_wr( operand, miscdata );
+			break;
+		case MMC4_PRG_SOP_FLASH_WR:	
+			mmc4_prgrom_sop_flash_wr( operand, miscdata );
+			break;
+		case MMC4_CHR_FLASH_WR:	
+			mmc4_chrrom_flash_wr( operand, miscdata );
 			break;
 		case CDREAM_CHR_FLASH_WR:	
 			cdream_chrrom_flash_wr( operand, miscdata );
@@ -809,7 +824,7 @@ uint8_t nes_dualport_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, 
 
 
 
-/* Desc:NES MMC1 Write
+/* Desc:NES MMC1 Mapper Register Write
  * 	write to entirety of MMC1 register
  * 	address selects register that's written to
  * 	address must be >= $8000 where registers are located
@@ -894,6 +909,109 @@ void nrom_chrrom_flash_wr( uint16_t addr, uint8_t data )
 
 	return;
 }
+
+
+/* Desc:NES MMC1 PRG-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	MMC1 must be properly inialized for flashing 
+ * 	32KB mode with current bank selected
+ * 	addr must be between $8000-FFFF as prescribed by init
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void mmc1_prgrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//make a generic write to mapper reg so the last write will block all subsequent writes
+	mmc1_wr(0xC000, 0x05, 0); //just write to random CHR ROM register
+	
+	//unlock and write data
+	//all these writes will be block by MMC1 mapper register due to valid write above that ends with a write
+	nes_cpu_wr(0x5555, 0xAA);
+	nes_cpu_wr(0xAAAA, 0x55);
+	nes_cpu_wr(0x5555, 0xA0);
+	nes_cpu_wr(addr, data);
+
+	do {
+		rv = nes_cpu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_cpu_rd(addr));
+	//TODO handle timeout
+
+	return;
+}
+
+
+/* Desc:NES MMC1 CHR-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	cur_bank global var must be set to desired mapper register value
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void mmc1_chrrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//set banks for unlock commands
+	mmc1_wr(0xA000, 0x02, 0);
+	//PT1 always set to 0x05 for $5555 command
+	
+	//send unlock command
+	nes_ppu_wr(0x1555, 0xAA);
+	nes_ppu_wr(0x0AAA, 0x55);
+	nes_ppu_wr(0x1555, 0xA0);
+
+	//select desired bank for write
+	mmc1_wr(0xA000, cur_bank, 0);
+	//write the data
+	nes_ppu_wr(addr, data);
+
+	do {
+		rv = nes_ppu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_ppu_rd(addr));
+
+	return;
+}
+
+
+
+
+/* Desc:NES UNROM PRG-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	cur_bank global var must be set to desired mapper register value
+ * 	bank_table global var must be set to base address of the bank table
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void unrom_prgrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//set A14 low for lower bank so to satisfy unlock commands
+	nes_cpu_wr(bank_table, 0x00);
+
+	//unlock the flash
+	discrete_exp0_prgrom_wr(0x5555, 0xAA);
+	discrete_exp0_prgrom_wr(0x2AAA, 0x55);
+	discrete_exp0_prgrom_wr(0x5555, 0xA0);
+
+	//select desired bank and write data
+	nes_cpu_wr(bank_table+cur_bank, cur_bank);
+	discrete_exp0_prgrom_wr(addr, data);
+
+	do {
+		rv = nes_cpu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_cpu_rd(addr));
+
+	return;
+}
+
 
 
 /* Desc:NES CNROM CHR-ROM FLASH Write
@@ -993,6 +1111,93 @@ void mmc3_chrrom_flash_wr( uint16_t addr, uint8_t data )
 }
 
 
+/* Desc:NES MMC4 PRG-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	MMC4 must be properly inialized for flashing
+ * 	addr must be between $8000-BFFF as prescribed by init
+ * 	desired bank must already be selected
+ * 	cur_bank must be set to desired bank for recovery
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void mmc4_prgrom_sop_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock and write data SOP-44 flash
+	nes_cpu_wr(0xFAAA, 0xAA);
+	nes_cpu_wr(0xF555, 0x55);
+	nes_cpu_wr(0xFAAA, 0xA0);
+	nes_cpu_wr(addr, data);		//corrupts bank register if addr $A000-AFFF
+
+	//recover bank register as data write would have corrupted
+	nes_cpu_wr(0xA000, cur_bank);
+
+	do {
+		rv = nes_cpu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_cpu_rd(addr));
+	//TODO handle timeout
+
+	return;
+}
+
+
+/* Desc:NES MMC4 CHR-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	cur_bank global var must be set to desired mapper register value
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void mmc4_chrrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+//--set bank for unlock command
+//dict.nes("NES_CPU_WR", 0xB000, 0x0A)    --4KB @ PPU $0000 -> $2AAA cmd & writes
+//dict.nes("NES_CPU_WR", 0xC000, 0x0A)    --4KB @ PPU $0000
+//
+//--send unlock command
+//dict.nes("NES_PPU_WR", 0x1555, 0xAA)
+//dict.nes("NES_PPU_WR", 0x0AAA, 0x55)
+//dict.nes("NES_PPU_WR", 0x1555, 0xA0)
+//
+//--select desired bank
+//dict.nes("NES_CPU_WR", 0xB000, bank)    --4KB @ PPU $0000 -> $2AAA cmd & writes
+//dict.nes("NES_CPU_WR", 0xC000, bank)    --4KB @ PPU $0000
+//--write data
+//dict.nes("NES_PPU_WR", addr, value)
+
+	//set banks for unlock commands
+	nes_cpu_wr(0xB000, 0x0A);
+	nes_cpu_wr(0xC000, 0x0A);
+
+	//PT1 always set to 0x05 for $5555 command
+	
+	//send unlock command
+	nes_ppu_wr(0x1555, 0xAA);
+	nes_ppu_wr(0x0AAA, 0x55);
+	nes_ppu_wr(0x1555, 0xA0);
+
+	//select desired bank for write
+	nes_cpu_wr(0xB000, cur_bank);
+	nes_cpu_wr(0xC000, cur_bank);
+
+	//write the data
+	nes_ppu_wr(addr, data);
+
+	do {
+		rv = nes_ppu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_ppu_rd(addr));
+
+	return;
+}
+
+
+
+
 /* Desc:NES ColorDreams CHR-ROM FLASH Write
  * Pre: nes_init() setup of io pins
  * 	cur_bank global var must be set to desired mapper register value
@@ -1032,8 +1237,3 @@ void cdream_chrrom_flash_wr( uint16_t addr, uint8_t data )
 
 	return;
 }
-
-
-
-
-

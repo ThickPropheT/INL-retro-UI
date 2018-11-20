@@ -112,13 +112,14 @@
 	// designate the address base with mapper since this read is mapper independent
 	#define NESCPU_4KB	0x20 	//mapper (bits 3-0) specifies A12-15 (4bits)
 	#define NESPPU_1KB	0x21	//mapper (bits 5-2) specifies A10-13 (4bits)
+	//DON'T WANT TO USE THESE ANY MORE, USE THE PAGE VERSIONS BELOW
 
 	//since the types above only specify the granularity of the read, there is no reason
 	//to limit it to 1-4KByte.  May as well give page granularity and use the whole mapper byte!
 	#define NESCPU_PAGE	0x22	//mapper byte specifies A15-8
 	#define NESPPU_PAGE	0x23	//mapper byte specifies A13-8	 bits 6 & 7 can't be set
-	#define SNESROM_PAGE	0x24	//mapper byte specifies A15-8
-	
+	#define SNESROM_PAGE	0x24	//mapper byte specifies A15-8 ROMSEL low
+	#define SNESSYS_PAGE	0x25	//mapper byte specifies A15-8 ROMSEL high
 
 	//operand LSB
 	//SST 39SF0x0 manf/prod IDs

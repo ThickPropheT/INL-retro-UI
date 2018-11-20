@@ -1,6 +1,6 @@
 
 -- create the module's table
-local mmc1 = {}
+local mmc4 = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
@@ -9,34 +9,33 @@ local dump = require "scripts.app.dump"
 local flash = require "scripts.app.flash"
 
 -- file constants
-local mapname = "MMC1"
+local mapname = "MMC4"
 
 -- local functions
 
+--disables WRAM, selects Vertical mirroring
+--sets up CHR-ROM flash PT0 for DATA, Commands: $5555->$1555  $2AAA->$1AAA 
+--sets up PRG-ROM flash DATA: $8000-9FFF, Commands: $5555->D555  $2AAA->$AAAA
+--leaves $8000 control reg selected to IRQ value selected so $A000 writes don't affect banking
 local function init_mapper( debug )
 
-	--MMC1 ignores all but the first write
-	dict.nes("NES_CPU_RD", 0x8000)
-	--reset MMC1 shift register with D7 set
-	dict.nes("NES_CPU_WR", 0x8000, 0x80)
-	--this reset also effectively sets the control reg to 0x0C:
-	--	prg mode 3: last 16KB fixed
-	--	chr mode 0: single 8KB bank
-	--	mirroring 0: 1 screen NT0
 
---	mmc1_write(0x8000, 0x10);       //32KB mode, prg bank @ $8000-FFFF, 4KB CHR mode
-	dict.nes("NES_MMC1_WR", 0x8000, 0x10)
---	//note the mapper will constantly reset to this when writing to PRG-ROM
---	//PRG-ROM A18-A14
+	--RAM is always enabled..
+	
+	--set mirroring
+	dict.nes("NES_CPU_WR", 0xF000, 0x00)	--bit0: 0-vert 1-horz 
 
-	--select first PRG-ROM bank, disable save RAM
-	dict.nes("NES_MMC1_WR", 0xE000, 0x10)	--LSBit ignored in 32KB mode
-						--bit4 RAM enable 0-enabled 1-disabled
 
---	//CHR-ROM A16-12 (A14-12 are required to be valid)
---	bit4 (CHR A16) is /CE pin for WRAM on SNROM
-	dict.nes("NES_MMC1_WR", 0xA000, 0x12) --4KB bank @ PT0  $2AAA cmd and writes
-	dict.nes("NES_MMC1_WR", 0xC000, 0x15) --4KB bank @ PT1  $5555 cmd fixed
+	--For CHR-ROM flash writes, use lower 4KB (PT0) for writting data & upper 4KB (PT1) for commands
+	dict.nes("NES_CPU_WR", 0xB000, 0x02)	--4KB @ PPU $0000 -> $2AAA cmd & writes
+	dict.nes("NES_CPU_WR", 0xC000, 0x02)	--4KB @ PPU $0000
+	dict.nes("NES_CPU_WR", 0xD000, 0x05)	--4KB @ PPU $1000 -> $5555 cmd
+	dict.nes("NES_CPU_WR", 0xE000, 0x05)	--4KB @ PPU $1000
+
+
+	--can use upper 16KB $D555 for $5555 commands
+	--need lower bank for $AAAA commands and writes
+	dict.nes("NES_CPU_WR", 0xA000, 0x00)	--16KB @ CPU $8000
 
 end
 
@@ -45,61 +44,27 @@ end
 --can be used to help identify board: returns true if pass, false if failed
 local function mirror_test( debug )
 
-	--put MMC1 in known state (mirror bits cleared)
+	--put mapper in known state (mirror bits cleared)
 	init_mapper() 
 
-	--MM = 0: 1 screen A
-	dict.nes("NES_MMC1_WR", 0x8000, 0x00)
-	if (nes.detect_mapper_mirroring() ~= "1SCNA") then
-		print("MMC1 mirror test fail")
+	--Vertical
+	--dict.nes("NES_CPU_WR", 0xF000, 0x00)	--bit0: 0-vert 1-horz 
+	if (nes.detect_mapper_mirroring(false) ~= "VERT") then
+		print(mapname, " vert mirror test fail")
 		return false
 	end
 
-	--MM = 1: 1 screen B
-	dict.nes("NES_MMC1_WR", 0x8000, 0x01)
-	if (nes.detect_mapper_mirroring() ~= "1SCNB") then
-		print("MMC1 mirror test fail")
-		return false
-	end
-
-	--MM = 2: Vertical
-	dict.nes("NES_MMC1_WR", 0x8000, 0x02)
-	if (nes.detect_mapper_mirroring() ~= "VERT") then
-		print("MMC1 mirror test fail")
-		return false
-	end
-
-	--MM = 3: Horizontal
-	dict.nes("NES_MMC1_WR", 0x8000, 0x03)
-	if (nes.detect_mapper_mirroring() ~= "HORZ") then
-		print("MMC1 mirror test fail")
+	--Horizontal
+	dict.nes("NES_CPU_WR", 0xF000, 0x01)	--bit0: 0-vert 1-horz 
+	if (nes.detect_mapper_mirroring(false) ~= "HORZ") then
+		print(mapname, " horz mirror test fail")
 		return false
 	end
 
 	--passed all tests
-	if(debug) then print("MMC1 mirror test passed") end
+	if(debug) then print(mapname, " mirror test passed") end
 	return true
 end
-
-
-local function wr_flash_byte(addr, value, debug)
-
-	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xAA)
-	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x2AAA, 0x55)
-	dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xA0)
-	dict.nes("DISCRETE_EXP0_PRGROM_WR", addr, value)
-
-	local rv = dict.nes("NES_CPU_RD", addr)
-
-	local i = 0
-
-	while ( rv ~= value ) do
-		rv = dict.nes("NES_CPU_RD", addr)
-		i = i + 1
-	end
-	if debug then print(i, "naks, done writing byte.") end
-end
-
 
 --read PRG-ROM flash ID
 local function prgrom_manf_id( debug )
@@ -107,14 +72,19 @@ local function prgrom_manf_id( debug )
 	init_mapper()
 
 	if debug then print("reading PRG-ROM manf ID") end
-	--A0-A14 are all directly addressable in CNROM mode
-	--and mapper writes don't affect PRG banking
-	dict.nes("NES_CPU_WR", 0xD555, 0xAA)
-	dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
-	dict.nes("NES_CPU_WR", 0xD555, 0x90)
-	rv = dict.nes("NES_CPU_RD", 0x8000)
+	--SOP
+	dict.nes("NES_CPU_WR", 0xFAAA, 0xAA)
+	dict.nes("NES_CPU_WR", 0xF555, 0x55)
+	dict.nes("NES_CPU_WR", 0xFAAA, 0x90)
+	--PLCC
+	--dict.nes("NES_CPU_WR", 0xD555, 0xAA)
+	--dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
+	--dict.nes("NES_CPU_WR", 0xD555, 0x90)
+	rv = dict.nes("NES_CPU_RD", 0x8000) --0xC2 = MXIC
 	if debug then print("attempted read PRG-ROM manf ID:", string.format("%X", rv)) end
-	rv = dict.nes("NES_CPU_RD", 0x8001)
+	rv = dict.nes("NES_CPU_RD", 0x8002) --SOP 0x23/0xAB 512KB top/bottom
+					    --SOP 0x51/0x57 256KB top/bottom
+					    --SOP 0xD6/0x58 1MB top/bottom
 	if debug then print("attempted read PRG-ROM prod ID:", string.format("%X", rv)) end
 
 	--exit software
@@ -144,29 +114,28 @@ local function chrrom_manf_id( debug )
 end
 
 
-
 --dump the PRG ROM
 local function dump_prgrom( file, rom_size_KB, debug )
 
-	--PRG-ROM dump 32KB at a time in 32KB bank mode
-	local KB_per_read = 32
+	--PRG-ROM dump 16KB at a time
+	local KB_per_read = 16
 	local num_reads = rom_size_KB / KB_per_read
 	local read_count = 0
-	local addr_base = 0x08	-- $8000
+	local addr_base = 0x80	-- $8000
 
 	while ( read_count < num_reads ) do
 
 		if debug then print( "dump PRG part ", read_count, " of ", num_reads) end
 
 		--select desired bank(s) to dump
-		dict.nes("NES_MMC1_WR", 0xE000, read_count<<1)	--LSBit ignored in 32KB mode
+		dict.nes("NES_CPU_WR", 0xA000, read_count)	--16KB @ CPU $8000
 
 		--16 = number of KB to dump per loop
 		--0x08 = starting read address A12-15 -> $8000
 		--NESCPU_4KB designate mapper independent read of NES CPU address space
 		--mapper must be 0-15 to designate A12-15
 		--dump.dumptofile( file, 16, 0x08, "NESCPU_4KB", true )
-		dump.dumptofile( file, KB_per_read, addr_base, "NESCPU_4KB", false )
+		dump.dumptofile( file, KB_per_read, addr_base, "NESCPU_PAGE", false )
 
 		read_count = read_count + 1
 	end
@@ -176,7 +145,7 @@ end
 --dump the CHR ROM
 local function dump_chrrom( file, rom_size_KB, debug )
 
-	local KB_per_read = 8	--dump both PT
+	local KB_per_read = 8	--dump both PT at once
 	local num_reads = rom_size_KB / KB_per_read
 	local read_count = 0
 	local addr_base = 0x00	-- $0000
@@ -184,9 +153,13 @@ local function dump_chrrom( file, rom_size_KB, debug )
 	while ( read_count < num_reads ) do
 
 		if debug then print( "dump CHR part ", read_count, " of ", num_reads) end
+		--the bank is half the size of KB per read so must multiply by 2
+		dict.nes("NES_CPU_WR", 0xB000, (read_count*2))	--4KB @ PPU $0000
+		dict.nes("NES_CPU_WR", 0xC000, (read_count*2))	--4KB @ PPU $0000
 
-		dict.nes("NES_MMC1_WR", 0xA000, read_count*2) --4KB bank at $0000
-		dict.nes("NES_MMC1_WR", 0xC000, read_count*2+1) --4KB bank at $1000
+		--the bank is half the size of KB per read so must multiply by 2 and add 1 for second 1KB
+		dict.nes("NES_CPU_WR", 0xD000, (read_count*2+1))--4KB @ PPU $1000
+		dict.nes("NES_CPU_WR", 0xE000, (read_count*2+1))--4KB @ PPU $1000
 
 		--4 = number of KB to dump per loop
 		--0x00 = starting read address A10-13 -> $0000
@@ -194,7 +167,7 @@ local function dump_chrrom( file, rom_size_KB, debug )
 		--	bits 7, 6, 1, & 0 CAN NOT BE SET!
 		--	0x04 would designate that A10 is set -> $0400 (the second 1KB PT bank)
 		--	0x20 would designate that A13 is set -> $2000 (first name table)
-		dump.dumptofile( file, KB_per_read, addr_base, "NESPPU_1KB", false )
+		dump.dumptofile( file, KB_per_read, addr_base, "NESPPU_PAGE", false )
 
 		read_count = read_count + 1
 	end
@@ -224,49 +197,28 @@ end
 
 --write a single byte to PRG-ROM flash
 --PRE: assumes mapper is initialized and bank is selected as prescribed in mapper_init
---REQ: addr must be in the first bank $8000-FFFF
+--REQ: addr must be in the first bank $8000-BFFF
 local function wr_prg_flash_byte(addr, value, bank, debug)
 
-	if (addr < 0x8000 or addr > 0xFFFF) then
-		print("\n  ERROR! flash write to PRG-ROM", string.format("$%X", addr), "must be $8000-FFFF \n\n")
+	if (addr < 0x8000 or addr > 0xBFFF) then
+		print("\n  ERROR! flash write to PRG-ROM", string.format("$%X", addr), "must be $8000-BFFF \n\n")
 		return
 	end
 
---mmc1_wr(0x8000, 0x10, 0);               //32KB mode
---//IDK why, but somehow only the first byte gets programmed when ROM A14=1
---//so somehow it's getting out of 32KB mode for follow on bytes..
---//even though we reset to 32KB mode after the corrupting final write
---
---wr_func( unlock1, 0xAA );
---wr_func( unlock2, 0x55 );
---wr_func( unlock1, 0xA0 );
---wr_func( ((addrH<<8)| n), buff->data[n] );
---//writes to flash are to $8000-FFFF so any register could have been corrupted and shift register may be off
---//In reality MMC1 should have blocked all subsequent writes, so maybe only the CHR reg2 got corrupted..?                mmc1_wr(0x8000, 0x10, 1);               //32KB mode
---mmc1_wr(0xE000, bank, 0);       //reset shift register, and bank register
-
-	--MMC1 ignores all but the first write
-	--dict.nes("NES_CPU_RD", 0x8000)
---	dict.nes("NES_CPU_WR", 0x8000, 0x80) --reset MMC1 shift register with D7 set
-
-	--dict.nes("NES_MMC1_WR", 0x8000, 0x10) --32KB mode, prg bank @ $8000-FFFF, 4KB CHR mode
-	--doing this after the write doesn't work for some reason....
-	--I think the reason this works is because the last instruction is a write (and it's valid)
-	--so the next 4 writes are blocked by the MMC1 including the reset
-	dict.nes("NES_MMC1_WR", 0xC000, 0x05)	--this seems to work as well which makes sense based on above..
-	--so now all follow on writes will be blocked until there is a read
+	--select bank
+	dict.nes("NES_CPU_WR", 0xA000, bank)
 
 	--send unlock command and write byte
-	dict.nes("NES_CPU_WR", 0xD555, 0xAA)	--this will reset the MMC1..?, 
-						--but not if it was blocked by a previous write
-	dict.nes("NES_CPU_WR", 0xAAAA, 0x55)	--blocked
-	dict.nes("NES_CPU_WR", 0xD555, 0xA0)	--blocked
-	dict.nes("NES_CPU_WR", addr, value)	--blocked
+	--dict.nes("NES_CPU_WR", 0xD555, 0xAA)
+	--dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
+	--dict.nes("NES_CPU_WR", 0xD555, 0xA0)
+	dict.nes("NES_CPU_WR", 0xFAAA, 0xAA)
+	dict.nes("NES_CPU_WR", 0xF555, 0x55)
+	dict.nes("NES_CPU_WR", 0xFAAA, 0xA0)
+	dict.nes("NES_CPU_WR", addr, value)	--if this write was $A000-AFFF it will also corrupt the bank
 
---	dict.nes("NES_CPU_RD", 0x8000)	--must read before resetting
---	dict.nes("NES_CPU_WR", 0x8000, 0x80) --reset MMC1 shift register with D7 set
---	dict.nes("NES_MMC1_WR", 0x8000, 0x10) --32KB mode, prg bank @ $8000-FFFF, 4KB CHR mode
---	dict.nes("NES_MMC1_WR", 0xE000, bank<<1) --32KB mode, prg bank @ $8000-FFFF, 4KB CHR mode
+	--recover bank
+	dict.nes("NES_CPU_WR", 0xA000, bank)
 
 	local rv = dict.nes("NES_CPU_RD", addr)
 
@@ -286,7 +238,7 @@ end
 
 --write a single byte to CHR-ROM flash
 --PRE: assumes mapper is initialized and bank is selected as prescribed in mapper_init
---REQ: addr must be in the first bank $0000-0FFF
+--REQ: addr must be in the first 2 banks $0000-0FFF
 local function wr_chr_flash_byte(addr, value, bank, debug)
 
 	if (addr < 0x0000 or addr > 0x0FFF) then
@@ -294,17 +246,20 @@ local function wr_chr_flash_byte(addr, value, bank, debug)
 		return
 	end
 
-	--set banks for unlock commands
-	dict.nes("NES_MMC1_WR", 0xA000, 0x02) --4KB bank @ PT0  $2AAA cmd and writes (always write data to PT0)
-	--dict.nes("NES_MMC1_WR", 0xC000, 0x05) --4KB bank @ PT1  $5555 cmd fixed (never changed)
+	--set bank for unlock command
+	dict.nes("NES_CPU_WR", 0xB000, 0x0A)	--4KB @ PPU $0000 -> $2AAA cmd & writes
+	dict.nes("NES_CPU_WR", 0xC000, 0x0A)	--4KB @ PPU $0000
 
-	--send unlock command and write byte
+	--send unlock command
 	dict.nes("NES_PPU_WR", 0x1555, 0xAA)
 	dict.nes("NES_PPU_WR", 0x0AAA, 0x55)
 	dict.nes("NES_PPU_WR", 0x1555, 0xA0)
 
-	--select desired bank for write
-	dict.nes("NES_MMC1_WR", 0xA000, bank) --4KB bank @ PT0  $2AAA cmd and writes (always write data to PT0)
+	--select desired bank
+	dict.nes("NES_CPU_WR", 0xB000, bank)	--4KB @ PPU $0000 -> $2AAA cmd & writes
+	dict.nes("NES_CPU_WR", 0xC000, bank)	--4KB @ PPU $0000
+
+	--write data
 	dict.nes("NES_PPU_WR", addr, value)
 
 	local rv = dict.nes("NES_PPU_RD", addr)
@@ -332,15 +287,18 @@ local function flash_prgrom(file, rom_size_KB, debug)
 	init_mapper()
 
 	--test some bytes
-	--wr_prg_flash_byte(0x0000, 0xA5, true)
-	--wr_prg_flash_byte(0x0FFF, 0x5A, true)
+--	wr_prg_flash_byte(0x8000, 0xA5, 0, true)
+--	wr_prg_flash_byte(0xBFFF, 0x5A, 0, true)
+--	wr_prg_flash_byte(0x8000, 0x15, 1, true)
+--	wr_prg_flash_byte(0xBFFF, 0x1A, 1, true)
+--	wr_prg_flash_byte(0x8000, 0xF5, 0xF, true)
+--	wr_prg_flash_byte(0xBFFF, 0xFA, 0xF, true)
 
 	print("\nProgramming PRG-ROM flash")
-	--initial testing of MMC3 with no specific MMC3 flash firmware functions 6min per 256KByte = 0.7KBps
 
 
-	local base_addr = 0x8000 --writes occur $8000-9FFF
-	local bank_size = 32*1024 --MMC1 32KByte bank mode
+	local base_addr = 0x8000 --writes occur $8000-BFFF
+	local bank_size = 16*1024 --MMC4 16KByte per PRG bank
 	local buff_size = 1      --number of bytes to write at a time
 	local cur_bank = 0
 	local total_banks = rom_size_KB*1024/bank_size
@@ -351,12 +309,15 @@ local function flash_prgrom(file, rom_size_KB, debug)
 
 	while cur_bank < total_banks do
 
-		if (cur_bank % 2 == 0) then
+		if (cur_bank %8 == 0) then
 			print("writting PRG bank: ", cur_bank, " of ", total_banks-1)
 		end
 
-		--write the current bank to the mapper register
-		dict.nes("NES_MMC1_WR", 0xE000, cur_bank<<1)	--LSBit ignored in 32KB mode
+		--select desired bank, needed for first write
+		dict.nes("NES_CPU_WR", 0xA000, cur_bank)	--16KB @ CPU $8000
+		--set cur_bank for recovery and subsequent bytes
+		dict.nes("SET_CUR_BANK", cur_bank) 
+		if debug then print("get bank:", dict.nes("GET_CUR_BANK")) end
 
 		--program the entire bank's worth of data
 
@@ -375,7 +336,8 @@ local function flash_prgrom(file, rom_size_KB, debug)
 			--wr_prg_flash_byte(base_addr+byte_num, data, cur_bank, false)   --0.7KBps
 
 			--EASIEST FIRMWARE SPEEDUP: 5x faster, create mapper write byte function:
-			--dict.nes("MMC1_PRG_FLASH_WR", base_addr+byte_num, data)  --3.8KBps (5.5x faster than above)
+			--MMC3 function works on FME7 just fine
+			dict.nes("MMC4_PRG_SOP_FLASH_WR", base_addr+byte_num, data)  --3.8KBps (5.5x faster than above)
 			--NEXT STEP: firmware write page/bank function can use function pointer for the function above
 			--	this may cause issues with more complex algos
 			--	sometimes cur bank is needed 
@@ -386,7 +348,6 @@ local function flash_prgrom(file, rom_size_KB, debug)
 			--	this greatly simplifies things and is exactly where we want to go
 			--	This is completed below outside the byte while loop @ 39KBps
 
-			--local verify = true
 			if (verify) then
 				readdata = dict.nes("NES_CPU_RD", base_addr+byte_num)
 				if readdata ~= data then
@@ -399,7 +360,8 @@ local function flash_prgrom(file, rom_size_KB, debug)
 		--]]
 
 		--Have the device write a banks worth of data
-		flash.write_file( file, bank_size/1024, mapname, "PRGROM", false )
+		--FAST!  but needs firmware specific functions and flash control
+		flash.write_file( file, bank_size/1024, "MMC4", "PRGROM", false )
 
 		cur_bank = cur_bank + 1
 	end
@@ -416,15 +378,14 @@ local function flash_chrrom(file, rom_size_KB, debug)
 
 	init_mapper()
 
-	print("\nProgramming CHR-ROM flash")
-
 	--test some bytes
 	--wr_chr_flash_byte(0x0000, 0xA5, 0, true)
 	--wr_chr_flash_byte(0x0FFF, 0x5A, 0, true)
 	
+	print("\nProgramming CHR-ROM flash")
 
 	local base_addr = 0x0000
-	local bank_size = 4*1024 --MMC1 always write to PT0
+	local bank_size = 4*1024 --MMC4 4KByte CHR bank
 	local buff_size = 1      --number of bytes to write at a time
 	local cur_bank = 0
 	local total_banks = rom_size_KB*1024/bank_size
@@ -439,11 +400,9 @@ local function flash_chrrom(file, rom_size_KB, debug)
 			print("writting CHR bank: ", cur_bank, " of ", total_banks-1)
 		end
 
-		--select bank to flash
+		--set cur_bank so firmware can select desired bank during the write
 		dict.nes("SET_CUR_BANK", cur_bank) 
 		if debug then print("get bank:", dict.nes("GET_CUR_BANK")) end
-		--this only updates the firmware nes.c global
-		--which it will use when calling mmc1_chrrom_flash_wr
 
 		--program the entire bank's worth of data
 		--[[  This version of the code programs a single byte at a time but doesn't require 
@@ -458,9 +417,9 @@ local function flash_chrrom(file, rom_size_KB, debug)
 
 			--write the data
 			--SLOWEST OPTION: no firmware mapper specific functions 100% host flash algo:
-			--wr_chr_flash_byte(base_addr+byte_num, data, cur_bank, false)  --0.7KBps
+			wr_chr_flash_byte(base_addr+byte_num, data, cur_bank, false)  --0.7KBps
 			--EASIEST FIRMWARE SPEEDUP: 5x faster, create mapper write byte function:
-			dict.nes("MMC1_CHR_FLASH_WR", base_addr+byte_num, data) --3.8KBps (5.5x faster than above)
+			--dict.nes("MMC4_CHR_FLASH_WR", base_addr+byte_num, data) --3.8KBps (5.5x faster than above)
 			--FASTEST have the firmware handle flashing a bank's worth of data
 			--control the init and banking from the host side
 
@@ -477,7 +436,7 @@ local function flash_chrrom(file, rom_size_KB, debug)
 
 		--Have the device write a "banks" worth of data, actually 2x banks of 2KB each
 		--FAST!  13sec for 512KB = 39KBps
-		flash.write_file( file, bank_size/1024, mapname, "CHRROM", false )
+		flash.write_file( file, bank_size/1024, "MMC4", "CHRROM", false )
 
 		cur_bank = cur_bank + 1
 	end
@@ -486,10 +445,7 @@ local function flash_chrrom(file, rom_size_KB, debug)
 end
 
 
-
-
 --Cart should be in reset state upon calling this function 
---this function processes all user requests for this specific board/mapper
 local function process( test, read, erase, program, verify, dumpfile, flashfile, verifyfile, dumpram, writeram, ramdumpfile, ramwritefile)
 
 	local rv = nil
@@ -506,6 +462,8 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 	if test then
 		print("Testing ", mapname)
 
+		init_mapper()
+
 		--verify mirroring is behaving as expected
 		mirror_test(true)
 
@@ -518,31 +476,19 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		chrrom_manf_id(true)
 	end
 
-
 --dump the ram to file 
 	if dumpram then
+
 		print("\nDumping WRAM...")
 
 		init_mapper()
 		
-		--enable save ram
-		dict.nes("NES_MMC1_WR", 0xE000, 0x00)	--bit4 RAM enable 0-enabled 1-disabled
-	
-		--bit4 (CHR A16) is /CE pin for WRAM on SNROM
-		dict.nes("NES_MMC1_WR", 0xA000, 0x02) --4KB bank @ PT0  $2AAA cmd and writes
-		dict.nes("NES_MMC1_WR", 0xC000, 0x05) --4KB bank @ PT1  $5555 cmd fixed
+		--SRAM always enabled
 
 		file = assert(io.open(ramdumpfile, "wb"))
 
 		--dump cart into file
 		dump_wram(file, wram_size, false)
-
-		--for save data safety disable WRAM, and deny writes
-		dict.nes("NES_MMC1_WR", 0xE000, 0x10)	--bit4 RAM enable 0-enabled 1-disabled
-	
-		--bit4 (CHR A16) is /CE pin for WRAM on SNROM
-		dict.nes("NES_MMC1_WR", 0xA000, 0x12) --4KB bank @ PT0  $2AAA cmd and writes
-		dict.nes("NES_MMC1_WR", 0xC000, 0x15) --4KB bank @ PT1  $5555 cmd fixed
 
 		--close file
 		assert(file:close())
@@ -554,6 +500,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 --dump the cart to dumpfile
 	if read then
+
 		print("\nDumping PRG & CHR ROMs...")
 
 		init_mapper()
@@ -576,13 +523,25 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 		print("\nerasing ", mapname)
 
-		print("erasing PRG-ROM");
-		dict.nes("NES_CPU_WR", 0xD555, 0xAA)
-		dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
-		dict.nes("NES_CPU_WR", 0xD555, 0x80)
-		dict.nes("NES_CPU_WR", 0xD555, 0xAA)
-		dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
-		dict.nes("NES_CPU_WR", 0xD555, 0x10)
+		init_mapper()
+
+		--PLCC
+		--print("erasing PRG-ROM");
+		--dict.nes("NES_CPU_WR", 0xD555, 0xAA)
+		--dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
+		--dict.nes("NES_CPU_WR", 0xD555, 0x80)
+		--dict.nes("NES_CPU_WR", 0xD555, 0xAA)
+		--dict.nes("NES_CPU_WR", 0xAAAA, 0x55)
+		--dict.nes("NES_CPU_WR", 0xD555, 0x10)
+
+		--SOP
+		print("erasing PRG-ROM SOP-44 flash takes a couple sec...");
+		dict.nes("NES_CPU_WR", 0xFAAA, 0xAA)
+		dict.nes("NES_CPU_WR", 0xF555, 0x55)
+		dict.nes("NES_CPU_WR", 0xFAAA, 0x80)
+		dict.nes("NES_CPU_WR", 0xFAAA, 0xAA)
+		dict.nes("NES_CPU_WR", 0xF555, 0x55)
+		dict.nes("NES_CPU_WR", 0xFAAA, 0x10)
 		rv = dict.nes("NES_CPU_RD", 0x8000)
 
 		local i = 0
@@ -597,28 +556,26 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 
 		--TODO erase CHR-ROM only if present
-		if (chr_size ~= 0) then
-			init_mapper()
+		init_mapper()
 
-			print("erasing CHR-ROM");
-			dict.nes("NES_PPU_WR", 0x1555, 0xAA)
-			dict.nes("NES_PPU_WR", 0x0AAA, 0x55)
-			dict.nes("NES_PPU_WR", 0x1555, 0x80)
-			dict.nes("NES_PPU_WR", 0x1555, 0xAA)
-			dict.nes("NES_PPU_WR", 0x0AAA, 0x55)
-			dict.nes("NES_PPU_WR", 0x1555, 0x10)
+		print("erasing CHR-ROM");
+		dict.nes("NES_PPU_WR", 0x1555, 0xAA)
+		dict.nes("NES_PPU_WR", 0x0AAA, 0x55)
+		dict.nes("NES_PPU_WR", 0x1555, 0x80)
+		dict.nes("NES_PPU_WR", 0x1555, 0xAA)
+		dict.nes("NES_PPU_WR", 0x0AAA, 0x55)
+		dict.nes("NES_PPU_WR", 0x1555, 0x10)
+		rv = dict.nes("NES_PPU_RD", 0x0000)
+
+		local i = 0
+
+		--TODO create some function to pass the read value 
+		--that's smart enough to figure out if the board is actually erasing or not
+		while ( rv ~= 0xFF ) do
 			rv = dict.nes("NES_PPU_RD", 0x8000)
-
-			local i = 0
-
-			--TODO create some function to pass the read value 
-			--that's smart enough to figure out if the board is actually erasing or not
-			while ( rv ~= 0xFF ) do
-				rv = dict.nes("NES_PPU_RD", 0x8000)
-				i = i + 1
-			end
-			print(i, "naks, done erasing chr.");
+			i = i + 1
 		end
+		print(i, "naks, done erasing chr.");
 
 
 	end
@@ -630,30 +587,17 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 		init_mapper()
 		
-		--enable save ram
-		dict.nes("NES_MMC1_WR", 0xE000, 0x00)	--bit4 RAM enable 0-enabled 1-disabled
-	
-		--bit4 (CHR A16) is /CE pin for WRAM on SNROM
-		dict.nes("NES_MMC1_WR", 0xA000, 0x02) --4KB bank @ PT0  $2AAA cmd and writes
-		dict.nes("NES_MMC1_WR", 0xC000, 0x05) --4KB bank @ PT1  $5555 cmd fixed
+		--SRAM always enabled
 
 		file = assert(io.open(ramwritefile, "rb"))
 
 		flash.write_file( file, wram_size, "NOVAR", "PRGRAM", false )
-
-		--for save data safety disable WRAM, and deny writes
-		dict.nes("NES_MMC1_WR", 0xE000, 0x10)	--bit4 RAM enable 0-enabled 1-disabled
-	
-		--bit4 (CHR A16) is /CE pin for WRAM on SNROM
-		dict.nes("NES_MMC1_WR", 0xA000, 0x12) --4KB bank @ PT0  $2AAA cmd and writes
-		dict.nes("NES_MMC1_WR", 0xC000, 0x15) --4KB bank @ PT1  $5555 cmd fixed
 
 		--close file
 		assert(file:close())
 
 		print("DONE Writting WRAM")
 	end
-
 
 --program flashfile to the cart
 	if program then
@@ -663,7 +607,6 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--determine if auto-doubling, deinterleaving, etc, 
 		--needs done to make board compatible with rom
 
-		--flash cart
 		flash_prgrom(file, prg_size, false)
 		flash_chrrom(file, chr_size, false)
 
@@ -702,7 +645,7 @@ end
 
 
 -- functions other modules are able to call
-mmc1.process = process
+mmc4.process = process
 
 -- return the module's table
-return mmc1
+return mmc4

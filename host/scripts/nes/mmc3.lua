@@ -192,7 +192,7 @@ local function dump_prgrom( file, rom_size_KB, debug )
 		--select desired bank(s) to dump
 		dict.nes("NES_CPU_WR", 0x8000, 0x06)
 		--the bank is half the size of KB per read so must multiply by 2
-		dict.nes("NES_CPU_WR", 0x8001, read_count*2)	--1KB @ CPU $8000
+		dict.nes("NES_CPU_WR", 0x8001, read_count*2)	--8KB @ CPU $8000
 
 		dict.nes("NES_CPU_WR", 0x8000, 0x07)
 		--the bank is half the size of KB per read so must multiply by 2 and add 1 for second 8KB
@@ -534,7 +534,6 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 --dump the ram to file 
 	if dumpram then
-
 		print("\nDumping WRAM...")
 
 		init_mapper()
@@ -560,7 +559,6 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 --dump the cart to dumpfile
 	if read then
-
 		print("\nDumping PRG & CHR ROMs...")
 
 		init_mapper()
