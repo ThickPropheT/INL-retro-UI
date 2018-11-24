@@ -226,11 +226,9 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 		nes.detect_mapper_mirroring(true)
 		nes.ppu_ram_sense(0x1000, true)
-
 		print("EXP0 pull-up test:", dict.io("EXP0_PULLUP_TEST"))	
-		--nes.read_flashID_prgrom_exp0(true)
-		prgrom_manf_id(true)
 
+		prgrom_manf_id(true)
 	end
 
 --dump the cart to dumpfile
@@ -251,7 +249,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 --erase the cart
 	if erase then
 
-		print("\nerasing BxROM");
+		print("\nErasing", mapname);
 
 		print("erasing PRG-ROM");
 		dict.nes("DISCRETE_EXP0_PRGROM_WR", 0x5555, 0xAA)
@@ -283,7 +281,7 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--needs done to make board compatible with rom
 
 		--write bank table to all banks of cartridge
-		wr_bank_table(banktable_base, 16)
+		wr_bank_table(banktable_base, prg_size/32) --32KB per bank
 		--TODO need to verify where bank table belongs and properly determine number of banks
 
 		--flash cart

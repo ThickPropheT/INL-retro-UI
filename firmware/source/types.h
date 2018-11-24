@@ -16,6 +16,8 @@ typedef struct setup_packet{
 //typedef	uint8_t	(*read_funcptr)		( uint8_t addrH, uint8_t addrL );
 typedef	void	(*write_funcptr) 	( uint16_t addr, uint8_t data );
 typedef	uint8_t	(*read_funcptr)		( uint16_t addr );
+typedef	void	(*write_snes_funcptr) 	( uint16_t addr, uint8_t data, uint8_t romsel );
+typedef	uint8_t	(*read_snes_funcptr)	( uint16_t addr, uint8_t romsel );
 
 
 //~16 bytes per buffer...

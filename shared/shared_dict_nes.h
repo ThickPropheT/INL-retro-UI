@@ -39,6 +39,7 @@
 
 //#define DISCRETE_EXP0_MAPPER_WR		0x03
 
+//write to an MMC1 register, provide bank/address & data
 #define NES_MMC1_WR			0x04
 
 #define NES_DUALPORT_WR			0x05
@@ -52,6 +53,11 @@
 #define NROM_CHR_FLASH_WR		0x0A
 #define CNROM_CHR_FLASH_WR		0x0B	//needs cur_bank & bank_table prior to calling
 #define CDREAM_CHR_FLASH_WR		0x0C	//needs cur_bank & bank_table prior to calling
+#define UNROM_PRG_FLASH_WR		0x0D	//needs cur_bank & bank_table prior to calling
+#define MMC1_PRG_FLASH_WR		0x0E
+#define MMC1_CHR_FLASH_WR		0x0F	//needs cur_bank set prior to calling
+#define MMC4_PRG_SOP_FLASH_WR		0x10	//current bank must be selected, & needs cur_bank set prior to calling
+#define MMC4_CHR_FLASH_WR		0x11	//needs cur_bank set prior to calling
 
 
 #define	SET_CUR_BANK			0x20

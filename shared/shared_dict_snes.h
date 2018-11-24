@@ -31,7 +31,9 @@
 #define FLASH_WR_5V			0x03	//5v PLCC flash algo
 #define FLASH_WR_3V			0x04	//3v TSSOP flash algo
 
-
+//similar to ROM RD/WR above, but /ROMSEL doesn't go low
+#define SNES_SYS_RD			0x05	//RL=3
+#define SNES_SYS_WR			0x06
 
 
 #endif

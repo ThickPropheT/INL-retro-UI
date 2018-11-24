@@ -64,10 +64,12 @@ function main ()
 -- =====================================================
 	--cart/mapper specific scripts
 	--local curcart = require "scripts.nes.nrom"
-	--local curcart = require "scripts.nes.cnrom"
 	--local curcart = require "scripts.nes.mmc1"
-	local curcart = require "scripts.nes.mmc3"
 	--local curcart = require "scripts.nes.unrom"
+	--local curcart = require "scripts.nes.cnrom"
+	local curcart = require "scripts.nes.mmc3"
+	--local curcart = require "scripts.nes.mmc2"
+	--local curcart = require "scripts.nes.mmc4"
 	--local curcart = require "scripts.nes.mm2"
 	--local curcart = require "scripts.nes.mapper30"
 	--local curcart = require "scripts.nes.bnrom"
@@ -76,10 +78,12 @@ function main ()
 	--local curcart = require "scripts.nes.action53"
 	--local curcart = require "scripts.nes.action53_tsop"
 	--local curcart = require "scripts.nes.easyNSF"
+	--local curcart = require "scripts.nes.fme7"
 	--local curcart = require "scripts.nes.dualport"
 	--local curcart = require "scripts.snes.v3"  --and GAMEBOY for now
 	--local curcart = require "scripts.snes.lorom_5volt"  --catskull design
 	--local curcart = require "scripts.snes.v2proto"
+	--local curcart = require "scripts.snes.v2proto_hirom"  --quickly becoming the master SNES script...
 	
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
@@ -123,7 +127,7 @@ function main ()
 --
 
 	--BOOTLOADER TEST
-	--print("jumping...")
+--	print("jumping...")
 
 	--jump to 0xDEADBEEF
 	--dict.bootload("LOAD_ADDRH", 0xDEAD)	
@@ -132,9 +136,13 @@ function main ()
 --	dict.bootload("JUMP_ADDR",  0xCAC5)	
 --	dict.bootload("LOAD_ADDRH", 0x0800)	
 --	dict.bootload("JUMP_ADDR",  0x00C1)	
+--
+--	dict.bootload("LOAD_ADDRH", 0x2000)	
+--	dict.bootload("JUMP_ADDR",  0x0430)	
 
-	--dict.bootload("JUMP_BL")	
-	--print("jumped")
+--	dict.bootload("JUMP_BL")	
+--	dict.bootload("JUMP_TEST")	
+--	print("jumped")
 
 --	debug = true
 --	rv = cart.detect(debug)
@@ -272,20 +280,6 @@ function main ()
 
 			--DUALPORT
 			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
-			--MMC1
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/BB_sgrom.prg", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/Zelda2.bin", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/Zelda2_doubleprg.bin", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/alfonzoMMC1.bin", "ignore/verifyout.bin")
-
-			--UxROM
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/AFB_128.prg", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/nomolosFINAL.prg", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/owlia_revb.prg", "ignore/verifyout.bin")
-			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/rushnattack.prg", "ignore/verifyout.bin")
-			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/TDfix.prg", "ignore/verifyout.bin")
-
-
 			--MM2
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/mm2_i0.prg", "ignore/verifyout.bin")
 			--curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/mm2_i0.prg", "ignore/verifyout.bin")
@@ -324,6 +318,7 @@ function main ()
 			--have a better idea of what works best and minimizing firmware compilation and updates
 
 			--NROM
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/M0_P32K_C8K.bin", "ignore/verifyout.bin")
 			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/ddug2.bin", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/NTB_RE.bin", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/MM_demo.bin", "ignore/verifyout.bin")
@@ -331,13 +326,37 @@ function main ()
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/DEMO.bin", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/NES_hb_present.bin", "ignore/verifyout.bin")
 
+			--MMC1
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/P256K.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/BB_sgrom.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/Zelda2.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/Zelda2_doubleprg.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/alfonzoMMC1.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, false, false, false, nil, nil, nil, true, false, "ignore/ramdump.bin", "ignore/zelda2_pauliscool.bin")
+
+
+			--UxROM
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/AFB_128.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/nomolosFINAL.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/owlia_revb.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/rushnattack.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/TDfix.prg", "ignore/verifyout.bin")
+
 			--CNROM
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/galf.bin", "ignore/verifyout.bin")
 
 			--MMC3
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/P512K_C256K.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/P256K_C128K.bin", "ignore/verifyout.bin")
 			--curcart.process( true, true, true, false, true, "ignore/dump.bin", "ignore/kirby.nes", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/kirby.bin", "ignore/verifyout.bin", false, false, "ignore/ramdump.bin", "ignore/ramwrite.bin")
-			curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/kirby.bin", "ignore/verifyout.bin", true, true, "ignore/ramdump.bin", "ignore/kirby3xSave.bin")
+			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/kirby.bin", "ignore/verifyout.bin", true, true, "ignore/ramdump.bin", "ignore/kirby3xSave.bin")
+
+			--MMC2
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/punchout.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/P256K_C128K.bin", "ignore/verifyout.bin")
+			--MMC4
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/fe.bin", "ignore/verifyout.bin")
 
 			--COLOR DREAMS
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/multicart_mojontalesFINAL.prg", "ignore/verifyout.bin")
@@ -347,6 +366,12 @@ function main ()
 			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/lizard_v2.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/hh85.prg", "ignore/verifyout.bin")
 
+			--FME7
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/P256K_C256K.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/gimmick.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/barcode_prgx2.bin", "ignore/verifyout.bin")
+
+			--curcart.process( true, false, false, false, false, nil, nil, nil, true, true, "ignore/ramdump.bin", "ignore/kirby3xSave.bin")
 		--[[
 			--FLASHING:
 			--erase cart
@@ -383,11 +408,16 @@ function main ()
 			
 			--SNES
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/MMXdump.bin", "ignore/verifyout.bin")
-			curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/smw.sfc", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/smw.sfc", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/SF2.bin", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/dkc.bin", "ignore/verifyout.bin")
+			--curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/dkc_orig.bin", "ignore/verifyout.bin")
+			--curcart.process( false, false, false, false, false, "ignore/dump.bin", "ignore/smw.sfc", "ignore/verifyout.bin", true, true, "ignore/ramdump.bin", "ignore/smw_lauren.bin")
 			--curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/hsbm_4Mbit_Lo.sfc", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_4Mbit_Lo.sfc", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_4Mbit_Hi.sfc", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_32Mbit_Hi.sfc", "ignore/verifyout.bin")
+			--curcart.process( false, false, false, false, false, nil, nil, nil, true, true, "ignore/ramdump.bin", "ignore/dkc_paul.bin")
 
 
 --			--old SNES code

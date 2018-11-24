@@ -156,12 +156,13 @@ local function detect_mapper_mirroring (debug)
 		elseif readV ~= 0 and readH ~= 0 then
 			if debug then print("1screen B mirroring sensed") end
 			return "1SCNB"
+
 		elseif readV ~= 0 and readH == 0 then
 			if debug then print("vertical mirroring sensed") end
 			return "VERT"
 		elseif readV == 0 and readH ~= 0 then
 			if debug then print("horizontal mirroring sensed") end
-			return "HORIZ"
+			return "HORZ"
 		end
 		--]]
 
