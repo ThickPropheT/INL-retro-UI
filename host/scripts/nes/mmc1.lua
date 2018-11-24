@@ -45,28 +45,28 @@ local function mirror_test( debug )
 	--MM = 0: 1 screen A
 	dict.nes("NES_MMC1_WR", 0x8000, 0x00)
 	if (nes.detect_mapper_mirroring() ~= "1SCNA") then
-		print("MMC1 mirror test fail")
+		print("MMC1 mirror test fail (1 screen A)")
 		return false
 	end
 
 	--MM = 1: 1 screen B
 	dict.nes("NES_MMC1_WR", 0x8000, 0x01)
 	if (nes.detect_mapper_mirroring() ~= "1SCNB") then
-		print("MMC1 mirror test fail")
+		print("MMC1 mirror test fail (1 screen B)")
 		return false
 	end
 
 	--MM = 2: Vertical
 	dict.nes("NES_MMC1_WR", 0x8000, 0x02)
 	if (nes.detect_mapper_mirroring() ~= "VERT") then
-		print("MMC1 mirror test fail")
+		print("MMC1 mirror test fail (Vertical)")
 		return false
 	end
 
 	--MM = 3: Horizontal
 	dict.nes("NES_MMC1_WR", 0x8000, 0x03)
 	if (nes.detect_mapper_mirroring() ~= "HORZ") then
-		print("MMC1 mirror test fail")
+		print("MMC1 mirror test fail (Horizontal)")
 		return false
 	end
 
@@ -173,8 +173,9 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(dumpfile, "wb"))
 
 		--dump cart into file
-		dump.dumptofile( file, 256, "MMC1", "PRGROM", true )
-		dump.dumptofile( file, 128, "MMC1", "CHRROM", true )
+		-- TODO: This varies depending on cart?
+		dump.dumptofile( file, 128, "MMC1", "PRGROM", true )
+		dump.dumptofile( file, 32, "MMC1", "CHRROM", true )
 
 		--close file
 		assert(file:close())
