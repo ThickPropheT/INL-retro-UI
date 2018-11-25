@@ -561,14 +561,8 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(dumpfile, "wb"))
 
 		--dump cart into file
-<<<<<<< HEAD
-		-- TODO: This varies depending on cart?
-		dump.dumptofile( file, 128, "MMC1", "PRGROM", true )
-		dump.dumptofile( file, 32, "MMC1", "CHRROM", true )
-=======
 		dump_prgrom(file, prg_size, false)
 		dump_chrrom(file, chr_size, false)
->>>>>>> 7651f91a467c750b2d5415cddb428dd7fb548abe
 
 		--close file
 		assert(file:close())
