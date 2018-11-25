@@ -25,6 +25,8 @@ static libusb_device_handle *lua_usb_handle = NULL;
 libusb_device_handle *open_usb_device( libusb_context *context, int log_level )
 {	
 	int rv = 0;
+	libusb_device_handle *handle = NULL;
+	libusb_device **device_list = NULL;
 
 	//context set to NULL since only acting as single user of libusb
 	//libusb_context *context = NULL;
@@ -60,7 +62,6 @@ libusb_device_handle *open_usb_device( libusb_context *context, int log_level )
 	libusb_set_debug(context, log_level);
 
 	//discover all usb devices
-	libusb_device **device_list = NULL;
 	//ssize_t libusb_get_device_list (libusb_context *ctx, libusb_device ***list)
 	// Returns a list of USB devices currently attached to the system.
 	// return value is number of devices plus one as list is null terminated, or LIBUSB_ERROR if negative.
@@ -75,7 +76,6 @@ libusb_device_handle *open_usb_device( libusb_context *context, int log_level )
 	libusb_device *retroprog = NULL;
 	libusb_device *device = NULL;
 	struct libusb_device_descriptor desc;
-	libusb_device_handle *handle = NULL;
 	const char manf[256];	//used to hold manf/prod strings
 	const char prod[256];	//used to hold manf/prod strings
 		//Original kazzo
