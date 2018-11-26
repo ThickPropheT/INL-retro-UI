@@ -2,48 +2,19 @@
 #include "usb_descriptors.h"
 
 
-static int log = 0;
-
-//include target board library files
-//this is junk... #include <stm32f072b_discovery.h>
-
-//kaz6 is PB1
-//#define LED	(1U)
-//#define IOP_LED_EN RCC_AHBENR_GPIOBEN
-//#define GPIO_LED   GPIOB
-
-	////kaz adapter is PC13
-	//#define LED	(13U)
-	//#define IOP_LED_EN RCC_AHBENR_GPIOCEN
-	//#define GPIO_LED   GPIOC
-	//
-	////kaz adapter data0 debug is PB8
-	//#define DEBUG	(8U)
-	//#define IOP_DEBUG_EN RCC_AHBENR_GPIOBEN
-	//#define GPIO_DEBUG   GPIOB
-	//
-	//#define LED_ON() (GPIO_LED->ODR |= (0x1U<<LED))
-	//#define LED_OFF() (GPIO_LED->ODR &= ~(0x1U<<LED))
-	//
-	//#define DEBUG_HI() (GPIO_DEBUG->ODR |= (0x1U<<DEBUG))
-	//#define DEBUG_LO() (GPIO_DEBUG->ODR &= ~(0x1U<<DEBUG))
-
-//Here's where the LEDs and switch are located
-//PA0 user switch
-//#define SWITCH	(0U)
-
-
-
+//debug use only, should probably move this variable to usb buffer ram if enabling again
+//since usb drivers don't use any .data nor .bss space
+//static int log = 0;
 
 //pick define based on xtal setup for init_clock and init_usb_clock functions
 //#define NO_XTAL
-#define XTAL_16Mhz
+#define EXTERNAL_XTAL
 void init_usb_clock()
 {
 	// stm32f0x2 devices have HSI 48Mhz available to clock usb block, or PLL if it's source accurate enough
 	// stm32f0x0 devices must have ext xtal and use PLL output to drive usb block
 	
-#ifdef XTAL_16Mhz
+#ifdef EXTERNAL_XTAL
 	//by default the 072 has HSI 48Mhz selected as USB clock
 	//on the 070 this equates to off, so 070 must set USBSW bit
 	RCC->CFGR3 |= RCC_CFGR3_USBSW_PLLCLK;
@@ -233,11 +204,50 @@ void usb_reset_recovery(){
 uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 
 
+//static uint16_t num_bytes_req;
+#define num_bytes_req  		usb_buff[NUM_BYTES_REQ]		//place this variable in USB RAM
+//static uint16_t num_bytes_sending;
+#define num_bytes_sending  	usb_buff[NUM_BYTES_SENDING]	//place this variable in USB RAM
+//static uint16_t num_bytes_expecting;		//this was never used, so tried to cut it but couldn't..
+#define num_bytes_expecting  	usb_buff[NUM_BYTES_EXPECTING]	//place this variable in USB RAM
+//static uint16_t num_bytes_xfrd;
+#define num_bytes_xfrd  	usb_buff[NUM_BYTES_XFRD]	//place this variable in USB RAM
+
+
+
+//flag and value, since can't change address until after STATUS stage, must use this value
+//to denote that the USB device address needs updated after the status stage.
+//static uint8_t new_address = 0;	placed in upper byte of newaddr_reqtype
+//place this variable in the upper byte of reqtype, 
+//but it's prob important to ensure it's cleared & init
+
+//these variables are used together, so let's place them in the same usb_buff index
+//static uint8_t reqtype = 0;
+//static uint8_t reqdir = 0;
+//they're actual bit masks of the same bmRequestType byte, so really don't need separate bytes
+#define newaddr_reqtype  usb_buff[NEWADDR_REQTYPE]	//place this variable in USB RAM
+
+
+
+//static uint8_t	req_dir;
+#define req_dir  usb_buff[VAR_REQ_DIR]	//place this variable in USB RAM
+
+usbMsgPtr_t usbMsgPtr;
+
+
 //#define TSSOP20	//defined when using TSSOP-20 part to get PA11/12 alternate mapping to the pins
 
 void init_usb()
 {
 
+	//clear variables stored in USB ram since can't rely on .bss clearning them anymore
+	//Don't think most of these actually need to be cleared.. newaddr_reqtype might be only one..
+	num_bytes_req = 0;
+	num_bytes_sending = 0; 	
+	num_bytes_expecting = 0; 	
+	num_bytes_xfrd = 0;
+	newaddr_reqtype = 0;	//two single byte variables stored in single 16bit half word
+	req_dir = 0;	
 
 	//initialize i/o
 	// TSSOP-20: On STM32F070x6 devices, pin pair PA11/12 can be remapped instead of pin pair PA9/10 using SYSCFG_CFGR1 register.
@@ -355,7 +365,7 @@ void init_usb()
 	//Buffer table address (USB_BTABLE) this is the address of the buffer table which is contained in the 1KB of RAM itself
 	//By default this value is set to zero, that's what I would have choosen anyway, so doesn't need initialized
 	//But let's go ahead and do it so it's easy to move later if needed and gives us defines to use for addressing
-	USB->BTABLE = USB_BTABLE_BASE;
+	USB->BTABLE = USB_BTABLE_ADDR;
 
 	
 	//Endpoint initialization
@@ -438,14 +448,6 @@ void init_usb()
 }
 
 
-
-
-static uint16_t num_bytes_req;
-static uint16_t num_bytes_sending;
-static uint16_t num_bytes_expecting;
-static uint16_t num_bytes_xfrd;
-static uint8_t	req_dir;
-usbMsgPtr_t usbMsgPtr;
 
 //function gets called after reception of setup packet for IN transfer,
 //and each time an interrupt for successful data tx from control EP
@@ -583,12 +585,6 @@ static void control_xfr_in(){
 //
 //}
 
-//flag and value, since can't change address until after STATUS stage, must use this value
-//to denote that the USB device address needs updated after the status stage.
-static uint8_t new_address = 0;	
-static uint8_t reqtype = 0;
-static uint8_t reqdir = 0;
-
 
 //return number of bytes expected
 static uint16_t standard_req_out( usbRequest_t *spacket ){
@@ -610,8 +606,10 @@ static uint16_t standard_req_out( usbRequest_t *spacket ){
 	//	and can only be a maximum of 127. This request is unique in that the device does not set its address until after the 
 	//	completion of the status stage. (See Control Transfers.) All other requests must complete before the status stage.
 		case STD_REQ_SET_ADDRESS:
-			new_address = spacket->wValue;
-			usb_buff[LOG0] = new_address;
+			//new_address = spacket->wValue;
+			//store in upper byte of usb ram variable
+			newaddr_reqtype = (newaddr_reqtype & 0x00FF) | ((spacket->wValue)<<8);
+			//debug logging usb_buff[LOG0] = new_address;
 			return 0;
 			break;
 
@@ -727,19 +725,23 @@ static void control_xfr_init( usbRequest_t *spacket ) {
  * sent by the host, return 0 in 'usbFunctionSetup()'.
  */
 	//set request type so it can be keyed from for subsequent IN/OUT data transfers
-	reqtype = (spacket->bmRequestType & REQ_TYPE);
-	reqdir =  (spacket->bmRequestType & REQ_DIR);
+	//reqtype = (spacket->bmRequestType & REQ_TYPE_MASK);
+	//reqdir =  (spacket->bmRequestType & REQ_DIR_MASK);
+	//don't need separate bytes to store 2 bits of data coming from the same byte..
+	//reqtype = spacket->bmRequestType;
+	//store in lower byte
+	newaddr_reqtype = (newaddr_reqtype & 0xFF00) | spacket->bmRequestType;
 
 	//setup packets not handled by standard requests sent to usbFunctionSetup (just like Vusb)
-	if ((spacket->bmRequestType & REQ_TYPE) != REQ_TYPE_STD) {
+	if ((spacket->bmRequestType & REQ_TYPE_MASK) != REQ_TYPE_STD) {
 		//function must set usbMsgPtr to point to return data for IN transfers
 		num_bytes_sending = usbFunctionSetup( (uint8_t*) spacket );
 	}
 	
 	
-	if ( (spacket->bmRequestType & REQ_DIR) == REQ_DIR_IN ) {
+	if ( (spacket->bmRequestType & REQ_DIR_MASK) == REQ_DIR_IN ) {
 	//IN transfer Host wants us to send data (tx)
-		switch ( spacket->bmRequestType & REQ_TYPE ) {
+		switch ( spacket->bmRequestType & REQ_TYPE_MASK ) {
 			case REQ_TYPE_STD:
 				num_bytes_sending = standard_req_in( spacket );
 				break;
@@ -787,8 +789,12 @@ static void control_xfr_init( usbRequest_t *spacket ) {
 
 		//num_byte_req contains number of bytes expected to be transferred in upcoming OUT xfrs
 
-		switch ( spacket->bmRequestType & REQ_TYPE ) {
+		switch ( spacket->bmRequestType & REQ_TYPE_MASK ) {
 			case REQ_TYPE_STD:
+				//num_bytes_expecting was never used, so cut it to save ram
+				//the compiler was cutting it anyway, no need to put in usb_buff[]..
+				//BUT!  When I cut it, USB device descriptor fails..  
+				//IDK why, so just let's just keep it anyway..
 				num_bytes_expecting = standard_req_out( spacket );
 				break;
 		//	case REQ_TYPE_CLASS:
@@ -887,17 +893,19 @@ void USB_IRQHandler(void)
 		//elsewhere, or set STAT_RX to DISABLED to keep it from being stomped by the next setup
 
 		if ( USB->EP0R & USB_EP_SETUP ) { //SETUP packet
-		log ++;	//inc log for each setup packet used for debugging purposes to trigger logic analyzer at desired packet
+		//log ++;	//inc log for each setup packet used for debugging purposes to trigger logic analyzer at desired packet
 #define LOG_COUNT	3
 //		if ( log >= LOG_COUNT) { DEBUG_HI(); DEBUG_LO(); }
 //usb_buff[LOG0] = USB->EP0R;
 			//set pointer to usb buffer, type ensures 8/16bit accesses to usb_buff
 			setup_packet = (void*) &usb_buff[EP0_RX_BASE];
-			req_dir = (setup_packet->bmRequestType & REQ_DIR);	//set to REQ_DIR_IN/OUT for data stage dir
+			req_dir = (setup_packet->bmRequestType & REQ_DIR_MASK);	//set to REQ_DIR_IN/OUT for data stage dir
 			control_xfr_init( setup_packet );
 			
 		} else { //OUT packet
-			if ((reqtype == REQ_TYPE_VEND) & (reqdir == REQ_DIR_OUT)) { 
+			//if ((reqtype == REQ_TYPE_VEND) & (reqdir == REQ_DIR_OUT)) { 
+			//the two variables (bits) were combined to single byte
+			if (((newaddr_reqtype & REQ_TYPE_MASK) == REQ_TYPE_VEND) && ((newaddr_reqtype & REQ_DIR_MASK) == REQ_DIR_OUT)) { 
 				//have to key off of reqdir so OUT status packets don't call usbFunctionWrite
 //			if ( log >= LOG_COUNT) { DEBUG_HI(); DEBUG_LO(); }
 		//number of bytes received is denoted in USB_COUNTn_RX buffer table
@@ -939,9 +947,14 @@ void USB_IRQHandler(void)
 			//OUT request, IN denotes STATUS stage
 
 			//check if USB device address needs set must be after completion of STATUS stage
-			if (new_address) {
-				USB->DADDR = (new_address | USB_DADDR_EF);	//update address and keep USB function enabled	
-				new_address = 0;	//clear flag value so don't come back here again
+			//if (new_address) {
+			//stored in upper byte of newaddr_reqtype
+			if (newaddr_reqtype & 0xFF00) {
+				//USB->DADDR = (new_address | USB_DADDR_EF);	//update address and keep USB function enabled	
+				USB->DADDR = ((newaddr_reqtype>>8) | USB_DADDR_EF);	//update address and keep USB function enabled	
+				//new_address = 0;	//clear flag value so don't come back here again
+				newaddr_reqtype &= 0x00FF;
+
 				//LED_ON();
 			}
 		}

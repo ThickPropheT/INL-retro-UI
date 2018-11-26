@@ -48,7 +48,6 @@
 #define	RX_COUNT_MSK	(uint16_t) 0x03FF
 
 // Cannot setup for 0 bytes to be received, that's equivalent of STATUS OUT packet which isn't a true data reception
-#define _ADDRX_SET(oper) _DATA_OP(); DATA_OUT = oper; _AXL_CLK(); _DATA_IP();
 #define	USB_RX_2TO62_MUL2B(oper)	((uint16_t) ((BL_SIZE2) | ((oper/2)<<NUM_BLOCKS))) 
 #define	USB_RX_32TO992_MUL32B(oper)	((uint16_t) ((BL_SIZE32) | ((oper/32-1)<<NUM_BLOCKS))) 
 
@@ -70,27 +69,47 @@
 //	creates the limit of 992B xfr buffer + 32B buffer table (also in buffer ram) = 1024B size of USB buffer ram
 
 
+//Would like to have USB code not use any .data nor .bss so the USB code can be separated from the application code
+//this allows the USB code to update/bootload the application code/firmware more easily
+//Currently doesn't use any .data, but does use ~18Bytes of .bss for static variables
+//cutting out the log debug variable dropped it down to 14Bytes
+//So let's place those 14Bytes worth of variables in the begining of USB RAM
+#define NUM_BYTES_REQ 		0	//variable placed in first 16bit index
+#define NUM_BYTES_SENDING 	1	//variable placed in second index...
+#define NUM_BYTES_EXPECTING 	2
+#define NUM_BYTES_XFRD 		3
+#define NEWADDR_REQTYPE		4	//two single byte variables stored in this index
+#define VAR_REQ_DIR		5	//might be able to combine with above..?
+//6 variables above use up 12Bytes of USB buffer RAM
+//there's 4Bytes of available space, could be used for usbMsgPtr, but need to ensure half word access is used..
 
 //buffer table itself is located in 1KB buffer above, but it's location is programmable
-#define USB_BTABLE_BASE ((uint16_t) 0x0000)	//least 3 significant bits are forced to zero
+//the table must be aligned to an 8Byte boundary
+//#define USB_BTABLE_ADDR ((uint16_t) 0x0000)	//least 3 significant bits are forced to zero
+#define USB_BTABLE_ADDR ((uint16_t) 0x0010)	//this skips the first 16Bytes of usb buffer so can be used for vars above
+#define USB_BTABLE_BASE USB_BTABLE_ADDR/2	//The base index is in 16bit half words
 #define USB_BTABLE_SIZE 64	//32x 16bit halfwords
+//NOTE!!! ADDR is the 8bit "BYTE" address, BASE is the index of the usb_buff array
+//So BASE is always ADDR/2 will mess everything up if this isn't fully understood!
 
 //Endpoint 0: setup as 8Bytes TX & RX following buffer table
 //	endpoint 0 size defined in usb_descriptors.h as it's needed there
 //#define EP0_SIZE	0x08		//8Bytes same as usb 1.1 for now
 #define EP0_TX_ADDR     (USB_BTABLE_BASE + USB_BTABLE_SIZE)
-#define EP0_TX_BASE	(EP0_TX_ADDR / 2)
+#define EP0_TX_BASE	(EP0_TX_ADDR / 2)	//this is the actual half word index of the usb_buff array
 //NOTE!!!  control_xfr functions are hardcoded for EP0 size of 8Bytes currently, must update if changing
 
 #define EP0_RX_ADDR     (EP0_TX_ADDR + EP0_SIZE)
-#define EP0_RX_BASE	(EP0_RX_ADDR / 2)
+#define EP0_RX_BASE	(EP0_RX_ADDR / 2)	//this is the actual half word index of the usb_buff array
 
-//#define LOG0     	(EP0_RX_ADDR + EP0_SIZE)
-#define LOG0     	(64+16) / 2
-#define LOG4		LOG0 + 2
-#define LOG8		LOG0 + 4
-#define LOGC		LOG0 + 6
-#define LOG10		LOG0 + 8
+//debug place some variables in USB RAM, this broke when moving table to remove .bss RAM
+//don't think it's really needed anymore..
+////#define LOG0     	(EP0_RX_ADDR + EP0_SIZE)
+//#define LOG0     	(64+16) / 2
+//#define LOG4		LOG0 + 2
+//#define LOG8		LOG0 + 4
+//#define LOGC		LOG0 + 6
+//#define LOG10		LOG0 + 8
 
 
 //Transmission buffer address n (USB_ADDRn_TX)
@@ -208,7 +227,7 @@ typedef struct usbRequest_t{
 //D7 Data Phase Transfer Direction
 //0 = Host to Device
 //1 = Device to Host
-#define REQ_DIR		0x80
+#define REQ_DIR_MASK	0x80
 #define REQ_DIR_OUT	0x00
 #define REQ_DIR_IN	0x80
 //D6..5 Type
@@ -216,7 +235,7 @@ typedef struct usbRequest_t{
 //1 = Class
 //2 = Vendor
 //3 = Reserved
-#define REQ_TYPE	0x60
+#define REQ_TYPE_MASK	0x60
 #define REQ_TYPE_STD	0x00
 #define REQ_TYPE_CLASS	0x20
 #define REQ_TYPE_VEND	0x40
