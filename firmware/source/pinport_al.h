@@ -8,6 +8,25 @@
 //#define STM_INL6 
 //#define STM_NES 
 
+//define the connectors present on each device
+//these are used to exclude unecessary code from devices which don't have the connectors present
+#if defined(AVR_KAZZO) || defined(STM_ADAPTER)
+	#define NES_CONN	//includes famicom as definitions are effectively the same
+	#define SNES_CONN
+#endif
+
+#ifdef STM_NES
+	#define NES_CONN	//famicom isn't actually present but a pin adapter should work
+#endif
+
+#if defined(STM_INL6) || defined(STM_INL6_PROTO)
+	#define NES_CONN	//includes famicom as definitions are effectively the same
+	#define SNES_CONN
+	#define SEGA_CONN
+	#define GB_CONN
+	#define N64_CONN
+#endif
+
 #ifdef AVR_CORE
 	#include "avr_gpio.h"
 	#include <avr/wdt.h>
@@ -298,10 +317,26 @@ void software_AXL_CLK();
 //
 //
 // STM32F070C6T6 "INL RETRO NES" V2.0N NESmaker edition
+// Orange solder mask
+// Labeled "INL RETRO PROGRAMMER DUMPER V2.0N"
+// Dated AUG 2018
 // Comparable to INL6, but only has NES connector
 // uses Flipflop for io expansion for A8-15 similar to original kazzos
 // this device is setup very similarly to STM_ADAPTER
 // AHL/AHLOE, AXL, EXP port, and CIC port are main differences
+//
+// AHL_OEn controls AHL flipflop clock and /OE
+// 	-also tied to CIC RESET, but this creates problems with CICs that wire OR RESET and DOUT
+// 	Only viable solution is to cut AHL_OEn away from CIC RESET
+// 	Don't have any reason that CIC RESET is needed at this point, and in reality it's the same
+// 	CIC mcu pin for stm8s001 CICs..  Perhaps I should have used stm32 pin PA1 shared with EXP1 (JTAG TDI)
+// 	CIC CLK connected to A0
+// 	CIC KEY DIN shared with NTSC 24Mhz 
+// 	CIC KEY DOUT is also SWCLK
+// AXL does not exist
+// EXP0-3,6 has dedicated mcu pin
+// EXP4-5,7-8 connect to A4-7
+// EXP9 is shared with LED
 //
 
 
@@ -602,109 +637,23 @@ void software_AXL_CLK();
 #endif //STM_INL6 & PROTO
 
 
-#ifdef STM_NES
-
-	//     PC0  "M2"	mcupinA3
-	#define C0bank 		GPIOA 
-	#define C0		(3U)
-	
-	//     PC1  "ROMSEL"	mcupinA4
-	#define C1bank 		GPIOA 
-	#define C1		(4U)
-	
-	//     PC2  "PRGRW"	mcupinA5
-	#define C2bank 		GPIOA 
-	#define C2		(5U)
-	
-	//     PC3  "FREE"	mcupinA6
-	#define C3bank 		GPIOA 
-	#define C3		(6U)
-	
-	//     PC4  "CSRD"	mcupinA7
-	#define C4bank 		GPIOA 
-	#define C4		(7U)
-	
-	//     PC5  "CSWR"	mcupinB0
-	#define C5bank 		GPIOB 
-	#define C5		(0U)
-
-	//     PC6  "CICE" 	mcupinA10
-	#define C6bank 		GPIOA 
-	#define C6		(10U)
-
-	//     PC7  "AHL"	mcupinB1
-	//     THIS IS FLIPFLOP /OE pin as well!
-	#define C7bank 		GPIOB 
-	#define C7		(1U)
-
-	//     PC8  "EXP0" 	mcupinA0
-	#define C8bank 		GPIOA 
-	#define C8		(0U)
-	
-	//     PC9  "LED" 	mcupinC13
-	#define C9bank 		GPIOC 
-	#define C9		(13U)
-
-	//     PC10 "IRQ"	mcupinA15
-	#define C10bank 	GPIOA 
-	#define C10		(15U)
-
-	//     PC11 "CIA10" 	mcupinA13
-	#define C11bank 	GPIOA 
-	#define C11		(13U)
-
-	//     PC12 "BL" 
-	//     Not defined
-	#define C12nodef
-
-	//     PC13 "AXL"
-	//     Not present on STM_NES
-	#define C13nodef
-
-	//     PC14 "AUDL"
-	//     Not defined
-	#define C14nodef
-	
-	//     PC15 "AUDR"
-	//     Not defined
-	#define C15nodef
-
-	//     PC16 "GBP" 
-	//     Not defined
-	#define C16nodef
-
-	//     PC17 "SWD" 	mcupinA13
-	//     Not defined due to shared with CIRAM A10
-	#define C17nodef
-	
-	//     PC18 "SWC" 	mcupinA14
-	#define C18bank 	GPIOA 
-	#define C18		(14U)
-	
-	//     PC19 "AFL" 
-	//     Not defined
-	#define C19nodef
-
-	//     PC20 "COUT" 
-	//     Not defined
-	#define C20nodef
-
-	//     PC21 "FCAPU" 	double mapping of EXP0
-	#define C21bank 	C8bank 
-	#define C21		C8
-
-
-#define RCC_AHBENR_CTL	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN)
-#define RCC_AHBENR_ADDR	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
-#define RCC_AHBENR_DATA	 RCC_AHBENR_GPIOBEN
-
-#endif	//STM_NES
-
-
-//TODO combine STM_NES & STM_ADAPTER, they're predominantly the same
+//STM_NES & STM_ADAPTER, they're predominantly the same
 //AHL-AHLOE, AXL, EXP port, and CIC port are only differences
+//The recommended wiring for STM_ADAPTER to CIC pins brings them even closer together..
 
 #ifdef STM_ADAPTER
+	//     PC13 "AXL"	mcupinA2
+	#define C13bank 	GPIOA 
+	#define C13		(2U)
+#endif
+
+#ifdef STM_NES
+	//     PC13 "AXL"
+	//     Not present on STM_NES, it uses this pin for EXP6 instead
+	#define C13nodef
+#endif
+
+#if defined (STM_ADAPTER) || defined(STM_NES)
 
 	//     PC0  "M2"	mcupinA3
 	#define C0bank 		GPIOA 
@@ -719,6 +668,8 @@ void software_AXL_CLK();
 	#define C2		(5U)
 	
 	//     PC3  "FREE"	mcupinA6
+	//     No connection on kazzo/stm adapter (recommend wire connection to CIC KEY DIN (pin34)
+	//     STM NES connects to CIC KEY DIN (pin34) & NTSC 24Mhz Clock
 	#define C3bank 		GPIOA 
 	#define C3		(6U)
 #ifdef PURPLE_KAZZO
@@ -738,6 +689,8 @@ void software_AXL_CLK();
 	#define C6		(10U)
 
 	//     PC7  "AHL"	mcupinB1
+	//     AH Flipflop /OE is grounded on kazzo/stmadapter
+	//     AH Flipflop /OE is tied to CLK with this "AHL_OEN" signal
 	#define C7bank 		GPIOB 
 	#define C7		(1U)
 
@@ -746,6 +699,7 @@ void software_AXL_CLK();
 	#define C8		(0U)
 	
 	//     PC9  "LED" 	mcupinC13
+	//     This is also EXP9 on kazzo, stm adapter, and stm NES
 	#define C9bank 		GPIOC 
 	#define C9		(13U)
 
@@ -754,16 +708,16 @@ void software_AXL_CLK();
 	#define C10		(15U)
 
 	//     PC11 "CIA10" 	mcupinA13
+	//     This is also SWDIO pin
 	#define C11bank 	GPIOA 
 	#define C11		(13U)
 
 	//     PC12 "BL" 
-	//     Not defined
+	//     Not defined because it's an MCU dedicated pin44 "BOOT0"
 	#define C12nodef
 
-	//     PC13 "AXL"	mcupinA2
-	#define C13bank 	GPIOA 
-	#define C13		(2U)
+	//     PC13 "AXL"
+	//     Differs between STM_ADAPTER and STM_NES so defined above
 
 	//     PC14 "AUDL"
 	//     Not defined
@@ -782,6 +736,9 @@ void software_AXL_CLK();
 	#define C17nodef
 	
 	//     PC18 "SWC" 	mcupinA14
+	//     This has no connection on STM_ADAPTER, recommended wire connection to CIC KEY DOUT (pin35)
+	//     STM_NES connects this to CIC KEY DOUT
+	//     PROBLEM...  INL STM8 CIC cuts mcu pins by wire ORing RESET & DOUT...
 	#define C18bank 	GPIOA 
 	#define C18		(14U)
 	
@@ -790,7 +747,7 @@ void software_AXL_CLK();
 	#define C19nodef
 
 	//     PC20 "COUT" 
-	//     Not defined
+	//     Not defined but maybe it should be in place of SWC..
 	#define C20nodef
 
 	//     PC21 "FCAPU" 	double mapping of EXP0
@@ -802,7 +759,7 @@ void software_AXL_CLK();
 #define RCC_AHBENR_ADDR	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
 #define RCC_AHBENR_DATA	 RCC_AHBENR_GPIOBEN
 
-#endif	//STM_ADAPTER
+#endif	//STM_ADAPTER & STM_NES
 
 
 #ifdef AVR_KAZZO
@@ -1072,7 +1029,7 @@ void software_AXL_CLK();
 	#elif defined PURPLE_KAZZO
 		#define AHL_CLK()      CTL_SET_HI(AHLbank, AHL); CTL_SET_LO(AHLbank, AHL)
 		#define AXL_CLK()      CTL_SET_HI(FREEbank, FREE); CTL_SET_LO(FREEbank, FREE)
-	#else
+	#else	//STM_NES ties AHL to the flipflop's /OE pin as well, so default should be low when address bus is enabled
 		#define AHL_CLK()      CTL_SET_HI(AHLbank, AHL); CTL_SET_LO(AHLbank, AHL)
 		#define AXL_CLK()      CTL_SET_HI(AXLbank, AXL); CTL_SET_LO(AXLbank, AXL)
 	#endif
@@ -1266,6 +1223,9 @@ void software_AXL_CLK();
 //	INL6 has direct pin access
 //		-these pins also act as Data8-15 for Sega Genesis
 //		-has separate pins dedicated to A16-23
+//	STM_NES doesn't use a flipflop, has direct access or dual purposed pinning
+// 		EXP1-3,6 has dedicated mcu pin
+// 		EXP4-5,7-8 connect to A4-7
 //	Directionality: All pins are forced output, or tristate.  This maintains compatability
 //		between all devices
 //	Driver: All pins are push-pull, AVR & STM ADAPTER drive with 5v signals, INL6 drives with 3.3v
@@ -1307,21 +1267,38 @@ void software_AXL_CLK();
 	#define E68bank 	GPIOA 
 
 	//TODO this is not complete!!!  it's still a copy paste from the prototype
-	#define EXP_PU()	E157bank->PUPDR |= (PUPDR_PU_ALL & 0xFFF00000); E68bank->PUPDR |= (PUPDR_PU_ALL & 0x30000300)
-	#define EXP_IP()	E157bank->MODER &=~(MODER_OP_ALL & 0xFFF00000); E68bank->MODER &=~(MODER_OP_ALL & 0x30000300)
-	#define EXP_OP()	E157bank->MODER |= (MODER_OP_ALL & 0xFFF00000); E68bank->MODER |= (MODER_OP_ALL & 0x30000300)
+	#define EXP_PU()	//E157bank->PUPDR |= (PUPDR_PU_ALL & 0xFFF00000); E68bank->PUPDR |= (PUPDR_PU_ALL & 0x30000300)
+	#define EXP_IP()	//E157bank->MODER &=~(MODER_OP_ALL & 0xFFF00000); E68bank->MODER &=~(MODER_OP_ALL & 0x30000300)
+	#define EXP_OP()	//E157bank->MODER |= (MODER_OP_ALL & 0xFFF00000); E68bank->MODER |= (MODER_OP_ALL & 0x30000300)
 	//not sure these bit shift accesses will work if the value passed in is a uint8_t variable...
-	#define EXP_SET(val)	E157bank->ODR = ((E157bank->ODR & 0x03FF) | (val<<10 & 0x7C00) | (val<<9 & 0x8000)); E68bank->ODR = ((E68bank->ODR & 0xBFEF) | (val>>1 & 0x0010) | (val<<7 & 0x4000))
+	#define EXP_SET(val)	//E157bank->ODR = ((E157bank->ODR & 0x03FF) | (val<<10 & 0x7C00) | (val<<9 & 0x8000)); E68bank->ODR = ((E68bank->ODR & 0xBFEF) | (val>>1 & 0x0010) | (val<<7 & 0x4000))
 
-	#define EXP_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_EXP
-	#define EXP_ENABLE()	ADDR_EN_CLK(); EXP_OP()
-	#define EXP_DISABLE()	EXP_PU(); EXP_IP()
+	#define EXP_EN_CLK()	//RCC->AHBENR |= RCC_AHBENR_EXP
+	#define EXP_ENABLE()	//ADDR_EN_CLK(); EXP_OP()
+	#define EXP_DISABLE()	//EXP_PU(); EXP_IP()
 
 #endif	//STM_INL6
 
 
 #ifdef STM_NES
-	//TODO
+	//EXP1-3,6 has dedicated mcu pin
+	// EXP1:PA1, EXP2:PC14, EXP3:PC15, EXP6:PA2
+	//EXP4-5,7-8 connect to A4-7
+	// EXP4:A4->PB6, EXP5:A5->PB7, EXP7:A6->PA8, EXP8:A7->PA9
+	#define E1678bank 	GPIOA 
+	#define E45bank 	GPIOB 
+	#define E23bank 	GPIOC 
+
+//TODO
+	#define EXP_PU()//	E157bank->PUPDR |= (PUPDR_PU_ALL & 0xFFF00000); E68bank->PUPDR |= (PUPDR_PU_ALL & 0x30000300)
+	#define EXP_IP()//	E157bank->MODER &=~(MODER_OP_ALL & 0xFFF00000); E68bank->MODER &=~(MODER_OP_ALL & 0x30000300)
+	#define EXP_OP()//	E157bank->MODER |= (MODER_OP_ALL & 0xFFF00000); E68bank->MODER |= (MODER_OP_ALL & 0x30000300)
+	//not sure these bit shift accesses will work if the value passed in is a uint8_t variable...
+	#define EXP_SET(val)//	E157bank->ODR = ((E157bank->ODR & 0x03FF) | (val<<10 & 0x7C00) | (val<<9 & 0x8000)); E68bank->ODR = ((E68bank->ODR & 0xBFEF) | (val>>1 & 0x0010) | (val<<7 & 0x4000))
+
+	#define EXP_EN_CLK()//	RCC->AHBENR |= RCC_AHBENR_EXP
+	#define EXP_ENABLE()//	ADDR_EN_CLK(); EXP_OP()
+	#define EXP_DISABLE()//	EXP_PU(); EXP_IP()
 
 #endif	//STM_NES
 
@@ -1385,7 +1362,7 @@ void software_AXL_CLK();
 //	---------------------------------------------------------------------------------------
 //	HIGH ADDRESS PORT 8bits A16-23
 //	
-//	This port is present on all devices
+//	This port is present on all devices with SNES connector
 //	Restrictions: CANNOT be used when EXPANSION PORT is enabled
 //		CIRAM_A10 & CIRAM /CE cannot be used on CONTROL PORT
 //	Directionality: All pins are forced output 
@@ -1401,7 +1378,7 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 
-#if defined STM_INL6_PROTO
+#ifdef STM_INL6_PROTO
 
 	//A16-21 are on PB10-15	these also map to EXP1-5, & 7
 	//A22-23 are on PA9-10 these also map to CIRAM A10 & CIRAM /CE respectively
@@ -1418,7 +1395,9 @@ void software_AXL_CLK();
 	#define HADDR_ENABLE()	HADDR_EN_CLK(); HADDR_OP()
 	#define HADDR_DISABLE()	HADDR_PU(); HADDR_IP()
 
-#elif defined STM_INL6
+#endif	//STM_INL6_PROTO
+
+#ifdef STM_INL6
 
 	//A16-21 are on PB2-7	these also map to EXP1-5, & 7 (changed from prototype)
 	//A22-23 are on PA9-10 these also map to CIRAM A10 & CIRAM /CE respectively
@@ -1435,12 +1414,15 @@ void software_AXL_CLK();
 	#define HADDR_ENABLE()	HADDR_EN_CLK(); HADDR_OP()
 	#define HADDR_DISABLE()	HADDR_PU(); HADDR_IP()
 
-//end STM_INL6 & PROTO
-
-//TODO STM_NES
+#endif	//STM_INL6
 
 
-#else	//AVR_KAZZO or STM_ADAPTER
+#ifdef STM_NES
+//HADDR is NOT PRESENT!
+#endif
+
+//#else	//AVR_KAZZO or STM_ADAPTER
+#if defined(AVR_KAZZO) || defined(STM_ADAPTER)
 
 
 	// ADDR16-23 are behind AXL flipflop
@@ -1506,7 +1488,32 @@ void software_AXL_CLK();
 
 #endif //STM_INL6 & PROTO
 
-//TODO STM_NES
+#ifdef STM_NES
+//TODO BLINDLY COPIED FROM STM6, will not work AS-IS 
+
+	//     PE0  "A0"	mcupinC0
+	//     			TODO!!!
+	#define E0bank 		//GPIOC 
+	#define E0		//(0U)
+
+	//     PE1  "D0"	//mcupinB2
+	#define E1bank 		//GPIOB 
+	#define E1		//(2U)
+
+	//     PE2  "D8"	//mcupinB10
+	#define E2bank 		//GPIOB 
+	#define E2		//(10U)
+
+	//     PE3  "D9"	//mcupinB11
+	#define E3bank 		//GPIOB 
+	#define E3		//(11U)
+
+	//     PE4  "D10"	//mcupinB12
+	#define E4bank 		//GPIOB 
+	#define E4		//(12U)
+
+
+#endif
 
 #ifdef STM_ADAPTER
 

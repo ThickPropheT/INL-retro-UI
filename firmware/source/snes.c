@@ -1,5 +1,8 @@
 #include "snes.h"
 
+//only need this file if connector is present on the device
+#ifdef SNES_CONN 
+
 //=================================================================================================
 //
 //	SNES operations
@@ -335,3 +338,5 @@ void snes_3v_flash_wr( uint16_t addr, uint8_t data )
 	return;
 }
 
+
+#endif //SNES_CONN

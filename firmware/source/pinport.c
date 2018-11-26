@@ -406,9 +406,11 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 		//opcode: type of operation
 		//operand: value to place on bus
 		//============================
+		#ifndef STM_NES	//HADDR not present when there's no 16bit console connector
 		case HADDR_ENABLE_:	HADDR_ENABLE();		break;
 		case HADDR_DISABLE_:	HADDR_DISABLE();	break;
 		case HADDR_SET_:	HADDR_SET(operand);	break;
+		#endif
 
 		default:
 			 //macro doesn't exist or isn't on this PCB version

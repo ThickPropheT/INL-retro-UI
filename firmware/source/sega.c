@@ -1,5 +1,8 @@
 #include "sega.h"
 
+//only need this file if connector is present on the device
+#ifdef SEGA_CONN 
+
 //=================================================================================================
 //
 //	SEGA operations
@@ -57,3 +60,6 @@ void	sega_wr( uint16_t addr, uint8_t data )
 {
 	return;
 }
+
+
+#endif //SEGA_CONN

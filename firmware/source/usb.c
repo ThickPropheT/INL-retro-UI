@@ -109,14 +109,19 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 			rv[RETURN_ERR_IDX] = io_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
 
+		#ifdef NES_CONN
 		case DICT_NES:
 			rv[RETURN_ERR_IDX] = nes_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
+		#endif
 
+		#ifdef SNES_CONN
 		case DICT_SNES:
 			rv[RETURN_ERR_IDX] = snes_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
+		#endif
 
+		#ifdef GB_CONN
 		case DICT_GAMEBOY:
 			rv[RETURN_ERR_IDX] = gameboy_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
@@ -124,14 +129,19 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 		case DICT_GBA:
 			rv[RETURN_ERR_IDX] = gba_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
+		#endif
 
+		#ifdef SEGA_CONN
 		case DICT_SEGA:
 			rv[RETURN_ERR_IDX] = sega_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
+		#endif
 
+		#ifdef N64_CONN
 		case DICT_N64:
 			rv[RETURN_ERR_IDX] = n64_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
+		#endif
 
 		case DICT_SWIM:
 			rv[RETURN_ERR_IDX] = swim_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	

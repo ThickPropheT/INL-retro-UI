@@ -27,12 +27,22 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 #define	HWORD_LEN 2
 	switch (opcode) { 
 		case IO_RESET:	io_reset();			break;
+		#ifdef NES_CONN
 		case NES_INIT:	nes_init();			break;
+		#endif
+		#ifdef SNES_CONN
 		case SNES_INIT:	snes_init();			break;
+		#endif
+		#ifdef GB_CONN
 		case GAMEBOY_INIT:	gameboy_init();			break;
 //		case GBA_INIT:	gba_init();			break;
+		#endif
+		#ifdef SEGA_CONN
 		case SEGA_INIT:	sega_init();			break;
+		#endif
+		#ifdef N64_CONN
 //		case N64_INIT:	n64_init();			break;
+		#endif
 		case SWIM_INIT:	
 			return swim_init(operand);		break;
 		case JTAG_INIT:	
@@ -128,6 +138,7 @@ void io_reset()
 //set outputs as required
 //latch address of $0000
 //disable NES cart memories
+#ifdef NES_CONN
 void nes_init() 
 {
 	//start with a reset
@@ -167,7 +178,7 @@ void nes_init()
 	ADDR_SET(0x0000);
 
 }
-
+#endif
 
 //SNES cartridge interfacing setup
 //set outputs as required
@@ -176,6 +187,7 @@ void nes_init()
 //reset high disables SRAM and puts INL carts in PRGM mode
 //Excersize caution calling this while NES/FC cart inserted on old kazzo versions
 //probably won't work if FC inserted due to EXP0-EXP6 short due to audio jumper on cart
+#ifdef SNES_CONN
 void snes_init() 
 {
 	//start with a reset
@@ -212,11 +224,13 @@ void snes_init()
 	HADDR_SET(0x00);
 
 }
+#endif
 
 //GAMEBOY cartridge interfacing setup
 //set outputs as required
 //latch address of $0000
 //disable cart memories
+#ifdef GB_CONN
 void gameboy_init() 
 {
 	//start with a reset
@@ -255,12 +269,14 @@ void gameboy_init()
 #endif
 
 }
+#endif
 
 
 //GBA cartridge interfacing setup
 //set outputs as required
 //latch address of $0000
 //disable cart memories
+#ifdef GB_CONN
 void gba_init() 
 {
 	//start with a reset
@@ -294,12 +310,14 @@ void gba_init()
 	ADDR_SET(0x0000);
 
 }
+#endif
 
 
 //SEGA Genesis/MegaDrive cartridge interfacing setup
 //set outputs as required
 //latch address of $00:0000
 //disable cart memories
+#ifdef SEGA_CONN
 void sega_init() 
 {
 	//start with a reset
@@ -338,7 +356,7 @@ void sega_init()
 	HADDR_SET(0x00);
 
 }
-
+#endif
 
 //Initialization of SWIM "single wire interface module" communications
 //the SWIM pin depends on INL board design.

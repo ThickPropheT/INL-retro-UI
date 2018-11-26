@@ -385,7 +385,7 @@ uint8_t flash_buff( buffer *buff ) {
 	uint8_t	bank;
 
 	switch ( buff->mem_type ) {
-//		#ifdef NES_CONN
+		#ifdef NES_CONN
 		case PRGROM:		//$8000
 
 			//Latest method used here!
@@ -508,9 +508,9 @@ uint8_t flash_buff( buffer *buff ) {
 		case PRGRAM:
 			write_page( addrH+0x60, buff, nes_cpu_wr);
 			break;
-		//#endif
+		#endif
 
-		//#ifdef SNES_CONN
+		#ifdef SNES_CONN
 		case SNESROM:
 			if (buff->mapper == LOROM_5VOLT) {
 				//LOROM banks start at $XX:8000
@@ -554,7 +554,7 @@ uint8_t flash_buff( buffer *buff ) {
 		case SNESRAM:
 //warn			addrX = ((buff->page_num)>>8);
 			break;
-	//	#endif
+		#endif
 
 		default:
 			return ERR_BUFF_UNSUP_MEM_TYPE;

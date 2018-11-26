@@ -1,5 +1,8 @@
 #include "nes.h"
 
+//only need this file if connector is present on the device
+#ifdef NES_CONN 
+
 //=================================================================================================
 //
 //	NES operations
@@ -46,6 +49,9 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 			break;
 		case NES_CPU_WR:	
 			nes_cpu_wr( operand, miscdata );
+			break;
+		case NES_M2_LOW_WR:	
+			nes_m2_low_wr( operand, miscdata );
 			break;
 		case NES_DUALPORT_WR:	
 			nes_dualport_wr( operand, miscdata );
@@ -451,6 +457,62 @@ void	nes_cpu_wr( uint16_t addr, uint8_t data )
 	//Free data bus
 	DATA_IP();
 }
+
+
+/* Desc:NES CPU Write, but M2 remains low
+ * 	Allows writes to flash, but not memory if M2 must be high for mapper to latch the write
+ *	A15 decoded to enable /ROMSEL
+ * Note:addrH bit7 has no effect (ends up on PPU /A13)
+ *	EXP0 as-is
+ * Pre: nes_init() setup of io pins
+ * Post:data latched by anything listening on the bus
+ * 	address left on bus
+ * 	data left on bus, but pullup only
+ * Rtn:	None
+ */
+void	nes_m2_low_wr( uint16_t addr, uint8_t data )
+{
+	//Float EXP0 as it should be in NES
+	//EXP0_IP_FL();
+
+	//need for whole function
+	//_DATA_OP();
+
+	//set addrL
+	//ADDR_OUT = addrL;
+	//latch addrH
+	//DATA_OUT = addrH;
+	//_AHL_CLK();	
+	ADDR_SET(addr);
+
+	//PRG R/W LO
+	PRGRW_LO();
+
+	//put data on bus
+	DATA_OP();
+	DATA_SET(data);
+
+	//set M2 and /ROMSEL
+//	M2_HI();
+	if( addr >= 0x8000 ) {	//addressing cart rom space
+		ROMSEL_LO();	//romsel trails M2 during CPU operations
+	}
+
+	//give some time
+	NOP();
+	NOP();
+
+	//latch data to cart memory/mapper
+//	M2_LO();
+	ROMSEL_HI();
+
+	//retore PRG R/W to default
+	PRGRW_HI();
+
+	//Free data bus
+	DATA_IP();
+}
+
 
 
 /* Desc:NES PPU Read 
@@ -1237,3 +1299,6 @@ void cdream_chrrom_flash_wr( uint16_t addr, uint8_t data )
 
 	return;
 }
+
+
+#endif //NES_CONN

@@ -1,5 +1,8 @@
 #include "n64.h"
 
+//only need this file if connector is present on the device
+#ifdef N64_CONN 
+
 //=================================================================================================
 //
 //	N64 operations
@@ -57,3 +60,6 @@ void	n64_wr( uint16_t addr, uint8_t data )
 {
 	return;
 }
+
+
+#endif //N64_CONN

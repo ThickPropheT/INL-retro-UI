@@ -12,7 +12,7 @@ uint8_t dump_buff( buffer *buff ) {
 	uint8_t	bank;
 
 	switch ( buff->mem_type ) {
-	//	#ifdef NES_CONN
+		#ifdef NES_CONN
 		case NESCPU_4KB:
 			//mapper lower nibble specifies NES CPU A12-15
 			if (buff->mapper > 0x0F) { 
@@ -54,9 +54,9 @@ uint8_t dump_buff( buffer *buff ) {
 			buff->cur_byte = nes_ppu_page_rd_poll( buff->data, addrH, buff->id,
 								buff->last_idx, ~FALSE );
 			break;
-	//	#endif
+		#endif
 
-	//	#ifdef SNES_CONN
+		#ifdef SNES_CONN
 		case SNESROM_PAGE:	//ROMSEL is always taken low
 			//mapper byte specifies SNES CPU A15-8
 			addrH |= (buff->mapper); //no shift needed
@@ -72,9 +72,9 @@ uint8_t dump_buff( buffer *buff ) {
 							//id contains MSb of page when <256B buffer
 							buff->last_idx, ~FALSE );
 			break;
-	//	#endif
+		#endif
 
-	//	#ifdef NES_CONN
+		#ifdef NES_CONN
 		case PRGROM:
 			addrH |= 0x80;	//$8000
 			if (buff->mapper == MAP30) {
@@ -138,9 +138,9 @@ uint8_t dump_buff( buffer *buff ) {
 			buff->cur_byte = nes_cpu_page_rd_poll( buff->data, addrH, buff->id,
 								buff->last_idx, ~FALSE );
 			break;
-	//	#endif
+		#endif
 
-	//	#ifdef SNES_CONN
+		#ifdef SNES_CONN
 		case SNESROM:
 			if (buff->mapper == LOROM) {
 				addrH |= 0x80;	//$8000 LOROM space
@@ -163,7 +163,7 @@ uint8_t dump_buff( buffer *buff ) {
 									//id contains MSb of page when <256B buffer
 									buff->last_idx, ~FALSE );
 			break;
-	//	#endif
+		#endif
 
 		default:
 			return ERR_BUFF_UNSUP_MEM_TYPE;

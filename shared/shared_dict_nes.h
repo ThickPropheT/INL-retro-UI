@@ -63,6 +63,9 @@
 #define	SET_CUR_BANK			0x20
 #define	SET_BANK_TABLE			0x21
 
+
+#define NES_M2_LOW_WR			0x22	//like CPU WR, but M2 stays low
+
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================

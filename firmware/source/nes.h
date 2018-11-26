@@ -14,6 +14,7 @@ void	disc_push_exp0_prgrom_wr( uint16_t addr, uint8_t data );
 uint8_t	emulate_nes_cpu_rd( uint16_t addr );
 uint8_t	nes_cpu_rd( uint16_t addr );
 void	nes_cpu_wr( uint16_t addr, uint8_t data );
+void	nes_m2_low_wr( uint16_t addr, uint8_t data );
 uint8_t	nes_ppu_rd( uint16_t addr );
 void	nes_ppu_wr( uint16_t addr, uint8_t data );
 uint8_t	nes_dualport_rd( uint16_t addr );

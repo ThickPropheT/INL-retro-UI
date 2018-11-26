@@ -1,5 +1,8 @@
 #include "gameboy.h"
 
+//only need this file if connector is present on the device
+#ifdef GB_CONN 
+
 //=================================================================================================
 //
 //	GAMEBOY operations
@@ -57,3 +60,6 @@ void	dmg_wr( uint16_t addr, uint8_t data )
 {
 	return;
 }
+
+
+#endif //GB_CONN
