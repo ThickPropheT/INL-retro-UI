@@ -66,6 +66,10 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 #ifdef STM_CORE
 	static uint16_t rv16[RETURN_BUFF_SIZE/2];
 	uint8_t *rv = (uint8_t*)rv16;
+
+	//create a usbMsgPtr variable from the stack which we can use convienently
+	//but then at end of the function we'll need to copy the value over to usb_buff usbMsgPtr_H/L
+	usbMsgPtr_t usbMsgPtr;
 #else
 	static uint8_t rv[RETURN_BUFF_SIZE];
 #endif
@@ -185,6 +189,14 @@ uint16_t usbFunctionSetup(uint8_t data[8]) {
 			//request (aka dictionary) is unknown
 			rv[RETURN_ERR_IDX] = ERR_UNKN_DICTIONARY;
 	}
+
+#ifdef STM_CORE
+	//now we need to copy usbMsgPtr over to usb_buff so the usb drivers actually get the pointer value
+	usbMsgPtr_L = (uint32_t)usbMsgPtr;
+	usbMsgPtr_H = ((uint32_t)usbMsgPtr)>>16;
+	//this is a hack for stm32 devices only.  It allows usb firmware to be mostly separated
+	//from application code.  Usb code doesn't use any .data nor .bss, only the stack and usb_buff
+#endif
 
 	return rlen;
 

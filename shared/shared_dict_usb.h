@@ -15,7 +15,7 @@
 //=============================================================================================
 // USB DICTIONARY
 //
-// opcodes contained in this dictionary must be implemented in firmware/source/io.c
+// opcodes contained in this dictionary must be implemented in firmware/source/usb.c
 //
 //=============================================================================================
 //=============================================================================================

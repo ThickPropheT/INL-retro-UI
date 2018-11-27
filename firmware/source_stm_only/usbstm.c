@@ -208,8 +208,8 @@ uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 #define num_bytes_req  		usb_buff[NUM_BYTES_REQ]		//place this variable in USB RAM
 //static uint16_t num_bytes_sending;
 #define num_bytes_sending  	usb_buff[NUM_BYTES_SENDING]	//place this variable in USB RAM
-//static uint16_t num_bytes_expecting;		//this was never used, so tried to cut it but couldn't..
-#define num_bytes_expecting  	usb_buff[NUM_BYTES_EXPECTING]	//place this variable in USB RAM
+//static uint16_t num_bytes_expecting;		//this was never used, so it was cut
+//#define num_bytes_expecting  	usb_buff[NUM_BYTES_EXPECTING]	//place this variable in USB RAM
 //static uint16_t num_bytes_xfrd;
 #define num_bytes_xfrd  	usb_buff[NUM_BYTES_XFRD]	//place this variable in USB RAM
 
@@ -232,7 +232,10 @@ uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 //static uint8_t	req_dir;
 #define req_dir  usb_buff[VAR_REQ_DIR]	//place this variable in USB RAM
 
-usbMsgPtr_t usbMsgPtr;
+//move this into USB buffer ram, definition kept in usbstm.h so application code can import it
+//usbMsgPtr_t usbMsgPtr;
+//#define usbMsgPtr_L  usb_buff[USBMSGPTR_L]	//place this variable in USB RAM
+//#define usbMsgPtr_H  usb_buff[USBMSGPTR_H]	//place this variable in USB RAM
 
 
 //#define TSSOP20	//defined when using TSSOP-20 part to get PA11/12 alternate mapping to the pins
@@ -244,10 +247,11 @@ void init_usb()
 	//Don't think most of these actually need to be cleared.. newaddr_reqtype might be only one..
 	num_bytes_req = 0;
 	num_bytes_sending = 0; 	
-	num_bytes_expecting = 0; 	
+	//num_bytes_expecting = 0; 	
 	num_bytes_xfrd = 0;
 	newaddr_reqtype = 0;	//two single byte variables stored in single 16bit half word
 	req_dir = 0;	
+	//usbMsgPtr_H/L shouldn't need pre-initialized
 
 	//initialize i/o
 	// TSSOP-20: On STM32F070x6 devices, pin pair PA11/12 can be remapped instead of pin pair PA9/10 using SYSCFG_CFGR1 register.
@@ -477,17 +481,24 @@ static void control_xfr_in(){
 //
 //		return;
 //	}
+
+	//need a usbMsgPtr but want it to be a variable from the stack
+	usbMsgPtr_t usbMsgPtr_temp;
+	//copy the actual pointer from usb_buffer ram
+	//the usb_buffer ram can only be accessed in halfwords (16bits)
+	//so this assigment respects this and then casts it to the necessary pointer type
+	usbMsgPtr_temp = (uint16_t *) ((usbMsgPtr_H<<16) | usbMsgPtr_L);
 	
 	//copy over 8bytes from transmit data to EP0 buffer
 	//copy data into EP0 buffer table ram
 	//usb buffer ram is only accessible in halfwords/bytes (16/8bits)
-	usb_buff[EP0_TX_BASE] 	= usbMsgPtr[num_bytes_xfrd/2];
+	usb_buff[EP0_TX_BASE] 	= usbMsgPtr_temp[num_bytes_xfrd/2];
 	num_bytes_xfrd += 2;
-	usb_buff[EP0_TX_BASE+1] = usbMsgPtr[num_bytes_xfrd/2];
+	usb_buff[EP0_TX_BASE+1] = usbMsgPtr_temp[num_bytes_xfrd/2];
 	num_bytes_xfrd += 2;
-	usb_buff[EP0_TX_BASE+2] = usbMsgPtr[num_bytes_xfrd/2];
+	usb_buff[EP0_TX_BASE+2] = usbMsgPtr_temp[num_bytes_xfrd/2];
 	num_bytes_xfrd += 2;
-	usb_buff[EP0_TX_BASE+3] = usbMsgPtr[num_bytes_xfrd/2];
+	usb_buff[EP0_TX_BASE+3] = usbMsgPtr_temp[num_bytes_xfrd/2];
 	num_bytes_xfrd += 2;
 
 	//if there aren't 8bytes of data to send, junk will be copied into end of EP0 TX buffer
@@ -645,19 +656,42 @@ static uint16_t standard_req_in( usbRequest_t *spacket ){
 		case STD_REQ_GET_DESCRIPTOR:
 			switch ( (spacket->wValue & DESC_TYPE_MASK)>>8) {	//must mask out upper byte and shift to get desc type
 				case DESC_TYPE_DEVICE:
-					usbMsgPtr = (uint16_t *)device_desc;
+					//usbMsgPtr = (uint16_t *)device_desc;
+					//set the usb_buff[] message ptr instead..
+					//this works, but requires assingment above
+					//usbMsgPtr_L = (uint32_t)usbMsgPtr;
+					//usbMsgPtr_H = ((uint32_t)usbMsgPtr)>>16;
+
+					//do the same but without the use of an actual usbMsgPtr
+					//first the const array (which is actually a pointer), is cast to a 
+					//16bit pointer.  Then that pointer is cast to an int and assinged
+					//to the usb_buff ram/index.
+					//the upper 16bits needs to get shifted prior to assignment
+					usbMsgPtr_L = (uint32_t)(uint16_t *)device_desc;
+					usbMsgPtr_H = ((uint32_t)(uint16_t *)device_desc)>>16;
+
 					return device_desc[bLength];
+
 				case DESC_TYPE_CONFIG:	//Must return all config, interface, and endpoint descriptors in one shot
-					usbMsgPtr = (uint16_t *)config_desc;
+					//usbMsgPtr = (uint16_t *)config_desc;
+					usbMsgPtr_L = (uint32_t)(uint16_t *)config_desc;
+					usbMsgPtr_H = ((uint32_t)(uint16_t *)config_desc)>>16;
 					return config_desc[wTotalLength];
+
 				case DESC_TYPE_STRING:
 					//determine which string index
 					switch ( spacket->wValue & DESC_IDX_MASK ) { //Must mask out index from lower byte
-						case 0: usbMsgPtr = (uint16_t *)string0_desc;
+						case 0: //usbMsgPtr = (uint16_t *)string0_desc;
+							usbMsgPtr_L = (uint32_t)(uint16_t *)string0_desc;
+							usbMsgPtr_H = ((uint32_t)(uint16_t *)string0_desc)>>16;
 							return string0_desc[bLength];
-						case 1: usbMsgPtr = (uint16_t *)string1_desc;
+						case 1: //usbMsgPtr = (uint16_t *)string1_desc;
+							usbMsgPtr_L = (uint32_t)(uint16_t *)string1_desc;
+							usbMsgPtr_H = ((uint32_t)(uint16_t *)string1_desc)>>16;
 							return string1_desc[bLength];
-						case 2: usbMsgPtr = (uint16_t *)string2_desc;
+						case 2: //usbMsgPtr = (uint16_t *)string2_desc;
+							usbMsgPtr_L = (uint32_t)(uint16_t *)string2_desc;
+							usbMsgPtr_H = ((uint32_t)(uint16_t *)string2_desc)>>16;
 							return string2_desc[bLength];
 						default: //error send stall
 							return 0;
@@ -795,7 +829,10 @@ static void control_xfr_init( usbRequest_t *spacket ) {
 				//the compiler was cutting it anyway, no need to put in usb_buff[]..
 				//BUT!  When I cut it, USB device descriptor fails..  
 				//IDK why, so just let's just keep it anyway..
-				num_bytes_expecting = standard_req_out( spacket );
+				//num_bytes_expecting = standard_req_out( spacket );
+				//The reason was because that function actually does something required even
+				//if the return value is ignored you bozo!
+				standard_req_out( spacket );
 				break;
 		//	case REQ_TYPE_CLASS:
 		//		//num_bytes_sending = 0;//class_req_in( spacket );

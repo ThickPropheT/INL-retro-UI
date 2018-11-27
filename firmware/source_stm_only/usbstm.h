@@ -76,12 +76,18 @@
 //So let's place those 14Bytes worth of variables in the begining of USB RAM
 #define NUM_BYTES_REQ 		0	//variable placed in first 16bit index
 #define NUM_BYTES_SENDING 	1	//variable placed in second index...
-#define NUM_BYTES_EXPECTING 	2
-#define NUM_BYTES_XFRD 		3
-#define NEWADDR_REQTYPE		4	//two single byte variables stored in this index
-#define VAR_REQ_DIR		5	//might be able to combine with above..?
-//6 variables above use up 12Bytes of USB buffer RAM
-//there's 4Bytes of available space, could be used for usbMsgPtr, but need to ensure half word access is used..
+//#define NUM_BYTES_EXPECTING 	2	//variable cut
+#define NUM_BYTES_XFRD 		2
+#define NEWADDR_REQTYPE		3	//two single byte variables stored in this index
+#define VAR_REQ_DIR		4	//might be able to combine with above..?
+//there's 6Bytes of available space, could be used for usbMsgPtr, but need to ensure half word access is used..
+#define USBMSGPTR_L		5	//lower 16bit of pointer
+#define USBMSGPTR_H		6	//upper 16bit of pointer
+//now there's 7 indexes = 14Bytes used for usb_buff ram variables and the usb code shouldn't be using any .data nor .bss
+//usbstm only uses the stack and usb_buff ram table
+//There are 2 bytes unused, perhaps these can be utilized for initialization flags or other communication between
+//usb driver and application code
+
 
 //buffer table itself is located in 1KB buffer above, but it's location is programmable
 //the table must be aligned to an 8Byte boundary
@@ -258,7 +264,14 @@ typedef struct usbRequest_t{
 #define usbPoll()	NOP()
 
 #define usbMsgPtr_t uint16_t *
-extern  usbMsgPtr_t usbMsgPtr;
+//extern  usbMsgPtr_t usbMsgPtr;	//this variable is defined in usbstm.c
+				//putting extern here allows any file that imports usbstm.h access to usbMsgPtr
+
+//application code can access the entire usb_buff as well as the usbMsgPtr_H/L
+//extern used here to declare usb_buff so other files can use it, definition is in usbstm.c
+extern uint16_t volatile (* const usb_buff);
+#define usbMsgPtr_L  usb_buff[USBMSGPTR_L]	//place this variable in USB RAM
+#define usbMsgPtr_H  usb_buff[USBMSGPTR_H]	//place this variable in USB RAM
 
 extern uint16_t usbFunctionSetup(uint8_t data[8]);
 extern uint8_t usbFunctionWrite(uint8_t *data, uint8_t len);
