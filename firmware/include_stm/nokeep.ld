@@ -11,14 +11,18 @@ MEMORY
 	/* $0000 0000 128KB of flash/sram depending on BOOT */
 	/* $0002 0000 ~128MB of system reserved */
 	/* $0800 0000 always flash size depends on part */
-/*  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 128K */ /* 0x20000 128K */
-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 32K /* 0x20000 128K */
+/*  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 128K */ 		/* 0x20000 128K 070RB */
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 32K  		/* 0x08000 32K  070C6 */
+/*  FLASH0 (rx) : ORIGIN = 0x08000000, LENGTH = 2K  */ /* 0x0800 2K vectors, usb, firmware update, etc */
+/*  FLASH1 (rx) : ORIGIN = 0x08000800, LENGTH = 30K */ /* 0x7800 30K reset, main, & application code */
+/*  FLASH2 (rx) : ORIGIN = 0x08008000, LENGTH = 96K */ /* RB ONLY 0x18000 96K */
 	/* $0802 0000 ~384MB of system reserved */
-  	/* $1FFF C800 12KB of system memory (bootloader and etc) */
+  	/* $1FFF C400 13KB of system memory (bootloader and etc) 070C6 */
+  	/* $1FFF C800 12KB of system memory (bootloader and etc) 070RB */
   	/* $1FFF F800 2KB of option bytes */
   	/* $2000 0000 always SRAM size depends on part */
-/*  RAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 16K */ /* 0x04000  16K */
-  RAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 6K /* 0x04000  16K */
+/*  RAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 16K */ 		/* 0x04000  16K 070RB */
+  RAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 6K 		/* 0x01800  6K  070C6 */
 	/* $2000 4000 ~512MB of system reserved */
 	/* $4000 0000 128KB of APB perif regs & reserved */
 	/* $4002 0000 17KB of AHB1 perif regs & reserved */
@@ -65,7 +69,36 @@ SECTIONS
 {
 	.text :
 	{
+		/* First 2KByte of flash EXCLUDES all application & main code */
+		/* start with vector table */
 		KEEP(*(.isr_vector))
+
+		/* then USB code & desc tables */
+		*(.usb_driver) 
+		*(.usb_desc) 
+
+		/* hardfault & dummy handlers */
+		*(.hardfault) 
+
+		/* put firmware update code at end of first 2KByte
+		 * should allow for easier updating of that code alone 
+		 * by the application code if desired */
+		*(.fw_update) 
+
+		. = 0x0800;	/*update the location counter to the 3rd KByte */
+		/* reset handler fixed to 0x08000800
+		 * that way the vector table should always be accurate */
+		*(.reset_handler) 
+
+		/* usbFunctionSetup & usbFunctionWrite must be in first 64KByte of flash
+		 * make Write first, and Setup last since Write is less likely to change 
+		 * or maybe we just want to make them fixed addresses and avoid use of usb_buff
+		 * function pointers, possible future TODO for speedup? */
+		*(.usbFuncWrite) 
+		*(.usbFuncSetup) 
+
+		/* then everything else (application code) follows */
+
 		*(.text*)
 
 		*(.init)
@@ -167,6 +200,12 @@ SECTIONS
 		*(SORT(.fini_array.*))
 		*(.fini_array)
 		PROVIDE_HIDDEN (__fini_array_end = .);
+
+		. = ALIGN(4);
+		*(.fastrun) /*Placing functions in .fastrun section in RAM */
+		/* This kind of breaks arm-none-eabi-size look at .map file __data_end__ for actual data size*/
+		/* Really size is just combining text & data together */
+
 
 		*(.jcr)
 		. = ALIGN(4);

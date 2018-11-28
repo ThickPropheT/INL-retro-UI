@@ -5,6 +5,13 @@
 //include target chip port definition library files
 #include <stm32f0xx.h>
 
+#include "fwupdate.h"
+
+#define USBDRIVER __attribute__ ((section (".usb_driver")))
+//let the compiler perform inline optization, it'll keep code smaller
+//this code is all exactly where we want it anyway and separate from
+//application code, so inlining is not just okay, it's good!
+//#define USBDRIVER __attribute__ ((section (".usb_boot"), noinline, noclone))
 
 //clear RX interrupt
 //set tx field to keep from accidentally clearing //mask out toggle feilds making them zero //clear rx bit removing active interrupt

@@ -122,7 +122,12 @@ __isr_vector:
 
 	.size	__isr_vector, . - __isr_vector
 
-	.text
+	//;.text
+	//;want to move this to a fixed flash location so the lower
+	//;vector/usb section of flash doesn't need to be updated for 
+	//;main/application firmware updates.
+	//;want the reset handler to always reside @ 0x08000800
+	.section .reset_handler
 	.thumb
 	.thumb_func
 	.align	1
@@ -268,6 +273,9 @@ Reset_Handler:
 	.pool
 	.size	Reset_Handler, . - Reset_Handler
 
+	
+//;want the default handler to be in same space as hardfault
+	.section .hardfault
 	.align	1
 	.thumb_func
 	.weak	Default_Handler

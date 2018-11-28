@@ -46,10 +46,10 @@
 USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 #endif
 #ifdef STM_CORE
-#define NOINLINE	__attribute__ ((section (".text"), noinline, noclone))
-//NOINLINE should keep these functions at beinging of flash (.text)
+#define USBSETUP	__attribute__ ((section (".usbFuncSetup"), noinline, noclone))
+//noinline should keep these functions at beinging of flash (.text)
 //they need to be in the first 64KByte which is non issue with C6, but could prob with RB
-NOINLINE uint16_t usbFunctionSetup(uint8_t data[8]) {
+USBSETUP uint16_t usbFunctionSetup(uint8_t data[8]) {
 #endif
 
 
@@ -279,7 +279,10 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 #endif
 
 #ifdef STM_CORE
-NOINLINE uint8_t usbFunctionWrite(uint8_t *data, uint8_t len) {
+#define USBWRITE	__attribute__ ((section (".usbFuncWrite"), noinline, noclone))
+//noinline should keep these functions at beinging of flash (.text)
+//they need to be in the first 64KByte which is non issue with C6, but could prob with RB
+USBWRITE uint8_t usbFunctionWrite(uint8_t *data, uint8_t len) {
 #endif
 
 	//defined and controled by buffer.c

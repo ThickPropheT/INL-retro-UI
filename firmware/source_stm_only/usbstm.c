@@ -6,7 +6,7 @@
 //since usb drivers don't use any .data nor .bss space
 //static int log = 0;
 
-void usb_reset_recovery(){
+USBDRIVER void usb_reset_recovery(){
 
 //	USB->CNTR |= USB_CNTR_FRES;
 //	USB->CNTR &= ~USB_CNTR_FRES;
@@ -165,7 +165,7 @@ void usb_reset_recovery(){
 //uint16_t volatile (* const usb_buff)[512] = (void*)USB_PMAADDR; 
 //this was suggestion by: http://a3f.at/articles/register-syntax-sugar
 //which errors on compilation due to assigning of type array
-uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
+USBDRIVER uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 
 
 //static uint16_t num_bytes_req;
@@ -207,7 +207,7 @@ uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 //#define TSSOP20	//defined when using TSSOP-20 part to get PA11/12 alternate mapping to the pins
 
 //prereq: USB block's clock must be initialized prior to calling
-void init_usb()
+USBDRIVER void init_usb()
 {
 
 	//initialize the clock
@@ -433,7 +433,7 @@ void init_usb()
 //currently hardcoded for EP0 only
 //num_bytes_sending, num_bytes_xfrd, and *usbMsgPtr must be initialized prior to entry
 
-static void control_xfr_in(){
+USBDRIVER static void control_xfr_in(){
 	//determine if have data remaining to be sent
 	
 // We should never get to this point, if we did there was an error and should prob send STALL
@@ -570,7 +570,7 @@ static void control_xfr_in(){
 
 
 //return number of bytes expected
-static uint16_t standard_req_out( usbRequest_t *spacket ){
+USBDRIVER static uint16_t standard_req_out( usbRequest_t *spacket ){
 
 	switch ( spacket->bRequest ) {
 
@@ -614,7 +614,7 @@ static uint16_t standard_req_out( usbRequest_t *spacket ){
 
 }
 
-static uint16_t standard_req_in( usbRequest_t *spacket ){
+USBDRIVER static uint16_t standard_req_in( usbRequest_t *spacket ){
 
 	switch ( spacket->bRequest ) {
 
@@ -694,7 +694,7 @@ static uint16_t standard_req_in( usbRequest_t *spacket ){
 //USB IRQ handler calls this function after recieving a control setup packet
 //function is responsible for preparing follow on data/status transfers to complete control xfr
 //must set everything up for control_xfr_in/out functions to be called during data packets
-static void control_xfr_init( usbRequest_t *spacket ) {
+USBDRIVER static void control_xfr_init( usbRequest_t *spacket ) {
 
 	//determine number of requested data payload bytes
 	num_bytes_req = spacket->wLength;
@@ -748,15 +748,29 @@ static void control_xfr_init( usbRequest_t *spacket ) {
 		//to do this the usb code can't directly call application code (usbFunction Setup/Write)
 		//need the application code to tell the usb code where the functions are using variables
 
+
 		//call the usbFunctionSetup function with some function pointer magic
 		typedef uint16_t (*pFunction)(uint8_t data[8]);
 		pFunction JumpToApplication;
-		JumpToApplication = (uint16_t (*)(uint8_t data[8])) ((0x08000000));  //base of flash
-		//application main makes the following assignment at powerup
-		//usbfuncsetup = (uint32_t) &usbFunctionSetup;	//should only assign lower 16bits
-		JumpToApplication += usbfuncsetup;
 
+
+		//but this is where we need to snoop on the setup packet to determine 
+		//if it's a firmware update packet
+//		if (fwupdate logic) {
+//			//send this packet to the firmware updater
+//			erase_main();
+//		}
+//		else {	//normal setup packet send to application code
+			JumpToApplication = (uint16_t (*)(uint8_t data[8])) ((0x08000000));  //base of flash
+			//application main makes the following assignment at powerup
+			//usbfuncsetup = (uint32_t) &usbFunctionSetup;	//should only assign lower 16bits
+			JumpToApplication += usbfuncsetup;
+
+//		}
+
+		//perform the actual jump/call
 		num_bytes_sending = JumpToApplication( (uint8_t*) spacket );
+
 	}
 	
 	
@@ -866,7 +880,7 @@ static void control_xfr_init( usbRequest_t *spacket ) {
 	//USB interrupt status register (USB_ISTR)
 	//This register contains the status of all the interrupt sources allowing application 
 	//software to determine, which events caused an interrupt request.
-void USB_IRQHandler(void)
+USBDRIVER void USB_IRQHandler(void)
 {
 
 	//communications between application code & USB to prevent direct calls

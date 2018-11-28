@@ -1,6 +1,8 @@
 #ifndef _usb_descriptors_h
 #define _usb_descriptors_h
 
+#define USBDESC __attribute__ ((section (".usb_desc")))
+
 /*	Contains all the device, configuration, interface, endpoint, and string descriptor definitions
  *	The excellent breakdown of the USB standard and field comments have been copy pasted from the 
  *	almighty documentation "USB in a Nutshell" article by BeyondLogic: 
@@ -19,7 +21,7 @@
 #define	DESC_TYPE_ENDPOINT 	0x05
 
 #define DEVICE_DESC_LEN	18
-const uint8_t device_desc[DEVICE_DESC_LEN] = {
+USBDESC const uint8_t device_desc[DEVICE_DESC_LEN] = {
 // 0 	bLength 		1 	Number 		Size of the Descriptor in Bytes (18 bytes)
 					DEVICE_DESC_LEN,
 // 1 	bDescriptorType 	1 	Constant 	Device Descriptor (0x01)
@@ -93,7 +95,7 @@ const uint8_t device_desc[DEVICE_DESC_LEN] = {
 		//NOTE: current table broken if total is greater 255 bytes!!!
 #define CONFIG_TOTAL_LEN	(CONFIG_DESC_LEN + INTERFACE_DESC_LEN + ENDPOINT_DESC_LEN)
 #define	wTotalLength	2	//offset of wTotalLength in descriptor array
-const uint8_t config_desc[CONFIG_TOTAL_LEN] = {
+USBDESC const uint8_t config_desc[CONFIG_TOTAL_LEN] = {
 // Off 	Field 			Size 	Value 		Description
 // 0 	bLength 		1 	Number		Size of Descriptor in Bytes
 					CONFIG_DESC_LEN,
@@ -224,7 +226,7 @@ const uint8_t config_desc[CONFIG_TOTAL_LEN] = {
 //	Universal Serial Bus Language Identifiers (LANGIDs) version 1.0
 //
 #define STRING0_DESC_LEN	4
-const uint8_t string0_desc[STRING0_DESC_LEN] = {
+USBDESC const uint8_t string0_desc[STRING0_DESC_LEN] = {
 // Off 	Field 			Size 	Value 		Description
 // 0 	bLength 		1 	Number		Size of Descriptor in Bytes
 					STRING0_DESC_LEN,	
@@ -255,7 +257,7 @@ const uint8_t string0_desc[STRING0_DESC_LEN] = {
 //Defining string arrays as uint16_t effectively makes the strings UTF-16 as required
 #define BYTES_PER_HWORD		2
 #define STRING1_DESC_LEN	(21*BYTES_PER_HWORD)	//characters plus 1 for bLength & bDescriptorType
-const uint16_t string1_desc[STRING1_DESC_LEN] = {
+USBDESC const uint16_t string1_desc[STRING1_DESC_LEN] = {
 // 0 	bLength 		1 	Number		Size of Descriptor in Bytes
 // 1 	bDescriptorType 	1 	Constant	String Descriptor (0x03)
 					((uint16_t)DESC_TYPE_STRING<<8 | STRING1_DESC_LEN),
@@ -263,7 +265,7 @@ const uint16_t string1_desc[STRING1_DESC_LEN] = {
 'I','n','f','i','n','i','t','e','N','e','s','L','i','v','e','s','.','c','o','m'};
 
 #define STRING2_DESC_LEN	(15*BYTES_PER_HWORD)	//characters plus 1 for bLength & bDescriptorType
-const uint16_t string2_desc[STRING2_DESC_LEN] = {
+USBDESC const uint16_t string2_desc[STRING2_DESC_LEN] = {
 // 0 	bLength 		1 	Number		Size of Descriptor in Bytes
 // 1 	bDescriptorType 	1 	Constant	String Descriptor (0x03)
 					((uint16_t)DESC_TYPE_STRING<<8 | STRING2_DESC_LEN),
