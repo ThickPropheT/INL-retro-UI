@@ -80,10 +80,32 @@ int main(void)
 	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_PLL;
 	
 	//Initialize periphery clocks as needed
+	//tried to have this done but usb code but wasn't working..
+	//having the main handle this prob makes more sense anyway, but would like to know
+	//why this didn't work..
 	init_usb_clock();
 	
-	//Initialize WDT, core features, etc
 	
+	//init_usb();
+	//don't call the USB code directly,
+	//instead set the usb flag to tell it to initialize then jump to the USB ISR
+	//we know where the USB ISR is because of the vector table	
+	usbflag = INITUSB;
+
+	typedef void (*pFunction)(void);
+	pFunction JumpToApplication;
+	//interrupts should already be disabled
+	JumpToApplication = (void (*)(void)) (*((uint32_t *) ((0x000000BC))));	//USB ISR vector location
+
+	//Jump to the USB ISR
+	JumpToApplication();
+
+	//set the usb_buff ram function pointers to USB ISR can use them
+	usbfuncwrite = (uint32_t) &usbFunctionWrite;  //should only assign lower 16bits
+	usbfuncsetup = (uint32_t) &usbFunctionSetup;    //should only assign lower 16bits
+
+	//Initialize WDT, core features, etc
+
 	//enable interrupts
 	__enable_irq();		//clear's processor PRIMASK register bit to allow interrupts to be taken
 	//I think this gets done automatically when enabling individual IRQs
@@ -92,8 +114,7 @@ int main(void)
 	//setup LED as outputs and turn them on
 	//setup user switch as input
 
-	init_usb();
-	//Initialize board/system
+
 	
 #endif
 

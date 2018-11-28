@@ -230,3 +230,39 @@ void init_clock()
 	
 }
 
+//pick define based on xtal setup for init_clock and init_usb_clock functions
+//#define NO_XTAL
+#define EXTERNAL_XTAL
+void init_usb_clock()
+{
+	// stm32f0x2 devices have HSI 48Mhz available to clock usb block, or PLL if it's source accurate enough
+	// stm32f0x0 devices must have ext xtal and use PLL output to drive usb block
+	
+#ifdef EXTERNAL_XTAL
+	//by default the 072 has HSI 48Mhz selected as USB clock
+	//on the 070 this equates to off, so 070 must set USBSW bit
+	RCC->CFGR3 |= RCC_CFGR3_USBSW_PLLCLK;
+#endif
+
+#ifdef NO_XTAL
+	//Turn on HSI48 supposedly it will turn itself on if USB is enabled with HSI48 selected as clock
+	RCC->CR2 |= RCC_CR2_HSI48ON;
+
+	while ((RCC->CR2 & RCC_CR2_HSI48RDY) != RCC_CR2_HSI48RDY) /* (10) Wait until the HSI48 is stable */
+	{ /* For robust implementation, add here time-out management */ }
+
+	//by default the 072 has HSI 48Mhz selected as USB clock
+	RCC->CFGR3 &= ~RCC_CFGR3_USBSW_Msk;
+	//on the 070 this equates to off, so 070 must set USBSW bit
+	//CRS system must be turned on to keep HSI 48Mhz calibrated
+	RCC->APB1ENR |= RCC_APB1ENR_CRSEN;
+	//Default settings are good using SOF packets for calibration
+#endif
+
+	//enable USB block by providing clock
+	RCC->APB1ENR |= RCC_APB1ENR_USBEN;
+
+
+}
+
+

@@ -87,12 +87,23 @@
 //usbstm only uses the stack and usb_buff ram table
 //There are 2 bytes unused, perhaps these can be utilized for initialization flags or other communication between
 //usb driver and application code
+#define USBFLAG			7
+#define usbflag  usb_buff[USBFLAG]	//used for communication between USB driver and main application
+	//different values for usbflag
+	//			0x0000 reserved for flag cleared	
+	#define INITUSB		0xA53C
+
+//need 4 bytes for setup & write functions, bump the BTABLE another 8Bytes for now...
+#define USBFUNCSETUP		8
+#define usbfuncsetup  usb_buff[USBFUNCSETUP]
+#define USBFUNCWRITE		9
+#define usbfuncwrite  usb_buff[USBFUNCWRITE]
 
 
 //buffer table itself is located in 1KB buffer above, but it's location is programmable
 //the table must be aligned to an 8Byte boundary
 //#define USB_BTABLE_ADDR ((uint16_t) 0x0000)	//least 3 significant bits are forced to zero
-#define USB_BTABLE_ADDR ((uint16_t) 0x0010)	//this skips the first 16Bytes of usb buffer so can be used for vars above
+#define USB_BTABLE_ADDR ((uint16_t) 0x0018)	//this skips the first 16+8Bytes of usb buffer so can be used for vars above
 #define USB_BTABLE_BASE USB_BTABLE_ADDR/2	//The base index is in 16bit half words
 #define USB_BTABLE_SIZE 64	//32x 16bit halfwords
 //NOTE!!! ADDR is the 8bit "BYTE" address, BASE is the index of the usb_buff array
@@ -273,13 +284,14 @@ extern uint16_t volatile (* const usb_buff);
 #define usbMsgPtr_L  usb_buff[USBMSGPTR_L]	//place this variable in USB RAM
 #define usbMsgPtr_H  usb_buff[USBMSGPTR_H]	//place this variable in USB RAM
 
+//These declarations are solely for compilation purposes of usb code so it knows what
+//these functions contained in the application code look like
 extern uint16_t usbFunctionSetup(uint8_t data[8]);
 extern uint8_t usbFunctionWrite(uint8_t *data, uint8_t len);
 
-void init_clock();
-void init_usb_clock();
-void usb_reset_recovery();
-void init_usb();
+//don't want any application functions/files calling this code!
+//void usb_reset_recovery();
+//void init_usb();
 
 
 #endif

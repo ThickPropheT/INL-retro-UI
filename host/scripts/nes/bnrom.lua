@@ -7,10 +7,12 @@ local dict = require "scripts.app.dict"
 local nes = require "scripts.app.nes"
 local dump = require "scripts.app.dump"
 local flash = require "scripts.app.flash"
+local time = require "scripts.app.time"
 
 -- file constants & variables
 local mapname = "BxROM"
 local banktable_base = 0xFF94 --Lizard
+--local banktable_base = 0xFFE0 --HH85
 --local rom_FF_addr = 0x8000
 
 -- local functions
@@ -238,7 +240,9 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 
 		--TODO find bank table to avoid bus conflicts!
 		--dump cart into file
+		time.start()
 		dump_prgrom(file, prg_size, false)
+		time.report(prg_size)
 
 		--close file
 		assert(file:close())
@@ -280,12 +284,16 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		--determine if auto-doubling, deinterleaving, etc, 
 		--needs done to make board compatible with rom
 
+		time.start()
+
 		--write bank table to all banks of cartridge
 		wr_bank_table(banktable_base, prg_size/32) --32KB per bank
 		--TODO need to verify where bank table belongs and properly determine number of banks
 
 		--flash cart
 		flash_prgrom(file, prg_size, true)
+
+		time.report(prg_size)
 
 		--close file
 		assert(file:close())
@@ -300,7 +308,9 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		file = assert(io.open(verifyfile, "wb"))
 
 		--dump cart into file
+		time.start()
 		dump_prgrom(file, prg_size, false)
+		time.report(prg_size)
 
 		--close file
 		assert(file:close())

@@ -6,42 +6,6 @@
 //since usb drivers don't use any .data nor .bss space
 //static int log = 0;
 
-//pick define based on xtal setup for init_clock and init_usb_clock functions
-//#define NO_XTAL
-#define EXTERNAL_XTAL
-void init_usb_clock()
-{
-	// stm32f0x2 devices have HSI 48Mhz available to clock usb block, or PLL if it's source accurate enough
-	// stm32f0x0 devices must have ext xtal and use PLL output to drive usb block
-	
-#ifdef EXTERNAL_XTAL
-	//by default the 072 has HSI 48Mhz selected as USB clock
-	//on the 070 this equates to off, so 070 must set USBSW bit
-	RCC->CFGR3 |= RCC_CFGR3_USBSW_PLLCLK;
-#endif
-
-#ifdef NO_XTAL
-	//Turn on HSI48 supposedly it will turn itself on if USB is enabled with HSI48 selected as clock
-	RCC->CR2 |= RCC_CR2_HSI48ON;
-
-	while ((RCC->CR2 & RCC_CR2_HSI48RDY) != RCC_CR2_HSI48RDY) /* (10) Wait until the HSI48 is stable */
-	{ /* For robust implementation, add here time-out management */ }
-
-	//by default the 072 has HSI 48Mhz selected as USB clock
-	RCC->CFGR3 &= ~RCC_CFGR3_USBSW_Msk;
-	//on the 070 this equates to off, so 070 must set USBSW bit
-	//CRS system must be turned on to keep HSI 48Mhz calibrated
-	RCC->APB1ENR |= RCC_APB1ENR_CRSEN;
-	//Default settings are good using SOF packets for calibration
-#endif
-
-	//enable USB block by providing clock
-	RCC->APB1ENR |= RCC_APB1ENR_USBEN;
-
-
-}
-
-
 void usb_reset_recovery(){
 
 //	USB->CNTR |= USB_CNTR_FRES;
@@ -206,10 +170,13 @@ uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 
 //static uint16_t num_bytes_req;
 #define num_bytes_req  		usb_buff[NUM_BYTES_REQ]		//place this variable in USB RAM
+
 //static uint16_t num_bytes_sending;
 #define num_bytes_sending  	usb_buff[NUM_BYTES_SENDING]	//place this variable in USB RAM
+
 //static uint16_t num_bytes_expecting;		//this was never used, so it was cut
 //#define num_bytes_expecting  	usb_buff[NUM_BYTES_EXPECTING]	//place this variable in USB RAM
+
 //static uint16_t num_bytes_xfrd;
 #define num_bytes_xfrd  	usb_buff[NUM_BYTES_XFRD]	//place this variable in USB RAM
 
@@ -228,7 +195,6 @@ uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 #define newaddr_reqtype  usb_buff[NEWADDR_REQTYPE]	//place this variable in USB RAM
 
 
-
 //static uint8_t	req_dir;
 #define req_dir  usb_buff[VAR_REQ_DIR]	//place this variable in USB RAM
 
@@ -240,8 +206,14 @@ uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 
 //#define TSSOP20	//defined when using TSSOP-20 part to get PA11/12 alternate mapping to the pins
 
+//prereq: USB block's clock must be initialized prior to calling
 void init_usb()
 {
+
+	//initialize the clock
+	//init_usb_clock();
+	//couldn't get this to work for some reason.. 
+	//leaving it up to the main to turn on the USB clock
 
 	//clear variables stored in USB ram since can't rely on .bss clearning them anymore
 	//Don't think most of these actually need to be cleared.. newaddr_reqtype might be only one..
@@ -769,7 +741,22 @@ static void control_xfr_init( usbRequest_t *spacket ) {
 	//setup packets not handled by standard requests sent to usbFunctionSetup (just like Vusb)
 	if ((spacket->bmRequestType & REQ_TYPE_MASK) != REQ_TYPE_STD) {
 		//function must set usbMsgPtr to point to return data for IN transfers
-		num_bytes_sending = usbFunctionSetup( (uint8_t*) spacket );
+		//num_bytes_sending = usbFunctionSetup( (uint8_t*) spacket );
+
+		//the above worked great for a long time..
+		//but now I want to separate application code from usb code for firmware updates
+		//to do this the usb code can't directly call application code (usbFunction Setup/Write)
+		//need the application code to tell the usb code where the functions are using variables
+
+		//call the usbFunctionSetup function with some function pointer magic
+		typedef uint16_t (*pFunction)(uint8_t data[8]);
+		pFunction JumpToApplication;
+		JumpToApplication = (uint16_t (*)(uint8_t data[8])) ((0x08000000));  //base of flash
+		//application main makes the following assignment at powerup
+		//usbfuncsetup = (uint32_t) &usbFunctionSetup;	//should only assign lower 16bits
+		JumpToApplication += usbfuncsetup;
+
+		num_bytes_sending = JumpToApplication( (uint8_t*) spacket );
 	}
 	
 	
@@ -863,6 +850,7 @@ static void control_xfr_init( usbRequest_t *spacket ) {
 		//control_xfr_out();
 	}
 
+
 }
 
 
@@ -880,6 +868,20 @@ static void control_xfr_init( usbRequest_t *spacket ) {
 	//software to determine, which events caused an interrupt request.
 void USB_IRQHandler(void)
 {
+
+	//communications between application code & USB to prevent direct calls
+	//USB interrupts should probably be disabled when getting things done in this manner..
+	if (usbflag) {
+		//IDK if checking for it to be clear before switching will result in faster code or not..
+		switch (usbflag) {
+			case INITUSB:
+				init_usb(); break;
+		}
+		//clear the flag so don't come back for same request
+		//TODO think this trough to make sure other IRQ triggers aren't going to mess this up..
+		//perhaps we need to disable irq's while performing these flaging operations..
+		usbflag = 0x0000;
+	}
 
 	//all interrupts enabled by USB_CNTR, plus any successful rx/tx to an endpoint triggers this ISR
 	
@@ -947,7 +949,20 @@ void USB_IRQHandler(void)
 //			if ( log >= LOG_COUNT) { DEBUG_HI(); DEBUG_LO(); }
 		//number of bytes received is denoted in USB_COUNTn_RX buffer table
 			//control_xfr_out();
-			usbFunctionWrite((uint8_t*) &usb_buff[EP0_RX_BASE], (usb_buff[USB_COUNT0_RX] & RX_COUNT_MSK));
+			//usbFunctionWrite((uint8_t*) &usb_buff[EP0_RX_BASE], (usb_buff[USB_COUNT0_RX] & RX_COUNT_MSK));
+
+			//usb code doesn't know where usbFunctionWrite is at build time
+			//must use usb_buff variables as function pointers, but they're only 16bit
+
+			//function pointer magic
+			typedef uint8_t (*pFunction)(uint8_t *data, uint8_t len);
+			pFunction JumpToApplication;
+			JumpToApplication = (uint8_t (*)(uint8_t *data, uint8_t len)) ((0x08000000));  //Base of flash
+			//application main makes the following assignment at powerup
+			//usbfuncwrite = (uint32_t) &usbFunctionWrite;	//should only assign lower 16bits
+			JumpToApplication += usbfuncwrite;	//must be within first 64KByte of flash
+			JumpToApplication((uint8_t*) &usb_buff[EP0_RX_BASE], (usb_buff[USB_COUNT0_RX] & RX_COUNT_MSK));
+
 			USB_EP0R_RX_VALID();
 			}
 		}
