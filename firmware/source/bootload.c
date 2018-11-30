@@ -39,6 +39,15 @@ uint8_t bootload_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8
 		case JUMP_ADDR:		jump2addr((addrh<<16) | (operand));	break;
 					//device may not respond depending on the address/function being jumped to
 		
+		case PREP_FWUPDATE:	//while we are directly jumping to fwupdate section
+					//it should be okay if it's in a fixed location
+					return fwupdate_forever();	break;	
+					//this function hijacked the stack frame to steal execution
+					//after returing from the current USB ISR
+					//it returns SUCCESS/ERR depending on if it found and modified
+					//the stack frame successfully
+					//leaves main application code for good
+					//will respond to usb interrupts, but are directed to fwupdater
 		default:
 			 //opcode doesn't exist
 			 return ERR_UNKN_BOOTLOAD_OPCODE;

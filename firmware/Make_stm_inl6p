@@ -51,16 +51,14 @@ LDSCRIPTS=-L. -L$(BASE)/include_stm -T nokeep.ld
 LFLAGS=$(USE_NANO) $(USE_NOHOST) $(LDSCRIPTS) $(GC) $(MAP)
 
 DEFINE+=\
-	-DSTM32F070x6 \
-	-DF_CPU=16000000 \
+	-DSTM32F070xB \
+	-DF_CPU=48000000 \
 	-DSTM_CORE \
 	-DSTM_INL6_PROTO #inlretro 6connector prototype
-#	-DSTM_INL6 	#inlretro 6connector
 #	-DSTM_ADAPTER #stm32 to kazzo adapter board
+#	-DSTM32F070x6 \ #32KB version of both packages (TSSOP-20,LQFP-48)
 #	-DSTM32F072x8 \ #64KB version of all packages (LQFP-48,64,100)
 #	-DSTM32F070xB \ #128KB version of both packages (LQFP-48,64)
-#	-DSTM32F070x6 \ #32KB version of both packages (TSSOP-20,LQFP-48)
-#	-DF_CPU=8000000
 INCLUDE=-I ./include_stm
 CFLAGS+= $(DEFINE) $(INCLUDE) 
 

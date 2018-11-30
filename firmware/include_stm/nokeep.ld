@@ -80,12 +80,33 @@ SECTIONS
 		/* hardfault & dummy handlers */
 		*(.hardfault) 
 
+		/*this contains vital code for fwupdater appears to be some case statement helper..*/
+		*_thumb1_case_uqi.o	/* about 50 bytes */
+		/* his freinds are 50 Bytes each as well don't seem to be required
+		 * but lets include them for now anyway.  Perhaps we can move them
+		 * if we're ~100 bytes short at some point */
+		*_thumb1_case_shi.o	/*this disappeared when updating from gcc version 6.2.1 20161205
+					 *to version 7.3.1 20180622 but we'll keep it here anyway */
+		*_thumb1_case_uhi.o
+
 		/* put firmware update code at end of first 2KByte
 		 * should allow for easier updating of that code alone 
 		 * by the application code if desired */
 		*(.fw_update) 
 
+		/* when created there was about 132 Bytes of free space here */
+
+		/* fwupdate main needs to be in a fixed location */
+		. = 0x0780;
+		*(.fw_up_main) 
+
+		/* when created there was about 32Bytes free space here */
+
+		/* THIS IS THE END OF THE USB DRIVER & FIRMWARE UDPATER SECTION */
+
+
 		. = 0x0800;	/*update the location counter to the 3rd KByte */
+
 		/* reset handler fixed to 0x08000800
 		 * that way the vector table should always be accurate */
 		*(.reset_handler) 
@@ -100,6 +121,48 @@ SECTIONS
 		/* then everything else (application code) follows */
 
 		*(.text*)
+
+		/* GCC LIBRARIES */
+		/* Had issues with fwupdater breaking when my switch case got so big
+		 * turns out it must have been calling _thumb1_case_uqi.o library function
+		 * because whenever the sector with that library got stomped the mcu went
+		 * to hard fault (code that was being executed got erased)
+		 * 'quick' fix was to move that library function to fw_update section
+		 * went ahead and moved his case freinds as well.
+		 *
+		 * Possible that this issue could arise again if the fwupdate code calls 
+		 * other library functions.  I was able to move most of them with the
+		 * linker script, but not the libgcc.a ones.  Kept getting a linker
+		 * error with .text having both .exidx and .extab sections.  Apparently
+		 * these are for some C++ stack unrolling and exception handling
+		 * I don't even think I want these, and the fwupdater certainly shouldn't
+		 * need them.  So just leave them were they land normally at the end of .text
+		 * section.  If we run out of flash space some day they can probably
+		 * just get left out of the binary.  I tried to turn them off but failed..
+		 * don't care anymore, fixed my problem, I've banged my head enough for today
+		 */
+
+		/* *\lib*.a:*  */
+		/* *\libgcc.a:* */	
+		/* these are causing compiler issues, but honestly I don't want them anyway! */
+		/* some C++ junk about unwinding the stack and raising exeptions. */
+		/* *unwind-arm.o */
+		/* *pr-support.o */
+		/* *libunwind.o */  /*this one is movable I don't think I want it anyway!*/
+
+		/* some movable library code that doesn't seem to be relied upon by fwupdater
+		 * if the fwupdater fails at somepoint may want to see if it's calling 
+		 * code from these libraries and move them to fwupdate space 
+		*\libg.a:*	 <- includes things like memcpy
+		*\libnosys.a:*	
+		*\crti.o:*	
+		*/
+
+		/*	these got moved to fwupdate section, but so far only the first is used
+		*_thumb1_case_uqi.o
+		*_thumb1_case_shi.o
+		*_thumb1_case_uhi.o
+		*/
 
 		*(.init)
 		*(.fini)

@@ -165,7 +165,7 @@ USBDRIVER void usb_reset_recovery(){
 //uint16_t volatile (* const usb_buff)[512] = (void*)USB_PMAADDR; 
 //this was suggestion by: http://a3f.at/articles/register-syntax-sugar
 //which errors on compilation due to assigning of type array
-USBDRIVER uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
+uint16_t volatile (* const usb_buff) = (void*)USB_PMAADDR;
 
 
 //static uint16_t num_bytes_req;
@@ -756,17 +756,52 @@ USBDRIVER static void control_xfr_init( usbRequest_t *spacket ) {
 
 		//but this is where we need to snoop on the setup packet to determine 
 		//if it's a firmware update packet
-//		if (fwupdate logic) {
+		//
+		//this isn't needed anymore though.  because the application code
+		//jumps to the fwupdate main which effectively exits the main application
+		//then updates our usb function pointers for us.
+		//
+		//
+//		if (spacket->bRequest == DICT_FWUPDATE ) {
 //			//send this packet to the firmware updater
-//			erase_main();
+//			//do this by changing the usbfuncsetup pointer
+//			usbfuncsetup = (uint32_t) &usb_fwupdate_setup;	//should only assign lower 16bits
+//			//now all setup packets will go to the fwupdater instead of application code
+//			//we're basically stuck in this condition until a reset which is what we want
+//			//accidentally jumping to the application code that's not existent would brick us
+//			//hmmm could have the application code do this for us though instead of slowing down
+//			//all setup packets..
+//			//I think I like this idea, use BOOTLOADER dictionary to get it done once
+//			//rest of update stuff is working
+//			//other thing that should be protected from is write transfers
+//
+//			//The above was DONE
+//
+//
+//			//other thing we need to do is keep the USB ISR from returning to 
+//			//the main function
+//			//I think this function is inlined with the USB ISR which means the current
+//			//value in the link register is where the ISR will return to
+//			asm(
+//				//	"ldr     r0, sramconst\n"
+//				//	"mov 	r13, r0\n"
+//				//	"ldr     r0, sramconst+4\n"
+//      					"bkpt\n"
+//      					//"bx r0\n"
+//					//"mov pc, r0\n"
+//					//".p2align 2\n"
+//					//"sramconst:\n"
+//					////".word        0xDEADBEEF"
+//					//".word        0x20001278\n"	//MSP for bootloader
+//					////".word        0x1FFFC519"	//AN2606 note for jumping to bootloader C6
+//					//".word        0x1FFFCAC5\n"	//C6 reset vector
+//			   );
 //		}
-//		else {	//normal setup packet send to application code
-			JumpToApplication = (uint16_t (*)(uint8_t data[8])) ((0x08000000));  //base of flash
-			//application main makes the following assignment at powerup
-			//usbfuncsetup = (uint32_t) &usbFunctionSetup;	//should only assign lower 16bits
-			JumpToApplication += usbfuncsetup;
 
-//		}
+		JumpToApplication = (uint16_t (*)(uint8_t data[8])) ((0x08000000));  //base of flash
+		//application main makes the following assignment at powerup
+		//usbfuncsetup = (uint32_t) &usbFunctionSetup;	//should only assign lower 16bits
+		JumpToApplication += usbfuncsetup;
 
 		//perform the actual jump/call
 		num_bytes_sending = JumpToApplication( (uint8_t*) spacket );

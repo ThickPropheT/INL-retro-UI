@@ -23,6 +23,7 @@
 #define		LOAD_ADDRH	2	//upper address of jump 
 #define		JUMP_ADDR	3	//jump to address upper 16bit provided previous opcode
 
+#define		PREP_FWUPDATE	4	//leave main application and sets up for fwupdate
 
 
 #endif

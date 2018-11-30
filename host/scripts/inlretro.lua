@@ -54,6 +54,7 @@ function main ()
 	local swim = require "scripts.app.swim"
 	local jtag = require "scripts.app.jtag"
 	local ciccom = require "scripts.app.ciccom"
+	local fwupdate = require "scripts.app.fwupdate"
 --	local bootload = require "scripts.app.bootload"
 --	local crc32 = require "scripts.app.crc32"
 
@@ -67,12 +68,12 @@ function main ()
 	--local curcart = require "scripts.nes.mmc1"
 	--local curcart = require "scripts.nes.unrom"
 	--local curcart = require "scripts.nes.cnrom"
-	local curcart = require "scripts.nes.mmc3"
+	--local curcart = require "scripts.nes.mmc3"
 	--local curcart = require "scripts.nes.mmc2"
 	--local curcart = require "scripts.nes.mmc4"
 	--local curcart = require "scripts.nes.mm2"
 	--local curcart = require "scripts.nes.mapper30"
-	--local curcart = require "scripts.nes.bnrom"
+	local curcart = require "scripts.nes.bnrom"
 	--local curcart = require "scripts.nes.cdream"
 	--local curcart = require "scripts.nes.cninja"
 	--local curcart = require "scripts.nes.action53"
@@ -88,7 +89,7 @@ function main ()
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
 -- =====================================================
-	local cart_console = "NES" 	--includes Famicom
+	--local cart_console = "NES" 	--includes Famicom
 	--local cart_console = "SNES"
 	--local cart_console = "SEGA"
 	--local cart_console = "N64"
@@ -143,6 +144,12 @@ function main ()
 --	dict.bootload("JUMP_BL")	
 --	dict.bootload("JUMP_TEST")	
 --	print("jumped")
+--
+
+	--Firmware update testing
+
+	fwupdate.update_firmware("../firmware/build_stm/inlretro_stm.bin")
+		
 
 --	debug = true
 --	rv = cart.detect(debug)
@@ -288,7 +295,7 @@ function main ()
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/BBC_nonJW.bin", "ignore/verifyout.bin")
 			--curcart.process( true, false, false, false, false, "ignore/dump.bin", "ignore/MysticOrigins.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/NESmaker.nes", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/tb_map30.prg", "ignore/verifyout.bin")
+			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/tb_map30.prg", "ignore/verifyout.bin")
 
 
 			--COLOR NINJA
@@ -363,7 +370,7 @@ function main ()
 
 			--BNROM
 			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/lizard_PG.prg", "ignore/verifyout.bin")
-			--curcart.process( true, true, true, true, true, "ignore/dump.bin", "ignore/lizard_v2.prg", "ignore/verifyout.bin")
+			curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/lizard_v2.prg", "ignore/verifyout.bin")
 			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/hh85.prg", "ignore/verifyout.bin")
 
 			--FME7

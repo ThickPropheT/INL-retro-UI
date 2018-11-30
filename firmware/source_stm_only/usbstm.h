@@ -5,6 +5,7 @@
 //include target chip port definition library files
 #include <stm32f0xx.h>
 
+#include "../source/shared_dictionaries.h"
 #include "fwupdate.h"
 
 #define USBDRIVER __attribute__ ((section (".usb_driver")))
@@ -98,13 +99,19 @@
 #define usbflag  usb_buff[USBFLAG]	//used for communication between USB driver and main application
 	//different values for usbflag
 	//			0x0000 reserved for flag cleared	
-	#define INITUSB		0xA53C
+	#define INITUSB		0xA53C	//used by main application to tell usb driver to initialize itself
 
 //need 4 bytes for setup & write functions, bump the BTABLE another 8Bytes for now...
 #define USBFUNCSETUP		8
-#define usbfuncsetup  usb_buff[USBFUNCSETUP]
+#define usbfuncsetup	usb_buff[USBFUNCSETUP]	//will always be odd (Thumb)
 #define USBFUNCWRITE		9
-#define usbfuncwrite  usb_buff[USBFUNCWRITE]
+#define usbfuncwrite	usb_buff[USBFUNCWRITE]	//will always be odd (Thumb)
+//	#define RESETME		0x5FA4	//used by fwupdater to signal device to reset itself 
+					//being an even number we know it's a safe value because all funcs are thumb
+//#define FWPTR_LO		10
+//#define fwptr_lo	usb_buff[FWPTR_LO]
+//#define FWPTR_HI		11
+//#define fwptr_hi	usb_buff[FWPTR_HI]
 
 
 //buffer table itself is located in 1KB buffer above, but it's location is programmable

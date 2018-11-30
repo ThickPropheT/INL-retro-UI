@@ -731,6 +731,60 @@ local function bootload( opcode, operand, misc, data )
 end
 
 
+
+-- external call for firmware update dictionary
+local function fwupdate( opcode, operand, misc, data )
+
+	if not op_fwupdate[opcode] then
+		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_fwupdate.h")
+		return nil
+	end
+
+	if not operand then 
+		operand = 0 
+	elseif type(operand) == "string" then
+		if not op_fwupdate[operand] then
+			print("ERROR undefined operand:", operand, "must be defined in shared_dict_fwupdate.h")
+			return nil
+		end
+		--decode string operands into 
+		operand = op_fwupdate[operand]
+	end
+	
+	if not misc then misc = 0 end
+
+	local wLength, ep = default_rlen_1_in(op_fwupdate[opcode.."rlen"])
+
+	local count
+	count, data = usb_vend_xfr( 
+	--	ep,	dictionary		wValue[misc:opcode]     wIndex	wLength	 		data
+		ep, dict["DICT_FWUPDATE"], ( misc<<8 | op_fwupdate[opcode]),	operand,	wLength,	data)
+	--print(count)
+	local error_code, data_len
+	if ep == USB_IN then
+		error_code = data:byte(RETURN_ERR_IDX)
+		data_len =   data:byte(RETURN_LEN_IDX)
+	end
+	--print("error:", error_code, "data_len:",  data_len)
+	
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+
+	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
+		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
+	end
+
+	--process the return data string and return it to calling function
+	if data_len then
+		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+	else 
+		return nil
+	end 
+
+
+
+end
+
+
 -- external call for ciccom dictionary
 local function ciccom( opcode, operand, misc, data )
 
@@ -966,6 +1020,7 @@ op_n64 = {}
 op_swim = {}
 op_jtag = {}
 op_bootload = {}
+op_fwupdate = {}
 op_ciccom = {}
 err_codes = {}
 
@@ -985,6 +1040,7 @@ create_dict_tables( op_n64,  	"../shared/shared_dict_n64.h")
 create_dict_tables( op_swim,  	"../shared/shared_dict_swim.h")
 create_dict_tables( op_jtag,  	"../shared/shared_dict_jtag.h")
 create_dict_tables( op_bootload,"../shared/shared_dict_bootload.h")
+create_dict_tables( op_fwupdate,"../shared/shared_dict_fwupdate.h")
 create_dict_tables( op_ciccom,	"../shared/shared_dict_ciccom.h")
 create_dict_tables( err_codes, 	"../shared/shared_errors.h")
 
@@ -1005,6 +1061,7 @@ dict.buffer = buffer
 dict.buffer_payload_in = buffer_payload_in
 dict.buffer_payload_out = buffer_payload_out
 dict.operation = operation
+dict.fwupdate = fwupdate
 
 -- return the module's table
 return dict

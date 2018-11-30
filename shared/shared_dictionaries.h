@@ -270,4 +270,16 @@
 //=============================================================================================
 
 
+//=============================================================================================
+//=============================================================================================
+#define DICT_FWUPDATE 16
+#include "shared_dict_fwupdate.h"
+//dictionary used to control self updating firmware functions
+//These commands aren't actually processed by the main application
+//they are sniffed out by the device's usb code and handled separately
+//this is because we are presumedly erasing the main application code
+//=============================================================================================
+//=============================================================================================
+
+
 #endif
