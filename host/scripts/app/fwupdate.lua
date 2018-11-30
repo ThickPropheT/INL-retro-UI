@@ -24,12 +24,14 @@ local function erase_main()
 	print("flash addr:", string.format("%X", rv) )
 
 	while (curpage<32) do
---	while (curpage<128) do
-		print("erasing page:", curpage)
+--	while (curpage<128) do	--RB has 128KB but last 96KB isn't used (yet)
+		if(curpage%4 ==0) then
+			print("erasing page:", curpage)
+		end
 		dict.fwupdate("ERASE_1KB_PAGE", curpage)
 
-		rv = dict.fwupdate("GET_FLASH_ADDR") 
-		print("flash addr:", string.format("%X", rv) )
+		--rv = dict.fwupdate("GET_FLASH_ADDR") 
+		--print("flash addr:", string.format("%X", rv) )
 
 		curpage = curpage+1
 	end
@@ -40,107 +42,152 @@ local function update_firmware(newbuild)
 
 	print("updating")
 
+	--open new file first, don't bother continuing if can't find it.
+	file = assert(io.open(newbuild, "rb"))
+
+	--TODO verify the first 2KByte match, don't continue if not..
+
 	--enter fwupdate mode
 	dict.bootload("PREP_FWUPDATE")	
 
 	--now the device will only respond to FWUPDATE dictionary commands
 	
-	--open new file
-	file = assert(io.open(newbuild, "rb"))
-
-	--TODO verify first 2KByte matches build
-	
 	--erase 30KByte of application code
---	erase_main()
+	erase_main()
 
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	print("\n");
-
-	--advance past the first 2KB of build
-	dict.fwupdate("ERASE_1KB_PAGE", 30)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
+	--Set FLASH->AR to beginging of application section
+	--this can be done be re-erasing it..
+	--maybe we could have skipped page 2 in erase_main
+	--or have erase_main count down..
+	dict.fwupdate("ERASE_1KB_PAGE", 2)
 	rv = dict.fwupdate("GET_FLASH_ADDR") 
 	print("flash addr:", string.format("%X", rv) )
 	print("\n");
 	
-	dict.fwupdate("SET_FLASH_ADDR", 0x7912, 0x01)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
+	--advance the file past first 2KByte
+	local buffsize = 1
+	local byte, data
+	local byte_num = 0
+	for byte in file:lines(buffsize) do
+		data = string.unpack("B", byte, 1)
+		--print(string.format("%X", data))
+		byte_num = byte_num + 1
+		if byte_num == 2048 then break end
+	end
 
---	dict.fwupdate("UNLOCK_FLASH")
+	local offset = 0
+	local readdata
+	local data_l
+	buffsize = 1	 --2 bytes at a time
+	print("Writting half word at at time, but it's not much data..")
+	while byte_num < (32*1024) do
 
-	dict.fwupdate("WR_HWORD", 0xCC33, 0x00)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
-	print("\n");
+		--read next byte from the file and convert to binary
+		--gotta be a better way to read a half word (16bits) at a time but don't care right now...
+		byte_str = file:read(buffsize)
+		if byte_str then
+			data_l = string.unpack("B", byte_str, 1)
+		else
+			--should only have to make this check for lower byte
+			--binary file should be even
+			print("end of file")
+			break
+		end
+		byte_str = file:read(buffsize)
+		data = string.unpack("B", byte_str, 1)
+		data = (data<<8)+data_l
+	--	print("writting:", string.format("%X", data), "addr:", string.format("%X", byte_num))
+	
+		if( (byte_num % (4*1024)) == 0 ) then
+			print("flashing KB", byte_num/1024)
+		end
 
-	dict.fwupdate("WR_HWORD", 0x1111, 0x01)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+		--write the data
+		dict.fwupdate("WR_HWORD", data, offset)
 
-	dict.fwupdate("WR_HWORD", 0x2222, 0x01)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+--		if (verify) then
+--			readdata = dict.fwupdate("READ_FLASH", byte_num, 0x00) 
+--			print("read data:", string.format("%X", rv) )
+--			if readdata ~= data then
+--				print("ERROR flashing byte number", byte_num, " to flash ", data, readdata)
+--			end
+--		end
 
-	dict.fwupdate("WR_HWORD", 0x4444, 0x02)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+		offset = 1 --this is zero for first byte, but one for all others..
+		byte_num = byte_num + 2
+	end
+	--]]
 
-	dict.fwupdate("WR_HWORD", 0x7777, 0x03)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+--	dict.fwupdate("WR_HWORD", 0xCC33, 0x00)
+--	rv = dict.fwupdate("GET_FLASH_ADDR") 
+--	print("flash addr:", string.format("%X", rv) )
+--	rv = dict.fwupdate("GET_FLASH_DATA") 
+--	print("flash data:", string.format("%X", rv) )
+--	print("\n");
+--	print("\n");
+--
+--	dict.fwupdate("WR_HWORD", 0x1111, 0x01)
+--	rv = dict.fwupdate("GET_FLASH_ADDR") 
+--	print("flash addr:", string.format("%X", rv) )
+--	rv = dict.fwupdate("GET_FLASH_DATA") 
+--	print("flash data:", string.format("%X", rv) )
+--	print("\n");
+--
+--	dict.fwupdate("WR_HWORD", 0x2222, 0x01)
+--	rv = dict.fwupdate("GET_FLASH_ADDR") 
+--	print("flash addr:", string.format("%X", rv) )
+--	rv = dict.fwupdate("GET_FLASH_DATA") 
+--	print("flash data:", string.format("%X", rv) )
+--	print("\n");
+--
+--	dict.fwupdate("WR_HWORD", 0x4444, 0x02)
+--	rv = dict.fwupdate("GET_FLASH_ADDR") 
+--	print("flash addr:", string.format("%X", rv) )
+--	rv = dict.fwupdate("GET_FLASH_DATA") 
+--	print("flash data:", string.format("%X", rv) )
+--	print("\n");
+--
+--	dict.fwupdate("WR_HWORD", 0x7777, 0x03)
+--	rv = dict.fwupdate("GET_FLASH_ADDR") 
+--	print("flash addr:", string.format("%X", rv) )
+--	rv = dict.fwupdate("GET_FLASH_DATA") 
+--	print("flash data:", string.format("%X", rv) )
+--	print("\n");
+--
+--	dict.fwupdate("WR_HWORD", 0xAAAA, 0x10)
+--	rv = dict.fwupdate("GET_FLASH_ADDR") 
+--	print("flash addr:", string.format("%X", rv) )
+--	rv = dict.fwupdate("GET_FLASH_DATA") 
+--	print("flash data:", string.format("%X", rv) )
+--	print("\n");
+--
+--	dict.fwupdate("WR_HWORD", 0xBBBB, 0x20)
+--	rv = dict.fwupdate("GET_FLASH_ADDR") 
+--	print("flash addr:", string.format("%X", rv) )
+--	rv = dict.fwupdate("GET_FLASH_DATA") 
+--	print("flash data:", string.format("%X", rv) )
+--	print("\n");
+--
+----	dict.fwupdate("LOCK_FLASH")
+--
+--	rv = dict.fwupdate("READ_FLASH", 0x0000, 0x00) 
+--	print("read data:", string.format("%X", rv) )
+--
+--	rv = dict.fwupdate("READ_FLASH", 0x053e, 0x00) 
+--	print("read data:", string.format("%X", rv) )
+--
+--	rv = dict.fwupdate("READ_FLASH", 0x791a, 0x00) 
+--	print("read data:", string.format("%X", rv) )
 
-	dict.fwupdate("WR_HWORD", 0xAAAA, 0x10)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
-
-	dict.fwupdate("WR_HWORD", 0xBBBB, 0x20)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
-
---	dict.fwupdate("LOCK_FLASH")
-
-	rv = dict.fwupdate("READ_FLASH", 0x0000, 0x00) 
-	print("read data:", string.format("%X", rv) )
-
-	rv = dict.fwupdate("READ_FLASH", 0x053e, 0x00) 
-	print("read data:", string.format("%X", rv) )
-
-	rv = dict.fwupdate("READ_FLASH", 0x791a, 0x00) 
-	print("read data:", string.format("%X", rv) )
+	--close file
+	assert(file:close())
+	print("\n\n DONE updating flash. \n\n Reseting device \n\n IGNORE the error that comes next.. \n\n")
 
 	dict.fwupdate("RESET_DEVICE")
 
 	--write build to flash
 
-	print("updated")
+	print("updated")	--this doesn't print because reset errored us out..
 end
 
 -- global variables so other modules can use them
