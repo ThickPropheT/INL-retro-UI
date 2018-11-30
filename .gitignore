@@ -14,3 +14,6 @@ firmware/source/shared_*.h
 
 # ignore trash/temp files stored in host/ignore
 host/ignore
+
+# ignore built executable
+host/inlretro
