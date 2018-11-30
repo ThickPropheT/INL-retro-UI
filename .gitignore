@@ -2,6 +2,7 @@
 # Ignore files ending in the following #
 ########################################
 *.o
+*.d
 *.swp
 *.swo
 *.bin
@@ -14,3 +15,6 @@ firmware/source/shared_*.h
 
 # ignore trash/temp files stored in host/ignore
 host/ignore
+
+# OS X Metadata
+.DS_Store
