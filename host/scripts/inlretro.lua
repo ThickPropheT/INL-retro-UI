@@ -89,7 +89,7 @@ function main ()
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
 -- =====================================================
-	--local cart_console = "NES" 	--includes Famicom
+	local cart_console = "NES" 	--includes Famicom
 	--local cart_console = "SNES"
 	--local cart_console = "SEGA"
 	--local cart_console = "N64"
@@ -148,7 +148,14 @@ function main ()
 
 	--Firmware update testing
 
-	fwupdate.update_firmware("../firmware/build_stm/inlretro_stm.bin")
+	--active development path (based on makefile in use)
+	--fwupdate.update_firmware("../firmware/build_stm/inlretro_stm.bin")
+	
+	--released INL6 path (big square boards)
+	--fwupdate.update_firmware("../firmware/build_stm6/inlretro_stm_AV00.bin")
+	
+	--released INL_N path (smaller NESmaker boards)
+	--fwupdate.update_firmware("../firmware/build_stmn/inlretro_stm_AV00.bin")
 		
 
 --	debug = true

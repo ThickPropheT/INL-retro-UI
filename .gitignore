@@ -2,6 +2,7 @@
 # Ignore files ending in the following #
 ########################################
 *.o
+*.d
 *.swp
 *.swo
 *.bin
@@ -15,5 +16,11 @@ firmware/source/shared_*.h
 # ignore trash/temp files stored in host/ignore
 host/ignore
 
-# ignore built executable
+# Lua static library
+host/source/lua/liblua.a
+
+# Executable (Unix)
 host/inlretro
+
+# OS X Metadata
+.DS_Store

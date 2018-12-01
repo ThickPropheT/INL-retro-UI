@@ -29,6 +29,18 @@
 #include "lua/lauxlib.h"
 #include "lua/lualib.h"
 
+
+// TODO: Finish HELP for all currently supported options.
+const char *HELP =  "Usage: inlretro [options]\n\n"\
+					"Options:\n"\
+					"  -c [console]\t\tConsole port, {NES}\n"\
+					"  -d [dump_filename]\tIf provided, dump cartridge ROMs to this filename\n"\
+					"  -m [mapper]\t\tNES console only, mapper ASIC on cartridge\n"\
+					"  \t\t\t{mmc1,mmc3,nrom}\n"\
+					"  -p [program_filename]\tIf provided, write this data to cartridge\n"\
+					"  -s [lua_script]\tIf provided, use this script for main application logic\n"\
+					"  -h\t\t\tDisplays this message.\n";
+
 // Struct used to control functionality.
 typedef struct {
 	char *console_name;
@@ -159,9 +171,8 @@ INLOptions* parseOptions(int argc, char *argv[]) {
 		log_err("Non-option arguement: %s \n", argv[index]);
 	}
 
-	//TODO display better help message 
 	if (opts->display_help) {
-		printf("You've asked for help but the help message still needs created...\n");
+		printf("%s", HELP);
 		return NULL;
 	}
 	return opts;
@@ -334,7 +345,7 @@ int main(int argc, char *argv[])
 
 	// USB device is open, pass args and control over to Lua.
 	// If lua_filename isn't set from args, use default script.
-	const char *DEFAULT_SCRIPT = "scripts/inlretro.lua";
+	char *DEFAULT_SCRIPT = "scripts/inlretro.lua";
 	char *script = DEFAULT_SCRIPT;
 	if (opts->lua_filename) {
 		script = opts->lua_filename;

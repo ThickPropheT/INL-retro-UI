@@ -55,6 +55,39 @@ int main(void)
 
 #ifdef STM_CORE
 
+	//INDEPENDENT WATCH DOG TIMER
+	//has it's own clock circuit so even if the main clock fails the WDT
+	//will keep running, it's not as accurate as the System Window WDT
+	//but we don't care about accuracy for our needs.
+	//
+	//I can't make sense of the window option, so let's not bother with it..
+	//
+	//Configuring the IWDG when the window option is disabled
+	// When the window option it is not used, the IWDG can be configured as follows:
+	// 1.Enable the IWDG by writing 0x0000 CCCC in the IWDG_KR register.
+#define wdt_enable() 	IWDG->KR = 0x0000CCCC
+	wdt_enable();
+	// 2. Enable register access by writing 0x00005555 in the IWDG_KR register.
+	IWDG->KR = 0x00005555;
+	//After this point the IWDG timer can NEVER be shut off, except via reset..
+	// 3. Write the IWDG prescaler by programming IWDG_PR from 0 to 7.
+	// default is zero divider / 4
+	// 40Khz clock input to prescaler
+	// divided by 4 = 10Khz
+	IWDG->PR = 2;	// divided by 16 = 2.5Khz
+	// 4. Write the reload register (IWDG_RLR).
+	//12bit value that gets loaded into WDcounter each time counter is refreshed
+	//10Khz clock -> 1sec, need a value of 10,000 = 0x2710 too big
+	//12bit counter has max value of 4095
+	//2.5Khz clock -> 1sec, need value of 2500 ~= 2560 = 0xA00
+	IWDG->RLR = 0x0A00;
+	// 5. Wait for the registers to be updated (IWDG_SR = 0x00000000).
+	while( IWDG->SR ) { /* forever */ }
+	// 6. Refresh the counter value with IWDG_RLR (IWDG_KR = 0x0000 AAAA)
+#define wdt_reset() 	IWDG->KR = 0x0000AAAA
+	wdt_reset();
+	//call this function atleast once a second to keep the device from resetting
+
 	//remap system memory (including vector table)
 //	SYSCFG->CFGR1 = 0x00000002;	//boot value (BOOT1:0 = 0b10	
 //	SYSCFG->CFGR1 = 0x00000001;	//map sysmem bootloader to 0x00000000
@@ -115,7 +148,6 @@ int main(void)
 	//setup user switch as input
 
 
-	
 #endif
 
 	//intialize i/o and LED to pullup state
@@ -145,10 +177,10 @@ int main(void)
 	//=================
 	while (1) {
 
-#ifdef AVR_CORE
 		//pet the watch doggie to keep him happy
 		wdt_reset();	
 
+#ifdef AVR_CORE
 		//must call at regular intervals no longer than 50msec
 		//keeps 8Byte EP buffer moving from what I understand
 		usbPoll();	

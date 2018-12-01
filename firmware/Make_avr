@@ -30,7 +30,7 @@ help:
 hex: $(BUILD)/$(PROJ).hex
 
 program: $(BUILD)/$(PROJ).hex
-	../bootloader/commandline/bootloadHID -r $<
+	../avr_bootloader/commandline/bootloadHID -r $<
 
 dir:
 	mkdir -p $(BUILD)

@@ -4,10 +4,13 @@ local fwupdate = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
+local help = require "scripts.app.help"
 
 -- file constants
 
 -- local functions
+
+
 local function erase_main()
 
 	--dict.fwupdate("ERASE_1KB_PAGE", 2)	--page 0 & 1 (first 2KByte) are forbidden
@@ -24,12 +27,14 @@ local function erase_main()
 	print("flash addr:", string.format("%X", rv) )
 
 	while (curpage<32) do
---	while (curpage<128) do
-		print("erasing page:", curpage)
+--	while (curpage<128) do	--RB has 128KB but last 96KB isn't used (yet)
+		if(curpage%4 ==0) then
+			print("erasing page:", curpage)
+		end
 		dict.fwupdate("ERASE_1KB_PAGE", curpage)
 
-		rv = dict.fwupdate("GET_FLASH_ADDR") 
-		print("flash addr:", string.format("%X", rv) )
+		--rv = dict.fwupdate("GET_FLASH_ADDR") 
+		--print("flash addr:", string.format("%X", rv) )
 
 		curpage = curpage+1
 	end
@@ -38,109 +43,180 @@ end
 
 local function update_firmware(newbuild)
 
-	print("updating")
+	local error = false
+
+
+	--open new file first, don't bother continuing if can't find it.
+	file = assert(io.open(newbuild, "rb"))
+
+	--TODO read the fwupdater & app version from the provided file
+	--compare to current device and determine if they're compatible
+	--test let's tinker with SRAM
+	dict.bootload("SET_PTR_HI", 0x0800)
+	dict.bootload("SET_PTR_LO", 0x0800)	--application version 0x08000800 "AV00"
+	local av = dict.bootload("RD_PTR_OFFSET")
+	local ver = dict.bootload("RD_PTR_OFFSET",1)
+	local avstring = string.format("%s%s%s%s", string.char(av&0x00FF), string.char(av>>8),
+					string.char(ver&0x00FF), string.char(ver>>8))
+
+	if avstring == "AV00" then
+		print("application version:", avstring)
+	else
+		print("app version", avstring, "unknown, may need to update to firmware v2.3 or later using STmicro dfuse")
+	end
+
+
+	--verify the first 2KByte match, don't continue if not..
+	--use the bootload dictionary to complete this
+	--want to wait to enter firmware updater
+	
+	--set bootloader 16bit pointer to start of flash
+	dict.bootload("SET_PTR_HI", 0x0800)
+	dict.bootload("SET_PTR_LO", 0x0000)
+	local offset = 0 --first read has no offset
+	
+	--advance the file past first 2KByte
+	local buffsize = 1
+	local byte, data
+	local byte_num = 0
+	local readdata
+	local data_l
+
+	print("Verifing first 2KByte of updater..")
+	while byte_num < (2*1024) do
+
+		--read next byte from the file and convert to binary
+		--gotta be a better way to read a half word (16bits) at a time but don't care right now...
+		byte_str = file:read(buffsize)
+		if byte_str then
+			data_l = string.unpack("B", byte_str, 1)
+		else
+			--should only have to make this check for lower byte
+			--binary file should be even
+			print("There's a problem, file provided is smaller than 2KB fwupdater..")
+			--TODO test this
+			error = true 
+			break
+		end
+		byte_str = file:read(buffsize)
+		data = string.unpack("B", byte_str, 1)
+		data = (data<<8)+data_l
+	
+		if (true) then
+			--both these options work, but the later is limited to reading 64KByte space
+			readdata = dict.bootload("RD_PTR_OFF_UP", offset) 
+			--readdata = dict.bootload("RD_PTR_OFFSET", byte_num>>1) --shift by one 16bit read 
+
+		--	print("read data:", string.format("%X", readdata) )
+			if readdata ~= data then
+				print("\n\nERROR!!!! verifying byte number", help.hex(byte_num), 
+					" to flash expected:", help.hex(data), "was:", help.hex(readdata))
+				print("exiting because it's not safe to proceed...")
+				print("no changes to device flash were made\n\n")
+
+				error = true
+				break
+			--else
+			--	print("verified byte number", help.hex(byte_num), 
+			--		" of flash ", help.hex(data), help.hex(readdata))
+			end
+		end
+
+		offset = 1 --this is zero for first byte, but one for all others..
+		byte_num = byte_num + 2
+	end
+
+	if (not error) then
+		print("\nSuccessfully verified first 2KB of provided file")
+		print("matches the device's firmware updater section\n")
+	end
 
 	--enter fwupdate mode
 	dict.bootload("PREP_FWUPDATE")	
 
 	--now the device will only respond to FWUPDATE dictionary commands
 	
-	--open new file
-	file = assert(io.open(newbuild, "rb"))
-
-	--TODO verify first 2KByte matches build
-	
 	--erase 30KByte of application code
---	erase_main()
+	if (not error) then
+		erase_main()
+	end
 
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	print("\n");
-
-	--advance past the first 2KB of build
-	dict.fwupdate("ERASE_1KB_PAGE", 30)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	print("\n");
+	--Set FLASH->AR to beginging of application section
+	--this can be done be re-erasing it..
+	--maybe we could have skipped page 2 in erase_main
+	--or have erase_main count down..
+	if (not error) then
+		dict.fwupdate("ERASE_1KB_PAGE", 2)
+		print("flash addr:", help.hex(dict.fwupdate("GET_FLASH_ADDR")))
+		print("\n");
+	end
 	
-	dict.fwupdate("SET_FLASH_ADDR", 0x7912, 0x01)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
 
---	dict.fwupdate("UNLOCK_FLASH")
+	offset = 0 --first write has no offset
 
-	dict.fwupdate("WR_HWORD", 0xCC33, 0x00)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
-	print("\n");
+	if (not error) then
+		print("Updating device main application flash..")
+		while byte_num < (32*1024) do
 
-	dict.fwupdate("WR_HWORD", 0x1111, 0x01)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+			--read next byte from the file and convert to binary
+			--gotta be a better way to read a half word (16bits) at a time but don't care right now...
+			byte_str = file:read(buffsize)
+			if byte_str then
+				data_l = string.unpack("B", byte_str, 1)
+			else
+				--should only have to make this check for lower byte
+				--binary file should be even
+				print("end of file")
+				break
+			end
+			byte_str = file:read(buffsize)
+			data = string.unpack("B", byte_str, 1)
+			data = (data<<8)+data_l
+		
+			if( (byte_num % (4*1024)) == 0 ) then
+				print("flashing KB", byte_num/1024)
+			end
 
-	dict.fwupdate("WR_HWORD", 0x2222, 0x01)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+			--print("writting:", string.format("%X", data), "addr:", string.format("%X", byte_num))
 
-	dict.fwupdate("WR_HWORD", 0x4444, 0x02)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+			--write the data
+			dict.fwupdate("WR_HWORD", data, offset)
 
-	dict.fwupdate("WR_HWORD", 0x7777, 0x03)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+			if (true) then
+				readdata = dict.fwupdate("READ_FLASH", byte_num, 0x00) 
+			--	print("read data:", string.format("%X", readdata) )
+				if readdata ~= data then
+					print("\n\nERROR!!!! flashing byte number", help.hex(byte_num), 
+						" to flash expected:", help.hex(data), "was:", help.hex(readdata))
+					print("exiting before causing more damage...\n\n")
+					error = true
+					break
+				--else
+				--	print("verified byte number", help.hex(byte_num), 
+				--		" to flash ", help.hex(data), help.hex(readdata))
+				end
+			end
 
-	dict.fwupdate("WR_HWORD", 0xAAAA, 0x10)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+			offset = 1 --this is zero for first write, but one for all others..
+			byte_num = byte_num + 2
+		end
+	end
+	
+	if (not error) then
+		print("\nSuccessfully updated the device firmware!")
+	end
 
-	dict.fwupdate("WR_HWORD", 0xBBBB, 0x20)
-	rv = dict.fwupdate("GET_FLASH_ADDR") 
-	print("flash addr:", string.format("%X", rv) )
-	rv = dict.fwupdate("GET_FLASH_DATA") 
-	print("flash data:", string.format("%X", rv) )
-	print("\n");
+	--close file
+	assert(file:close())
 
---	dict.fwupdate("LOCK_FLASH")
+	print("\n\n DONE, Reseting device \n\n IGNORE the errors that comes next.. \n\n")
 
-	rv = dict.fwupdate("READ_FLASH", 0x0000, 0x00) 
-	print("read data:", string.format("%X", rv) )
-
-	rv = dict.fwupdate("READ_FLASH", 0x053e, 0x00) 
-	print("read data:", string.format("%X", rv) )
-
-	rv = dict.fwupdate("READ_FLASH", 0x791a, 0x00) 
-	print("read data:", string.format("%X", rv) )
-
+	--TODO maybe don't reset if we got an error, allow for correction while fwupdate still has control..?
 	dict.fwupdate("RESET_DEVICE")
 
 	--write build to flash
 
-	print("updated")
+	print("updated")	--this doesn't print because reset errored us out..
 end
 
 -- global variables so other modules can use them
