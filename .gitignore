@@ -19,5 +19,8 @@ host/ignore
 # Lua static library
 host/source/lua/liblua.a
 
+# Executable (Unix)
+host/inlretro
+
 # OS X Metadata
 .DS_Store
