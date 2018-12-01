@@ -152,7 +152,7 @@ function main ()
 	--fwupdate.update_firmware("../firmware/build_stm/inlretro_stm.bin")
 	
 	--released INL6 path (big square boards)
-	fwupdate.update_firmware("../firmware/build_stm6/inlretro_stm_AV00.bin")
+	--fwupdate.update_firmware("../firmware/build_stm6/inlretro_stm_AV00.bin")
 	
 	--released INL_N path (smaller NESmaker boards)
 	--fwupdate.update_firmware("../firmware/build_stmn/inlretro_stm_AV00.bin")
