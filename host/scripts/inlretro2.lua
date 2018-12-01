@@ -31,7 +31,8 @@ function nes_exec(mapper, dump_filename, flash_filename, verify_filename)
     local mappers = {
         mmc1 = require "scripts.nes.mmc1",
         mmc3 = require "scripts.nes.mmc3",
-        nrom = require "scripts.nes.nrom"
+        nrom = require "scripts.nes.nrom",
+        unrom = require "scripts.nes.unrom"
     }
 
     dict.io("IO_RESET")	
