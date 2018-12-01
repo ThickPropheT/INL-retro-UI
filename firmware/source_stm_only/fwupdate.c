@@ -239,6 +239,7 @@ FWUPDATE_NOIN uint16_t usb_fwupdate_setup(uint8_t data[8])
 	static uint16_t rv16[RETURN_BUFF_SIZE/2];
 	uint8_t *rv = (uint8_t*)rv16;
 
+
 	//create a usbMsgPtr variable from the stack which we can use convienently
 	//but then at end of the function we'll need to copy the value over to usb_buff usbMsgPtr_H/L
 	usbMsgPtr_t usbMsgPtr;
@@ -277,9 +278,10 @@ FWUPDATE_NOIN uint8_t usb_fwupdate_write(uint8_t *data, uint8_t len)
 //and it shouldn't change
 FWUPMAIN uint8_t fwupdate_forever()
 {
+
 	//need to turn off any interrupt sources except USB
 	
-	//TODO turn off WDT
+	//Cannot turn off the WDT not possible!  We must keep petting him!
 	
 	//update usb function pointers to fwupdate functions
 	//this file is compiled at same time as the the setup/write functions
@@ -378,10 +380,15 @@ FWUPMAIN uint8_t fwupdate_forever()
 		//if fwupdate is done, intitate system reset
 		//maybe it's safer to have the user do this by unpluggig the device..?
 
+			//pet watchdog
+			IWDG->KR = 0x0000AAAA;
+
 			//Couldn't get this to work for some reason...
-			//if (usbfuncwrite == RESETME ) {
-			//	SCB->AIRCR = 0x05FA0004;
-			//}
+//			if (usbfuncwrite == RESETME ) {
+//				SCB->AIRCR = 0x05FA0004;
+//			}
+
+
 		
 			asm( "b	fwupdateloop\n"
 			

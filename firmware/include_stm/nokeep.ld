@@ -97,7 +97,7 @@ SECTIONS
 		/* when created there was about 132 Bytes of free space here */
 
 		/* fwupdate main needs to be in a fixed location */
-		. = 0x0780;
+		. = 0x0770;
 		*(.fw_up_main) 
 
 		/* when created there was about 32Bytes free space here */
@@ -107,7 +107,11 @@ SECTIONS
 
 		. = 0x0800;	/*update the location counter to the 3rd KByte */
 
-		/* reset handler fixed to 0x08000800
+		*(.appver)	/* 4 Bytes characters ie: "AV01" */
+		/* can't get this to work right now, just manually add to binary before releasing.. */
+
+		. = 0x0804;
+		/* reset handler fixed to 0x08000804
 		 * that way the vector table should always be accurate */
 		*(.reset_handler) 
 
@@ -184,7 +188,7 @@ SECTIONS
 		*(.rodata*)
 
 		*(.eh_frame*)
-	} > FLASH
+	} > FLASH = 0xFF	/* fill with 0xFF 'erased' */
 
 	.ARM.extab : 
 	{
@@ -268,7 +272,16 @@ SECTIONS
 		*(.fastrun) /*Placing functions in .fastrun section in RAM */
 		/* This kind of breaks arm-none-eabi-size look at .map file __data_end__ for actual data size*/
 		/* Really size is just combining text & data together */
-
+		/* use a function attr like the following:
+		 * #define RAMFUNC __attribute__ ((section (".fastrun"), noinline, noclone))
+		 * RAMFUNC void myramfunction(){ code executes from ram }
+		 * or for assembly functions: .section ".ramfunctions"
+		 * the noinline is important so your function doesn't get inline optimized into
+		 * or so that clones of your function don't end up in different places/sections
+		 * whatever flash code is exectuting it.  However if you have a ram functions
+		 * calling other ram functions you may not need noinline and can benefit from 
+		 * it's optimization
+		 * /
 
 		*(.jcr)
 		. = ALIGN(4);
