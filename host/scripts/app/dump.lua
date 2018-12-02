@@ -10,7 +10,7 @@ local snes = require "scripts.app.snes"
 -- file constants
 
 -- local functions
-local function dumptofile( file, sizeKB, map, mem, debug )
+local function dumptocallback( callback, sizeKB, map, mem, debug )
 
 	local buff0 = 0
 	local buff1 = 1
@@ -94,7 +94,7 @@ local function dumptofile( file, sizeKB, map, mem, debug )
 		--need to setup buffer manager to nak anytime something like this happens
 		--the following setup slows down everything due to status waits..
 --		buffers.status_wait({buff0}, {"DUMPED"}) 
---		file:write( dict.buffer_payload_in( buff_size ))
+--		callback( dict.buffer_payload_in( buff_size ))
 --		buffers.status_wait({buff1}, {"DUMPED"}) 
 
 		--stm adapter having issues with race situation..
@@ -106,7 +106,7 @@ local function dumptofile( file, sizeKB, map, mem, debug )
 			--print(nak, "cur_buff->status: ", cur_buff_status)
 			cur_buff_status = dict.buffer("GET_CUR_BUFF_STATUS")
 		end
-		file:write( dict.buffer_payload_in( buff_size ))
+		callback( dict.buffer_payload_in( buff_size ))
 	--	print("dumped page:", i)
 		
 		--if ( (i % (1024*1024/buff_size/16)) == 0) then
@@ -141,6 +141,15 @@ local function dumptofile( file, sizeKB, map, mem, debug )
 	--and having STARTDUMP/FLASH initialize buffer status' as well.
 	dict.operation("SET_OPERATION", op_buffer["RESET"] )
 	dict.buffer("RAW_BUFFER_RESET")
+end
+
+local function dumptofile( file, sizeKB, map, mem, debug )
+	dumptocallback(
+		function (data)
+			file:write(data)
+		end,
+		sizeKB, map, mem, debug
+	)
 end
 
 
@@ -507,6 +516,7 @@ end
 dump.dump_nes = dump_nes
 dump.dump_snes = dump_snes
 dump.dumptofile = dumptofile
+dump.dumptocallback = dumptocallback
 
 -- return the module's table
 return dump

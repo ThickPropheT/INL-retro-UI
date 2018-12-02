@@ -10,8 +10,8 @@ local flash = require "scripts.app.flash"
 
 -- file constants & variables
 local mapname = "UxROM"
-local banktable_base = 0xCC84 --Nomolos
-		--Nomolos' bank table is at $CC84 so hard code that for now
+local banktable_base = nil
+		--Nomolos' bank table is at $CC84
 		--wr_bank_table(0xCC84, 32)
 		--Owlia bank table
 		--wr_bank_table(0xE473, 32)
@@ -67,6 +67,35 @@ local function prgrom_manf_id( debug )
 
 end
 
+--find a viable banktable location
+local function find_banktable( banktable_size )
+	local search_base = 0x0C -- search in $C000-$F000, the fixed bank
+	local KB_search_space = 16
+
+	--get the fixed bank's content
+	local search_data = ""
+	dump.dumptocallback(
+		function (data)
+			search_data = search_data .. data
+		end,
+		KB_search_space, search_base, "NESCPU_4KB", false
+	)
+
+	--construct the byte sequence that we need
+	local searched_sequence = ""
+	while ( searched_sequence:len() < banktable_size ) do
+		searched_sequence = searched_sequence .. string.char(searched_sequence:len())
+	end
+
+	--search for the banktable in the fixed bank
+	position_in_fixed_bank = string.find( search_data, searched_sequence, 1, true )
+	if ( position_in_fixed_bank == nil ) then
+		return nil
+	end
+
+	--compute the cpu offset of this data
+	return 0xC000 + position_in_fixed_bank - 1
+end
 
 --dump the PRG ROM
 local function dump_prgrom( file, rom_size_KB, debug )
@@ -279,7 +308,18 @@ local function process( test, read, erase, program, verify, dumpfile, flashfile,
 		print("\nDumping PRG-ROM...")
 		file = assert(io.open(dumpfile, "wb"))
 
-		--TODO find bank table to avoid bus conflicts!
+		--find bank table to avoid bus conflicts
+		if ( banktable_base == nil ) then
+			local KB_per_bank = 16
+			banktable_base = find_banktable( prg_size / KB_per_bank )
+			if ( banktable_base == nil ) then
+				print( "BANKTABLE NOT FOUND" )
+				return
+			else
+				print( "found banktable addr = " .. banktable_base )
+			end
+		end
+
 		--dump cart into file
 		--dump.dumptofile( file, prg_size, "UxROM", "PRGROM", true )
 		dump_prgrom(file, prg_size, false)
