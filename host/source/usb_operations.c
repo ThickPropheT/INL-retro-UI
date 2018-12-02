@@ -180,6 +180,7 @@ libusb_device_handle *open_usb_device( libusb_context *context, int log_level )
 
 	//report successful connection to INL retro-prog
 	printf("Successfully found and connected to INL retro-prog\n");//TODO with firmware version 2.0\n");
+	printf("Device firmware version: %x.%x.x \n", (desc.bcdDevice>>8), (desc.bcdDevice&0x00FF) );
 
 	//free device list if it was left open
 	if (device_list) {
