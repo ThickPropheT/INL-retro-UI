@@ -71,11 +71,19 @@ end
 
 --Cart should be in reset state upon calling this function 
 --this function processes all user requests for this specific board/mapper
-local function process( test, read, erase, program, verify, dumpfile, flashfile, verifyfile)
+local function process(process_opts, console_opts)
+	local test = process_opts["test"]
+	local read = process_opts["read"]
+	local erase = process_opts["erase"]
+	local program = process_opts["program"]
+	local verify = process_opts["verify"]
+	local dumpfile = process_opts["dump_filename"]
+	local flashfile = process_opts["flash_filename"]
+	local verifyfile = process_opts["verify_filename"]
 
 	local rv = nil
 	local file 
-
+	-- TODO: Handle variable rom sizes.
 
 --initialize device i/o for NES
 	dict.io("IO_RESET")

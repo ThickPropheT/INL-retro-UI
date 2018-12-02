@@ -490,13 +490,26 @@ end
 
 --Cart should be in reset state upon calling this function 
 --this function processes all user requests for this specific board/mapper
-local function process( test, read, erase, program, verify, dumpfile, flashfile, verifyfile, dumpram, writeram, ramdumpfile, ramwritefile)
+local function process(process_opts, console_opts)
+	local test = process_opts["test"]
+	local read = process_opts["read"]
+	local erase = process_opts["erase"]
+	local program = process_opts["program"]
+	local verify = process_opts["verify"]
+	local dumpfile = process_opts["dump_filename"]
+	local flashfile = process_opts["flash_filename"]
+	local verifyfile = process_opts["verify_filename"]
+	-- MMC1 has RAM capability present in some carts.
+	local dumpram = process_opts["dumpram"]
+	local ramdumpfile = process_opts["dumpram_filename"]
+	local writeram = process_opts["writeram"]
+	local ramwritefile = process_opts["writeram_filename"]
 
 	local rv = nil
 	local file 
-	local prg_size = 256
-	local chr_size = 128
-	local wram_size = 8
+	local prg_size = console_opts["prg_rom_size_kb"]
+	local chr_size = console_opts["chr_rom_size_kb"]
+	local wram_size = console_opts["wram_size_kb"]
 
 --initialize device i/o for NES
 	dict.io("IO_RESET")
