@@ -73,7 +73,7 @@ function main ()
 	--local curcart = require "scripts.nes.mmc4"
 	--local curcart = require "scripts.nes.mm2"
 	--local curcart = require "scripts.nes.mapper30"
-	local curcart = require "scripts.nes.bnrom"
+	--local curcart = require "scripts.nes.bnrom"
 	--local curcart = require "scripts.nes.cdream"
 	--local curcart = require "scripts.nes.cninja"
 	--local curcart = require "scripts.nes.action53"
@@ -85,15 +85,16 @@ function main ()
 	--local curcart = require "scripts.snes.lorom_5volt"  --catskull design
 	--local curcart = require "scripts.snes.v2proto"
 	--local curcart = require "scripts.snes.v2proto_hirom"  --quickly becoming the master SNES script...
+	local curcart = require "scripts.gb.romonly"
 	
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
 -- =====================================================
-	local cart_console = "NES" 	--includes Famicom
+	--local cart_console = "NES" 	--includes Famicom
 	--local cart_console = "SNES"
 	--local cart_console = "SEGA"
 	--local cart_console = "N64"
-	--local cart_console = "DMG"
+	local cart_console = "DMG"
 	--local cart_console = "GBA"
 	--local cart_console = "SMS"
 
@@ -593,25 +594,26 @@ function main ()
 
 			print("testing gameboy")
 
-			--SNES should be similar
-			curcart.process( false, true, false, false, false, "ignore/dump.bin", "ignore/gameboy.bin", "ignore/verifyout.bin")
-			---[[	--TEST GB power
-				rv = dict.pinport( "CTL_ENABLE", "GBP" )
-				rv = dict.pinport( "CTL_OP", "GBP")
-				rv = dict.pinport( "CTL_SET_HI", "GBP")
+			dict.io("IO_RESET")	
+
+			curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/gameboy.bin", "ignore/verifyout.bin")
+			--[[	--TEST GB power
+				dict.io("GB_POWER_3V")
 				print("GBP high 3v GBA")
 				jtag.sleep(1)
-				rv = dict.pinport( "CTL_SET_LO", "GBP")
+				dict.io("GB_POWER_5V")
 				print("GBP low 5v GB")
 				jtag.sleep(1)
-				rv = dict.pinport( "CTL_SET_HI", "GBP")
+				dict.io("GB_POWER_3V")
 				print("GBP high 3v GBA")
 				jtag.sleep(1)
-				rv = dict.pinport( "CTL_SET_LO", "GBP")
+				dict.io("GB_POWER_5V")
 				print("GBP low 5v GB")
-				--jtag.sleep(2)
+				jtag.sleep(1)
+				print("GBP reset (pullup) = 3v")
 				--]]
 			
+			dict.io("IO_RESET")	
 
 		elseif cart_console == "GBA" then
 
