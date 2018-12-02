@@ -31,15 +31,22 @@
 
 
 // TODO: Finish HELP for all currently supported options.
+// TODO: Migrate to argp for more descriptive flags.
 const char *HELP =  "Usage: inlretro [options]\n\n"\
 					"Options:\n"\
+					"  -a [dumpram_filename]\tIf provided write ram to this filename\n"\
+					"  -b [writeram_filename]If provided write this file's contents to ram\n"\
 					"  -c [console]\t\tConsole port, {NES}\n"\
 					"  -d [dump_filename]\tIf provided, dump cartridge ROMs to this filename\n"\
+					"  -h\t\t\tDisplays this message.\n"\
 					"  -m [mapper]\t\tNES console only, mapper ASIC on cartridge\n"\
 					"  \t\t\t{mmc1,mmc3,nrom}\n"\
 					"  -p [program_filename]\tIf provided, write this data to cartridge\n"\
 					"  -s [lua_script]\tIf provided, use this script for main application logic\n"\
-					"  -h\t\t\tDisplays this message.\n";
+					"  -v [verify_filename]\tIf provided, writeback written rom to this filename\n"
+					"  -w [wram_size_kb]\tNES-only, size of WRAM in kb\n"\
+					"  -x [prg_rom_size_kb]\tNES-only, size of PRG-ROM in kb\n"\
+					"  -y [chr_rom_size_kb]\tNES-only, size of CHR-ROM in kb\n";
 
 // Struct used to control functionality.
 typedef struct {
@@ -47,16 +54,31 @@ typedef struct {
 	char *mapper_name;
 	int display_help;
 
+	// NES Functionality
+	int chr_rom_size_kb;
+	int prg_rom_size_kb;
+	int wram_size_kb;
+
 	char *dump_filename;
 	char *program_filename;
+	char *ramdump_filename;
+	char *ramwrite_filename;
+	char *verify_filename;
+
 	char *lua_filename;
 } INLOptions;
+
+// Returns true if given number is a power of 2, and at least minimum size.
+int isValidROMSize(int x, int min) {
+	return ((x & (x - 1)) == 0) && x >= min;
+}
+
 
 // Parse options and flags, create struct to drive program.
 INLOptions* parseOptions(int argc, char *argv[]) {
 	// lower case flags suggested for average user
 
-	const char *FLAG_FORMAT = "hc:d:m:p:s:";
+	const char *FLAG_FORMAT = "a:b:hc:d:m:p:s:v:w:x:y:";
 	int index = 0;
 	int rv = 0;
 	// opterr = 0;
@@ -97,6 +119,8 @@ INLOptions* parseOptions(int argc, char *argv[]) {
 			// case 'n': n_flag = 1; break;
 			// case 'e': e_flag = 1; break;
 			// case 'f': f_flag = 1; break;
+			case 'a': opts->ramdump_filename = optarg; break;
+			case 'b': opts->ramwrite_filename = optarg; break;
 			case 'h': opts->display_help = 1; break;
 			// case 'i': i_flag = 1; break;
 			// case 't': t_flag = 1; break;
@@ -110,6 +134,10 @@ INLOptions* parseOptions(int argc, char *argv[]) {
 			case 'm': opts->mapper_name = optarg; break;
 			case 'p': opts->program_filename = optarg; break;
 			case 's': opts->lua_filename = optarg; break;
+			case 'v': opts->verify_filename = optarg; break;
+			case 'w': opts->wram_size_kb = atoi(optarg); break;
+			case 'x': opts->prg_rom_size_kb = atoi(optarg); break;
+			case 'y': opts->chr_rom_size_kb = atoi(optarg); break;
 			// case 'v': v_value = optarg; break;
 			// case 'C': C_value = optarg; break;
 			// case 'L': L_value = optarg; break;
@@ -276,6 +304,27 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	// Check for sane user input.
+	if (strcmp("NES", opts->console_name) == 0) {
+		// ROM sizes must be non-zero, power of 2, and greater than 16.
+		if (isValidROMSize(opts->prg_rom_size_kb, 16)) {
+			printf("PRG-ROM must be non-zero power of 2, 16kb or greater.\n");
+			return 1;
+		}
+		// Not having CHR-ROM is normal for certain types of carts.
+		// TODO: Update these checks with known info about mappers/carts.
+		if (isValidROMSize(opts->chr_rom_size_kb, 8) || opts->chr_rom_size_kb == 0) {
+			printf("CHR-ROM must be zero or power of 2, 8kb or greater.\n");
+			return 1;
+		}
+
+		// Not having WRAM is very normal.
+		if (isValidROMSize(opts->wram_size_kb, 8) || opts->wram_size_kb == 0) {
+			printf("WRAM must be zero or power of 2, 8kb or greater.\n");
+			return 1;
+		}
+	}
+
 	//Start up Lua
 	L = lua_init();
 	
@@ -343,6 +392,24 @@ int main(int argc, char *argv[])
 	lua_pushstring(L, opts->program_filename);
 	lua_setglobal(L, "flash_filename");
 
+	lua_pushstring(L, opts->verify_filename);
+	lua_setglobal(L, "verify_filename");
+
+	lua_pushstring(L, opts->ramdump_filename);
+	lua_setglobal(L, "ramdump_filename");
+
+	lua_pushstring(L, opts->ramwrite_filename);
+	lua_setglobal(L, "ramwrite_filename");
+
+	lua_pushinteger(L, opts->wram_size_kb);
+	lua_setglobal(L, "nes_wram_size_kb");
+
+	lua_pushinteger(L, opts->prg_rom_size_kb);
+	lua_setglobal(L, "nes_prg_rom_size_kb");
+
+	lua_pushinteger(L, opts->chr_rom_size_kb);
+	lua_setglobal(L, "nes_chr_rom_size_kb");
+	
 	// USB device is open, pass args and control over to Lua.
 	// If lua_filename isn't set from args, use default script.
 	char *DEFAULT_SCRIPT = "scripts/inlretro.lua";
