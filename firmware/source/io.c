@@ -34,7 +34,11 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 		case SNES_INIT:	snes_init();			break;
 		#endif
 		#ifdef GB_CONN
-		case GAMEBOY_INIT:	gameboy_init();			break;
+		case GB_POWER_3V:	
+				GBP_OP(); GBP_3V(); 		break;
+		case GB_POWER_5V:	
+				GBP_OP(); GBP_5V(); 		break;
+		case GAMEBOY_INIT:	gameboy_init();		break;
 //		case GBA_INIT:	gba_init();			break;
 		#endif
 		#ifdef SEGA_CONN
@@ -74,14 +78,22 @@ void io_reset()
 	RCC->AHBRSTR &= ~( RCC_AHBRSTR_GPIOARST | RCC_AHBRSTR_GPIOBRST | RCC_AHBRSTR_GPIOCRST | RCC_AHBRSTR_GPIODRST | RCC_AHBRSTR_GPIOFRST );
 #endif
 
-	//First set gameboy/GBA power, default to 3v (safe for both)
+
+	//enable the GPIO blocks before can access them
+	CTL_ENABLE();
+
 #ifndef C16nodef
-	GBP_OP();
-	GBP_3V();
+	//First set gameboy/GBA power, default to 3v (safe for both)
+	//pull up the GB power control pin
+	//prevents conflicts, but also pulls up the 
+	//Pmosfet gate which turns off the mosfet
+	//leaving the 3v power diode to supply the gameboy cart
+	GBP_IP_PU();	
+	//If there's a load on the gameboy cart power there will be ~3v present.  
+	//If no load/cart, the voltage will will float up to 5v because of Rds_off of the mosfet.
 #endif
 
 	//pull up control port
-	CTL_ENABLE();
 	M2_IP_PU();
 	ROMSEL_IP_PU();
 	PRGRW_IP_PU();
@@ -238,19 +250,29 @@ void gameboy_init()
 	io_reset();
 
 	//enable control outputs and disable memories
-	//ROM
+	//ROM-RAM
 	ROMSEL_OP();
-	ROMSEL_HI();
+	ROMSEL_HI();	//gameboy pin 5 "SRAM /CS"
 	CSRD_OP();
-	CSRD_HI();
+	CSRD_HI();	//gameboy pin 4 /RD
 	CSWR_OP();
-	CSWR_HI();
+	CSWR_HI();	//gameboy pin 3 /WR
 
 	//Set #RESET pin low
-	EXP0_LO();
 	EXP0_OP();
-	//if SWIM is active, EXP0 must be set to pullup prior to SWIM transfers
+	EXP0_HI();	//gameboy pin 30 "GAMEBOY /RESET" (GBA /CS2)
 
+	//AUDIO IN (from cart) gameboy pin 31
+	//if the cart generates audio it will drive this pin
+	//this pin is also used for ROM /WE on some carts
+	//such carts should have a pullup on this pin though..
+	//use "AUDR" ctl pin to access this pin
+	
+	//CLK is a 1MHz signal from the gameboy
+	//INL6 connects this to GPIO PA8, haven't even assigned this in pinport yet..
+	//don't think any carts even need it though..
+	//This is also the MCO pin from the STM32
+	
 	//other control pins are inputs or unused, leave as IP pullup from reset
 
 	//memories are now disabled Data bus should be clear
@@ -262,11 +284,12 @@ void gameboy_init()
 	ADDR_ENABLE();
 	ADDR_SET(0x0000);
 
-#ifndef C16nodef
-	//set GB/GBA power to 5v
-	GBP_OP();
-	GBP_5V();
-#endif
+//want to control this separately
+//#ifndef C16nodef
+//	//set GB/GBA power to 5v
+//	GBP_OP();
+//	GBP_5V();
+//#endif
 
 }
 #endif
@@ -308,6 +331,8 @@ void gba_init()
 	//setup address $0000
 	ADDR_ENABLE();
 	ADDR_SET(0x0000);
+
+	//default is 3v on gameboy/GBA port
 
 }
 #endif

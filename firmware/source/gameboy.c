@@ -61,5 +61,72 @@ void	dmg_wr( uint16_t addr, uint8_t data )
 	return;
 }
 
+/* Desc:GAMEBOY 8bit CPU Page Read with optional USB polling
+ * 	decode A15 from addrH to set SRAM /CE as expected
+ *	if poll is true calls usbdrv.h usbPoll fuction
+ *	this is needed to keep from timing out when double buffering usb data
+ * Pre: gameboy_init() setup of io pins
+ *	num_bytes can't exceed 256B page boundary
+ * Post:address left on bus
+ * 	data bus left clear
+ *	data buffer filled starting at first to last
+ * Rtn:	Index of last byte read
+ */
+uint8_t gameboy_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8_t len, uint8_t poll )
+{
+	uint8_t i;
+
+	//set address bus
+	ADDRH(addrH);
+	
+	//enable /RD pin
+	CSRD_LO();
+
+	//set SRAM /CS
+	//low for $A000-BFFF
+	if( (addrH >= 0xA0) && (addrH <= 0xBF) ) {	//addressing cart RAM space
+		ROMSEL_LO();	//this is actually the SRAM /CS pin
+	}
+
+	//set lower address bits
+	ADDRL(first);		//doing this prior to entry and right after latching
+
+	//extra NOP was needed on stm6 as address hadn't settled in time for the very first read
+	NOP();	
+				//gives longest delay between address out and latching data
+	for( i=0; i<=len; i++ ) {
+		//testing shows that having this if statement doesn't affect overall dumping speed
+		if ( poll ) {
+			usbPoll();	//Call usbdrv.h usb polling while waiting for data
+		} else {
+			NOP();	//couple more NOP's waiting for data
+			NOP();	//one prob good enough considering the if/else
+		}
+
+		//gameboy needed some extra NOPS
+		NOP();
+		NOP();
+		NOP();
+		NOP();
+		NOP();
+		NOP();
+
+		//latch data
+		DATA_RD(data[i]);
+
+		//set lower address bits
+		//ADDRL(++first);	THIS broke things, on stm adapter because macro expands it twice!
+		first++;
+		ADDRL(first);
+	}
+
+	//return bus to default
+	CSRD_HI();
+	ROMSEL_HI();
+	
+	//return index of last byte read
+	return i;
+}
+
 
 #endif //GB_CONN

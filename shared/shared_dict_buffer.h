@@ -120,6 +120,7 @@
 	#define NESPPU_PAGE	0x23	//mapper byte specifies A13-8	 bits 6 & 7 can't be set
 	#define SNESROM_PAGE	0x24	//mapper byte specifies A15-8 ROMSEL low
 	#define SNESSYS_PAGE	0x25	//mapper byte specifies A15-8 ROMSEL high
+	#define GAMEBOY_PAGE	0x26	//mapper byte specifies A15-8
 
 	//operand LSB
 	//SST 39SF0x0 manf/prod IDs

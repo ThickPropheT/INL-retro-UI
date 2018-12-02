@@ -64,6 +64,12 @@
 #define SEGA_INIT	7
 #define N64_INIT	8
 
+//default is 3v by pulling up on GBP pin
+//these set GBP pin to output and drive high for 3v, and low for 5v
+//be careful not to drive GBA cartridge with 5v as it's supposed to only be 3v
+#define GB_POWER_5V	9
+#define GB_POWER_3V	10
+
 
 //Test EXP0 drive with pull up 
 //This is an important test if reling on pulling up EXP0 pin to drive the cart's pin.
