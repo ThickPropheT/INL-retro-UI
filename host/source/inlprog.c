@@ -307,19 +307,19 @@ int main(int argc, char *argv[])
 	// Check for sane user input.
 	if (strcmp("NES", opts->console_name) == 0) {
 		// ROM sizes must be non-zero, power of 2, and greater than 16.
-		if (isValidROMSize(opts->prg_rom_size_kb, 16)) {
+		if (!isValidROMSize(opts->prg_rom_size_kb, 16)) {
 			printf("PRG-ROM must be non-zero power of 2, 16kb or greater.\n");
 			return 1;
 		}
 		// Not having CHR-ROM is normal for certain types of carts.
 		// TODO: Update these checks with known info about mappers/carts.
-		if (isValidROMSize(opts->chr_rom_size_kb, 8) || opts->chr_rom_size_kb == 0) {
+		if (!isValidROMSize(opts->chr_rom_size_kb, 8) && opts->chr_rom_size_kb != 0) {
 			printf("CHR-ROM must be zero or power of 2, 8kb or greater.\n");
 			return 1;
 		}
 
 		// Not having WRAM is very normal.
-		if (isValidROMSize(opts->wram_size_kb, 8) || opts->wram_size_kb == 0) {
+		if (!isValidROMSize(opts->wram_size_kb, 8) && opts->wram_size_kb != 0) {
 			printf("WRAM must be zero or power of 2, 8kb or greater.\n");
 			return 1;
 		}

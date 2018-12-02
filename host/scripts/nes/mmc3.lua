@@ -515,9 +515,9 @@ local function process(process_opts, console_opts)
 	local verifyfile = process_opts["verify_filename"]
 	-- MMC3 has RAM capability present in some carts.
 	local dumpram = process_opts["dumpram"]
-	local ramdump_filename = process_opts["dumpram_filename"]
+	local ramdumpfile = process_opts["dumpram_filename"]
 	local writeram = process_opts["writeram"]
-	local ramwrite_filename = process_opts["writeram_filename"]
+	local ramwritefile = process_opts["writeram_filename"]
 
 	local rv = nil
 	local file 
