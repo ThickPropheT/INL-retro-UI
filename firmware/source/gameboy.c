@@ -32,14 +32,14 @@ uint8_t gameboy_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 	
 	switch (opcode) { 
 //		//no return value:
-		case DMG_WR:	
-			dmg_wr( operand, miscdata );
+		case GAMEBOY_WR:	
+			gameboy_wr( operand, miscdata );
 			break;
 
 		//8bit return values:
-		case DMG_RD:
+		case GAMEBOY_RD:
 			rdata[RD_LEN] = BYTE_LEN;
-			rdata[RD0] = dmg_rd( operand );
+			rdata[RD0] = gameboy_rd( operand );
 			break;
 		default:
 			 //macro doesn't exist
@@ -50,15 +50,100 @@ uint8_t gameboy_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 
 }
 
-uint8_t	dmg_rd( uint16_t addr )
+/* Desc:Gameboy CPU Read without being so slow
+ * 	decode A15-14 from addrH to set SRAM /CS as expected
+ * 	ignore clock pin toggling pretty sure it's unconnected on most carts
+ * 	going by reference here: 
+ * 	https://dhole.github.io/media/gameboy_stm32f4/cpu_manual_timing_small.png
+ * Pre: gameboy_init() setup of io pins
+ * Post:address left on bus
+ * 	data bus left clear
+ * Rtn:	Byte read from cartridge at addrHL
+ */
+uint8_t	gameboy_rd( uint16_t addr )
 {
-	return 0xAA;
+	uint8_t	read;	//return value
+
+	//cycle would start with clock rise
+
+	//set address bus
+	ADDR_SET(addr);
+	
+	//enable /RD pin
+	CSRD_LO();
+
+	//set SRAM /CS
+	//low for $A000-BFFF
+	if( (addr >= 0xA000) && (addr < 0xC000) ) {	//addressing cart RAM space
+		ROMSEL_LO();	//this is actually the SRAM /CS pin
+	}
+
+	//half cycle with clock fall
+	//and /WR low for writes
+
+	//couple more NOP's waiting for data
+	//zero nop's returned previous databus value
+	NOP();	//one nop got most of the bits right
+	NOP();	//two nop got all the bits right
+	NOP();	//add third nop for some extra
+	NOP();	//one more can't hurt
+	//might need to wait longer for some carts...
+
+	//latch data
+	DATA_RD(read);
+
+	//return bus to default
+	ROMSEL_HI();
+	CSRD_HI();
+
+	//next cycle clock rise
+	
+	return read;
 }
 
 
-void	dmg_wr( uint16_t addr, uint8_t data )
+/* Desc:Gameboy CPU Write
+ * 	decode A15-14 from addrH to set SRAM /CS as expected
+ * 	ignore clock pin toggling pretty sure it's unconnected on most carts
+ * Pre: gameboy_init() setup of io pins
+ * Post:data latched by anything listening on the bus
+ * 	address left on bus
+ * 	data left on bus, but pullup only
+ * Rtn:	None
+ */
+void	gameboy_wr( uint16_t addr, uint8_t data )
 {
-	return;
+	//cycle would start with clock rise
+
+	//set address bus
+	ADDR_SET(addr);
+	
+	//set SRAM /CS
+	//low for $A000-BFFF
+	if( (addr >= 0xA000) && (addr < 0xC000) ) {	//addressing cart RAM space
+		ROMSEL_LO();	//this is actually the SRAM /CS pin
+	}
+
+
+	//put data on bus
+	DATA_OP();
+	DATA_SET(data);
+
+	//half cycle with clock fall
+	//and /WR low for writes
+	CSWR_LO();
+
+	//give some time
+	NOP();
+	NOP();
+	NOP();
+
+	//latch data to cart memory/mapper
+	CSWR_HI();
+	ROMSEL_HI();
+
+	//Free data bus
+	DATA_IP();
 }
 
 /* Desc:GAMEBOY 8bit CPU Page Read with optional USB polling
@@ -84,7 +169,7 @@ uint8_t gameboy_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 
 	//set SRAM /CS
 	//low for $A000-BFFF
-	if( (addrH >= 0xA0) && (addrH <= 0xBF) ) {	//addressing cart RAM space
+	if( (addrH >= 0xA0) && (addrH < 0xC0) ) {	//addressing cart RAM space
 		ROMSEL_LO();	//this is actually the SRAM /CS pin
 	}
 

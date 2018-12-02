@@ -17,8 +17,8 @@
 //=============================================================================================
 
 
-#define	DMG_RD	0	//RL=3  return error code, data len = 1, 1 byte of data
-#define	DMG_WR	1
+#define	GAMEBOY_RD	0	//RL=3  return error code, data len = 1, 1 byte of data
+#define	GAMEBOY_WR	1
 
 
 #endif

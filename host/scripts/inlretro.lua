@@ -85,7 +85,8 @@ function main ()
 	--local curcart = require "scripts.snes.lorom_5volt"  --catskull design
 	--local curcart = require "scripts.snes.v2proto"
 	--local curcart = require "scripts.snes.v2proto_hirom"  --quickly becoming the master SNES script...
-	local curcart = require "scripts.gb.romonly"
+	--local curcart = require "scripts.gb.romonly"
+	local curcart = require "scripts.gb.mbc1"
 	
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
