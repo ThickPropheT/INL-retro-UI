@@ -4,18 +4,26 @@ local ciccom = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
+local time = require "scripts.app.time"
 
 -- file constants
+--local resetpin = "AFL" --v2.0
+--local datapin = "GBP" --v2.0
+local resetpin = "SWC" --v2.0N
+local datapin = "FREE" --v2.0N
 
 -- local functions
 local function start( debug )
 
-	--CIC reset & clock needs to be low to start
-	dict.pinport( "CTL_OP", "AFL")
-	dict.pinport( "CTL_SET_LO", "AFL")	--CIC RESET LOW
+	--need to disable alternate function on SWCLK for STM_NES
+	dict.io( "IO_RESET", "DISABLE_STM_DEBUG")
 
-	dict.pinport( "CTL_OP", "GBP")
-	dict.pinport( "CTL_SET_LO", "GBP")	--INL CIC DATA LOW
+	--CIC reset & clock needs to be low to start
+	dict.pinport( "CTL_OP", resetpin)
+	dict.pinport( "CTL_SET_LO", resetpin)	--CIC RESET LOW
+
+	dict.pinport( "CTL_OP", datapin)
+	dict.pinport( "CTL_SET_LO", datapin)	--INL CIC DATA LOW
 
 
 --[[
@@ -29,7 +37,7 @@ local function start( debug )
 
 	--now the CIC should be restarting
 	--takes ~0.5msec for it to get through boot sequence
-	jtag.sleep(0.01) --10msec to be overly safe
+	time.sleep(0.01) --10msec to be overly safe
 	--after that time it's waiting for a CIC reset pulse to wake it
 --]]
 
@@ -52,7 +60,7 @@ local function start( debug )
 
 
 	dict.pinport( "ADDR_SET", 0)	--CIC CLK
-	dict.pinport( "CTL_SET_HI", "AFL")
+	dict.pinport( "CTL_SET_HI", resetpin)
 	
 	--CIC is now waiting for data to be clocked in using CIC CLK & KEY_DATA_OUT
 
@@ -67,40 +75,40 @@ local function set_opcode(opcode)
 	--MSbit is latched first
 
 	if opcode == "M" then
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_HI", "GBP")
+		dict.pinport( "CTL_SET_HI", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_LO", "GBP")
-		dict.pinport( "ADDR_SET", 1)	
-		dict.pinport( "ADDR_SET", 0)	
-	
-		dict.pinport( "ADDR_SET", 1)	
-		dict.pinport( "ADDR_SET", 0)	
-	
-		dict.pinport( "CTL_SET_HI", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_HI", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_HI", "GBP")
+		dict.pinport( "ADDR_SET", 1)	
+		dict.pinport( "ADDR_SET", 0)	
+	
+		dict.pinport( "CTL_SET_LO", datapin)
+		dict.pinport( "ADDR_SET", 1)	
+		dict.pinport( "ADDR_SET", 0)	
+	
+		dict.pinport( "CTL_SET_HI", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 
 	end
 
 	--now that "M" is written to CIC, end OPCODE write sequence by taking CIC RESET LO
-	dict.pinport( "CTL_SET_LO", "AFL")
+	dict.pinport( "CTL_SET_LO", resetpin)
 
 
 end
@@ -112,26 +120,26 @@ local function write(data)
 
 	if data == "H" then
 		--HORIZONTAL
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 
-		dict.pinport( "CTL_SET_HI", "GBP")
+		dict.pinport( "CTL_SET_HI", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 
-		dict.pinport( "CTL_SET_HI", "GBP")
+		dict.pinport( "CTL_SET_HI", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 
@@ -144,46 +152,40 @@ local function write(data)
 	elseif data == "V" then
 	
 		--VERTICAL
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_HI", "GBP")
+		dict.pinport( "CTL_SET_HI", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_HI", "GBP")
+		dict.pinport( "CTL_SET_HI", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_HI", "GBP")
+		dict.pinport( "CTL_SET_HI", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	
-		dict.pinport( "CTL_SET_LO", "GBP")
+		dict.pinport( "CTL_SET_LO", datapin)
 		dict.pinport( "ADDR_SET", 1)	
 		dict.pinport( "ADDR_SET", 0)	
 	end
 
 end
 
-
-local clock = os.clock
-local function sleep(n)  -- seconds
-	local t0 = clock()
-	while clock() - t0 <= n do end
-end
 
 -- global variables so other modules can use them
 
@@ -197,7 +199,6 @@ ciccom.set_opcode = set_opcode
 ciccom.write = write
 ciccom.wotf = wotf
 ciccom.rotf = rotf
-ciccom.sleep = sleep
 
 -- return the module's table
 return ciccom

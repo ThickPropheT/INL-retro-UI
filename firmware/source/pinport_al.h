@@ -35,6 +35,7 @@
 	//STM32 GPIO ports are effectively 16bits wide
 	//Use this type when need an int to hold pin mask
 	#define	GPIO_PinMask	uint16_t
+	#define wdt_reset() 	IWDG->KR = 0x0000AAAA
 #endif
 
 //This file contains pinout translations from AVR names to "kazzo" names
@@ -1491,10 +1492,10 @@ void software_AXL_CLK();
 #ifdef STM_NES
 //TODO BLINDLY COPIED FROM STM6, will not work AS-IS 
 
-	//     PE0  "A0"	mcupinC0
+	//     PE0  "A0"	mcupinB2
 	//     			TODO!!!
-	#define E0bank 		GPIOC 
-	#define E0		(0U)
+	#define E0bank 		GPIOB 
+	#define E0		(2U)
 
 	//     PE1  "D0"	mcupinB2
 	#define E1bank 		GPIOB 
@@ -1598,21 +1599,21 @@ void software_AXL_CLK();
 #endif //STM_CORE
 
 
-#ifdef STM_NES			//TODO
-#define EXT_IP_PU(bank, pin)		//bank->MODER &= ~(MODER_OP<<(pin*2)); bank->PUPDR |=  (PUPDR_PU<<(pin*2))
-#define EXT_IP_FL(bank, pin)		//bank->MODER &= ~(MODER_OP<<(pin*2)); bank->PUPDR &= ~(PUPDR_PU<<(pin*2))
-#define EXT_OP(bank, pin)		//bank->MODER |=  (MODER_OP<<(pin*2))
-#define EXT_OD(bank, pin)		//bank->OTYPER |=  (OTYPER_OD<<(pin))	//open drain has no effect when pin is input
-#define EXT_PP(bank, pin)		//bank->OTYPER &= ~(OTYPER_OD<<(pin))
-#define EXT_SET_LO(bank, pin)		//bank->BRR = 1<<pin 
-#define EXT_SET_HI(bank, pin)		//bank->BSRR = 1<<pin
-#define EXT_RD(bank, pin, val)		//val = (bank->IDR & (1<<pin))
+#ifdef STM_NES	
+#define EXT_IP_PU(bank, pin)		bank->MODER &= ~(MODER_OP<<(pin*2)); bank->PUPDR |=  (PUPDR_PU<<(pin*2))
+#define EXT_IP_FL(bank, pin)		bank->MODER &= ~(MODER_OP<<(pin*2)); bank->PUPDR &= ~(PUPDR_PU<<(pin*2))
+#define EXT_OP(bank, pin)		bank->MODER |=  (MODER_OP<<(pin*2))
+#define EXT_OD(bank, pin)		bank->OTYPER |=  (OTYPER_OD<<(pin))	//open drain has no effect when pin is input
+#define EXT_PP(bank, pin)		bank->OTYPER &= ~(OTYPER_OD<<(pin))
+#define EXT_SET_LO(bank, pin)		bank->BRR = 1<<pin 
+#define EXT_SET_HI(bank, pin)		bank->BSRR = 1<<pin
+#define EXT_RD(bank, pin, val)		val = (bank->IDR & (1<<pin))
 	//NOTE: STM registers are 16bit "halfwords" so must provide a 16bit val
 	
 //each pin needs it's own enable macro
-#define EXT_A0_ENABLE()		//ADDR_EN_CLK()	//unnecessarily enables both GPIO banks for STM adapter, oh well
-#define EXT_D0_ENABLE()		//DATA_EN_CLK()
-#define EXT_D8_10_ENABLE()	//DATA_EN_CLK()	
+#define EXT_A0_ENABLE()		ADDR_EN_CLK()	//unnecessarily enables both GPIO banks for STM adapter, oh well
+#define EXT_D0_ENABLE()		DATA_EN_CLK()
+#define EXT_D8_10_ENABLE()	DATA_EN_CLK()	
 
 #endif
 

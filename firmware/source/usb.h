@@ -24,6 +24,7 @@
 #include "swim.h"
 #include "bootload.h"
 #include "ciccom.h"
+#include "stuff.h"
 #include "types.h"
 #include "shared_errors.h"
 #include "shared_dictionaries.h"

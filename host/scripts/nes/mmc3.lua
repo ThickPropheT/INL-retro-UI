@@ -265,7 +265,6 @@ local function dump_wram( file, rom_size_KB, debug )
 end
 
 
---write a single byte to PRG-ROM flash
 --PRE: assumes mapper is initialized and bank is selected as prescribed in mapper_init
 --REQ: addr must be in the first bank $8000-9FFF
 local function wr_prg_flash_byte(addr, value, debug)

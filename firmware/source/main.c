@@ -84,7 +84,6 @@ int main(void)
 	// 5. Wait for the registers to be updated (IWDG_SR = 0x00000000).
 	while( IWDG->SR ) { /* forever */ }
 	// 6. Refresh the counter value with IWDG_RLR (IWDG_KR = 0x0000 AAAA)
-#define wdt_reset() 	IWDG->KR = 0x0000AAAA
 	wdt_reset();
 	//call this function atleast once a second to keep the device from resetting
 

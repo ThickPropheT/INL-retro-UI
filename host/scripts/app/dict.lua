@@ -162,18 +162,12 @@ RETURN_DATA = 3
 -- external call for pinport dictionary
 local function pinport( opcode, operand, misc, data )
 
-	if not op_pinport[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_pinport.h")
-		return nil
-	end
+	assert ( op_pinport[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_pinport.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_pinport[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_pinport.h")
-			return nil
-		end
+		assert ( op_pinport[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_pinport.h")
 		--decode string operands into 
 		operand = op_pinport[operand]
 	end
@@ -194,7 +188,7 @@ local function pinport( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -213,18 +207,12 @@ end
 -- external call for io dictionary
 local function io( opcode, operand, misc, data )
 
-	if not op_io[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_io.h")
-		return nil
-	end
+	assert ( op_io[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_io.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_io[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_io.h")
-			return nil
-		end
+		assert ( op_io[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_io.h")
 		--decode string operands into 
 		operand = op_io[operand]
 	end
@@ -244,7 +232,7 @@ local function io( opcode, operand, misc, data )
 		data_len =   data:byte(RETURN_LEN_IDX)
 	end
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -263,18 +251,12 @@ end
 -- external call for nes dictionary
 local function nes( opcode, operand, misc, data )
 
-	if not op_nes[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_nes.h")
-		return nil
-	end
+	assert ( op_nes[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_nes.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_nes[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_nes.h")
-			return nil
-		end
+		assert ( op_nes[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_game.h")
 		--decode string operands into 
 		operand = op_nes[operand]
 	end
@@ -295,7 +277,7 @@ local function nes( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -315,18 +297,12 @@ end
 -- external call for snes dictionary
 local function snes( opcode, operand, misc, data )
 
-	if not op_snes[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_snes.h")
-		return nil
-	end
+	assert ( op_snes[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_snes.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_snes[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_snes.h")
-			return nil
-		end
+		assert ( op_snes[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_snes.h")
 		--decode string operands into 
 		operand = op_snes[operand]
 	end
@@ -347,7 +323,7 @@ local function snes( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -366,18 +342,12 @@ end
 -- external call for gameboy dictionary
 local function gameboy( opcode, operand, misc, data )
 
-	if not op_gameboy[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_gameboy.h")
-		return nil
-	end
+	assert ( op_gameboy[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_gameboy.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_gameboy[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_gameboy.h")
-			return nil
-		end
+		assert ( op_gameboy[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_gameboy.h")
 		--decode string operands into 
 		operand = op_gameboy[operand]
 	end
@@ -398,7 +368,7 @@ local function gameboy( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -418,18 +388,12 @@ end
 -- external call for gba dictionary
 local function gba( opcode, operand, misc, data )
 
-	if not op_gba[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_gba.h")
-		return nil
-	end
+	assert ( op_gba[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_gba.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_gba[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_gba.h")
-			return nil
-		end
+		assert ( op_gba[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_gba.h")
 		--decode string operands into 
 		operand = op_gba[operand]
 	end
@@ -450,7 +414,7 @@ local function gba( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -470,18 +434,12 @@ end
 -- external call for sega dictionary
 local function sega( opcode, operand, misc, data )
 
-	if not op_sega[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_sega.h")
-		return nil
-	end
+	assert ( op_sega[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_sega.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_sega[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_sega.h")
-			return nil
-		end
+		assert ( op_sega[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_sega.h")
 		--decode string operands into 
 		operand = op_sega[operand]
 	end
@@ -502,7 +460,7 @@ local function sega( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -522,18 +480,12 @@ end
 -- external call for n64 dictionary
 local function n64( opcode, operand, misc, data )
 
-	if not op_n64[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_n64.h")
-		return nil
-	end
+	assert ( op_n64[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_n64.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_n64[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_n64.h")
-			return nil
-		end
+		assert ( op_n64[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_n64.h")
 		--decode string operands into 
 		operand = op_n64[operand]
 	end
@@ -554,7 +506,7 @@ local function n64( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -573,18 +525,12 @@ end
 -- external call for swim dictionary
 local function swim( opcode, operand, misc, data )
 
-	if not op_swim[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_swim.h")
-		return nil
-	end
+	assert ( op_swim[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_swim.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_swim[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_swim.h")
-			return nil
-		end
+		assert ( op_swim[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_swim.h")
 		--decode string operands into 
 		operand = op_swim[operand]
 	end
@@ -605,7 +551,7 @@ local function swim( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -629,18 +575,12 @@ end
 -- external call for jtag dictionary
 local function jtag( opcode, operand, misc, data )
 
-	if not op_jtag[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_jtag.h")
-		return nil
-	end
+	assert ( op_jtag[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_jtag.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_jtag[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_jtag.h")
-			return nil
-		end
+		assert ( op_jtag[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_jtag.h")
 		--decode string operands into 
 		operand = op_jtag[operand]
 	end
@@ -661,7 +601,7 @@ local function jtag( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -681,18 +621,12 @@ end
 -- external call for bootload dictionary
 local function bootload( opcode, operand, misc, data )
 
-	if not op_bootload[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_bootload.h")
-		return nil
-	end
+	assert ( op_bootload[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_bootload.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_bootload[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_bootload.h")
-			return nil
-		end
+		assert ( op_bootload[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_bootload.h")
 		--decode string operands into 
 		operand = op_bootload[operand]
 	end
@@ -713,7 +647,7 @@ local function bootload( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -735,18 +669,12 @@ end
 -- external call for firmware update dictionary
 local function fwupdate( opcode, operand, misc, data )
 
-	if not op_fwupdate[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_fwupdate.h")
-		return nil
-	end
+	assert ( op_fwupdate[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_fwupdate.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_fwupdate[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_fwupdate.h")
-			return nil
-		end
+		assert ( op_fwupdate[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_fwupdate.h")
 		--decode string operands into 
 		operand = op_fwupdate[operand]
 	end
@@ -767,7 +695,7 @@ local function fwupdate( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -788,18 +716,12 @@ end
 -- external call for ciccom dictionary
 local function ciccom( opcode, operand, misc, data )
 
-	if not op_ciccom[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_ciccom.h")
-		return nil
-	end
+	assert ( op_ciccom[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_ciccom.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_ciccom[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_ciccom.h")
-			return nil
-		end
+		assert ( op_ciccom[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_ciccom.h")
 		--decode string operands into 
 		operand = op_ciccom[operand]
 	end
@@ -820,7 +742,54 @@ local function ciccom( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
+
+	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
+		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
+	end
+
+	--process the return data string and return it to calling function
+	if data_len then
+		return string_to_int( data:sub(RETURN_DATA, data_len+RETURN_DATA), data_len) 
+	else 
+		return nil
+	end 
+
+
+
+end
+
+
+-- external call for misc dictionary
+local function stuff( opcode, operand, misc, data )
+
+	assert ( op_stuff[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_stuff.h")
+
+	if not operand then 
+		operand = 0 
+	elseif type(operand) == "string" then
+		assert ( op_stuff[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_stuff.h")
+		--decode string operands into 
+		operand = op_stuff[operand]
+	end
+	
+	if not misc then misc = 0 end
+
+	local wLength, ep = default_rlen_1_in(op_stuff[opcode.."rlen"])
+
+	local count
+	count, data = usb_vend_xfr( 
+	--	ep,	dictionary		wValue[misc:opcode]     wIndex	wLength	 		data
+		ep, dict["DICT_STUFF"], ( misc<<8 | op_stuff[opcode]),	operand,	wLength,	data)
+	--print(count)
+	local error_code, data_len
+	if ep == USB_IN then
+		error_code = data:byte(RETURN_ERR_IDX)
+		data_len =   data:byte(RETURN_LEN_IDX)
+	end
+	--print("error:", error_code, "data_len:",  data_len)
+	
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -903,18 +872,12 @@ end
 -- external call for buffer dictionary
 local function buffer( opcode, operand, misc, data, stringout )
 
-	if not op_buffer[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_buffer.h")
-		return nil
-	end
+	assert ( op_buffer[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_buffer.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_buffer[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_buffer.h")
-			return nil
-		end
+		assert ( op_buffer[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_buffer.h")
 		--decode string operands into 
 		operand = op_buffer[operand]
 	end
@@ -935,7 +898,7 @@ local function buffer( opcode, operand, misc, data, stringout )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -956,18 +919,12 @@ end
 -- external call for operation dictionary
 local function operation( opcode, operand, misc, data )
 
-	if not op_operation[opcode] then
-		print("ERROR undefined opcode:", opcode, "must be defined in shared_dict_operation.h")
-		return nil
-	end
+	assert ( op_operation[opcode] , "\nERROR undefined opcode: " .. opcode .. " must be defined in shared_dict_operation.h")
 
 	if not operand then 
 		operand = 0 
 	elseif type(operand) == "string" then
-		if not op_operation[operand] then
-			print("ERROR undefined operand:", operand, "must be defined in shared_dict_operation.h")
-			return nil
-		end
+		assert ( op_operation[operand] ,"\nERROR undefined operand: " .. operand .. " must be defined in shared_dict_operation.h")
 		--decode string operands into 
 		operand = op_operation[operand]
 	end
@@ -988,7 +945,7 @@ local function operation( opcode, operand, misc, data )
 	end
 	--print("error:", error_code, "data_len:",  data_len)
 	
-	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " device error code: " .. error_code)
+	assert ( (error_code == err_codes["SUCCESS"]), "\n ERROR!!! problem with opcode: " .. opcode .. " operand: " .. operand .. " misc: " .. misc .. " device error code: " .. error_code)
 
 	if data_len and data_len ~= (wLength - RETURN_LEN_IDX) then
 		print("WARNING!! Device's return data length:", data_len, "did not match expected:", wLength-RETURN_LEN_IDX)
@@ -1022,6 +979,7 @@ op_jtag = {}
 op_bootload = {}
 op_fwupdate = {}
 op_ciccom = {}
+op_stuff = {}
 err_codes = {}
 
 -- Dictionary table definitions initialized by calling parser
@@ -1042,6 +1000,7 @@ create_dict_tables( op_jtag,  	"../shared/shared_dict_jtag.h")
 create_dict_tables( op_bootload,"../shared/shared_dict_bootload.h")
 create_dict_tables( op_fwupdate,"../shared/shared_dict_fwupdate.h")
 create_dict_tables( op_ciccom,	"../shared/shared_dict_ciccom.h")
+create_dict_tables( op_stuff,	"../shared/shared_dict_stuff.h")
 create_dict_tables( err_codes, 	"../shared/shared_errors.h")
 
 -- functions other modules are able to call
@@ -1062,6 +1021,7 @@ dict.buffer_payload_in = buffer_payload_in
 dict.buffer_payload_out = buffer_payload_out
 dict.operation = operation
 dict.fwupdate = fwupdate
+dict.stuff = stuff
 
 -- return the module's table
 return dict

@@ -165,6 +165,9 @@ USBSETUP uint16_t usbFunctionSetup(uint8_t data[8]) {
 		case DICT_CICCOM:
 			rv[RETURN_ERR_IDX] = ciccom_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
 			break;
+		case DICT_STUFF:
+			rv[RETURN_ERR_IDX] = stuff_call( spacket->opcode, spacket->miscdata, spacket->operand, &rv[RETURN_LEN_IDX] );	
+			break;
 
 
 		case DICT_BUFFER:

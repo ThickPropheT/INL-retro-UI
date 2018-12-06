@@ -1,5 +1,9 @@
 #include "io.h"
 
+#ifdef STM_CORE
+uint8_t stm_debug_disable = 0;
+#endif
+
 //=================================================================================================
 //
 //	I/O operations
@@ -26,7 +30,12 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 #define	BYTE_LEN 1
 #define	HWORD_LEN 2
 	switch (opcode) { 
-		case IO_RESET:	io_reset();			break;
+		case IO_RESET:	
+			#ifdef STM_CORE
+			//operand sets whether to disable SWCLK/SWDIO on subequent io_reset calls
+			stm_debug_disable = operand;
+			#endif
+				io_reset();			 break;
 		#ifdef NES_CONN
 		case NES_INIT:	nes_init();			break;
 		#endif
@@ -81,6 +90,15 @@ void io_reset()
 
 	//enable the GPIO blocks before can access them
 	CTL_ENABLE();
+
+#ifdef STM_CORE
+	if (stm_debug_disable == DISABLE_STM_DEBUG){
+	//make the SWC/SWD pins like other GPIO
+	GPIOA->MODER = 0;
+	GPIOA->OSPEEDR = 0;
+	GPIOA->PUPDR = 0;
+	}
+#endif
 
 #ifndef C16nodef
 	//First set gameboy/GBA power, default to 3v (safe for both)

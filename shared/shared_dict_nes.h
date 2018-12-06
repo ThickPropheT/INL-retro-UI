@@ -47,7 +47,7 @@
 #define DISC_PUSH_EXP0_PRGROM_WR	0x06
 
 
-#define MMC3_PRG_FLASH_WR		0x07
+#define MMC3_PRG_FLASH_WR		0x07	//TODO set return lengths for all these functions
 #define MMC3_CHR_FLASH_WR		0x08
 #define NROM_PRG_FLASH_WR		0x09
 #define NROM_CHR_FLASH_WR		0x0A
@@ -58,13 +58,19 @@
 #define MMC1_CHR_FLASH_WR		0x0F	//needs cur_bank set prior to calling
 #define MMC4_PRG_SOP_FLASH_WR		0x10	//current bank must be selected, & needs cur_bank set prior to calling
 #define MMC4_CHR_FLASH_WR		0x11	//needs cur_bank set prior to calling
+#define MAP30_PRG_FLASH_WR		0x12	//needs cur_bank set prior to calling
 
 
 #define	SET_CUR_BANK			0x20
 #define	SET_BANK_TABLE			0x21
 
-
 #define NES_M2_LOW_WR			0x22	//like CPU WR, but M2 stays low
+
+//write a page worth of random data to ppu
+//make sure the LSFR is initialized first in misc dict
+//send start address in operand, doesn't have to be page boundary
+//but A13 and /A13 get set once based on provided address.
+#define	PPU_PAGE_WR_LFSR		0x23	
 
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE

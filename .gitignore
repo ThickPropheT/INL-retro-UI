@@ -5,7 +5,7 @@
 *.d
 *.swp
 *.swo
-*.bin
+#*.bin
 *.bak
 *.smc
 *.dropbox.attr

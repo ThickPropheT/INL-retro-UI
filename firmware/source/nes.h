@@ -5,6 +5,7 @@
 #include "buffer.h"	//TODO remove this junk when get rid of FALSE
 #include "shared_dictionaries.h"
 #include "shared_errors.h"
+#include "stuff.h"
 
 uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rdata );
 
@@ -26,17 +27,19 @@ uint8_t nes_dualport_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, 
 
 void	mmc1_wr( uint16_t addr, uint8_t data, uint8_t reset );
 
-void 	nrom_prgrom_flash_wr( uint16_t addr, uint8_t data );
+uint8_t	nrom_prgrom_flash_wr( uint16_t addr, uint8_t data );
 void 	nrom_chrrom_flash_wr( uint16_t addr, uint8_t data );
 void 	mmc1_prgrom_flash_wr( uint16_t addr, uint8_t data );
 void	mmc1_chrrom_flash_wr( uint16_t addr, uint8_t data );
 void 	unrom_prgrom_flash_wr( uint16_t addr, uint8_t data );
 void 	cnrom_chrrom_flash_wr( uint16_t addr, uint8_t data );
-void	mmc3_prgrom_flash_wr( uint16_t addr, uint8_t data );
+uint8_t	mmc3_prgrom_flash_wr( uint16_t addr, uint8_t data );
 void	mmc3_chrrom_flash_wr( uint16_t addr, uint8_t data );
 void 	mmc4_prgrom_sop_flash_wr( uint16_t addr, uint8_t data );
 void 	mmc4_chrrom_flash_wr( uint16_t addr, uint8_t data );
 void 	cdream_chrrom_flash_wr( uint16_t addr, uint8_t data );
+uint8_t	map30_prgrom_flash_wr( uint16_t addr, uint8_t data );
+void 	ppu_page_wr_lfsr( uint16_t addr, uint8_t data );
 
 
 

@@ -101,6 +101,9 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 		case CDREAM_CHR_FLASH_WR:	
 			cdream_chrrom_flash_wr( operand, miscdata );
 			break;
+		case MAP30_PRG_FLASH_WR:	
+			map30_prgrom_flash_wr( operand, miscdata );
+			break;
 
 
 		//8bit return values:
@@ -132,6 +135,9 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 			rdata[RD_LEN] = HWORD_LEN;
 			rdata[RD0] = bank_table;
 			rdata[RD1] = bank_table>>8;
+			break;
+		case PPU_PAGE_WR_LFSR:
+			ppu_page_wr_lfsr( operand, miscdata );
 			break;
 		default:
 			 //macro doesn't exist
@@ -828,6 +834,57 @@ uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	return i;
 }
 
+/* Desc:NES PPU Page Write Random from LFSR
+ * 	decode A13 from addrH to set /A13 as expected
+ * 	NOTE: this is a /WE controlled write
+ * Pre: nes_init() setup of io pins
+ * Post:address left on bus
+ * 	data bus left clear
+ * Rtn:	Index of last byte read
+ */
+void ppu_page_wr_lfsr( uint16_t addr, uint8_t data )
+//TODO give other data sources
+{
+
+	uint16_t i;
+
+	//addr with PPU /A13
+	if (addr < 0x2000) { //below $2000 A13 clear, /A13 set
+		addr |= PPU_A13N_WORD;
+	} //above PPU $1FFF, A13 set, /A13 clear 
+
+	//get the first byte of data
+	data = lfsr_32();
+
+	for (i=0; i<256; i++) {
+
+		ADDR_SET( addr );	//returns data bus to input on AHL devices..
+
+		DATA_OP();
+
+		//put data on bus
+		DATA_SET(data);
+
+		NOP();
+		
+		//set CHR /RD and /WR
+		CSWR_LO();
+
+		//do some things that take time
+		data = lfsr_32();
+		addr++;
+
+		//latch data to memory
+		CSWR_HI();
+
+	}
+
+
+	//clear data bus
+	DATA_IP();
+
+}
+
 
 /* Desc:NES DUAL PORT PPU Page Read with optional USB polling
  * 	/A13 ignored
@@ -926,7 +983,7 @@ void	mmc1_wr( uint16_t addr, uint8_t data, uint8_t reset )
  * Post:Byte written and ready for another write
  * Rtn:	None
  */
-void nrom_prgrom_flash_wr( uint16_t addr, uint8_t data )
+uint8_t nrom_prgrom_flash_wr( uint16_t addr, uint8_t data )
 {
 
 	uint8_t rv;
@@ -941,9 +998,11 @@ void nrom_prgrom_flash_wr( uint16_t addr, uint8_t data )
 		rv = nes_cpu_rd(addr);
 		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
 	} while (rv != nes_cpu_rd(addr));
-	//TODO handle timeout
 
-	return;
+	//return the post-written value
+	//may not be the desired value if there was a problem
+	//or if the byte wasn't erased enough..
+	return rv;	
 }
 
 
@@ -1121,7 +1180,7 @@ void cnrom_chrrom_flash_wr( uint16_t addr, uint8_t data )
  * Post:Byte written and ready for another write
  * Rtn:	None
  */
-void mmc3_prgrom_flash_wr( uint16_t addr, uint8_t data )
+uint8_t mmc3_prgrom_flash_wr( uint16_t addr, uint8_t data )
 {
 
 	uint8_t rv;
@@ -1139,9 +1198,8 @@ void mmc3_prgrom_flash_wr( uint16_t addr, uint8_t data )
 		rv = nes_cpu_rd(addr);
 		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
 	} while (rv != nes_cpu_rd(addr));
-	//TODO handle timeout
 
-	return;
+	return rv;
 }
 
 
@@ -1298,6 +1356,36 @@ void cdream_chrrom_flash_wr( uint16_t addr, uint8_t data )
 	//TODO handle timeout
 
 	return;
+}
+
+
+/* Desc:NES MAPPER30 PRG-ROM FLASH Write
+ * Pre: nes_init() setup of io pins
+ * 	cur_bank global var must be set to desired mapper register value
+ * 	bank_table global var must be set to base address of the bank table
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+uint8_t map30_prgrom_flash_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock the flash
+	nes_cpu_wr(0xC000, 0x01); nes_cpu_wr(0x9555, 0xAA);
+	nes_cpu_wr(0xC000, 0x00); nes_cpu_wr(0xAAAA, 0x55);
+	nes_cpu_wr(0xC000, 0x01); nes_cpu_wr(0x9555, 0xA0);
+
+	//select desired bank and write data
+	nes_cpu_wr(0xC000, cur_bank);
+	nes_cpu_wr(addr, data);
+
+	do {
+		rv = nes_cpu_rd(addr);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != nes_cpu_rd(addr));
+
+	return rv;
 }
 
 

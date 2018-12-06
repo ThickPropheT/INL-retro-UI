@@ -4,7 +4,7 @@ uint8_t	write_page( uint8_t addrH, buffer *buff, write_funcptr wr_func )
 {
 	uint16_t cur = buff->cur_byte;
 	uint8_t	n = buff->cur_byte;
-	uint8_t read;
+//	uint8_t read;
 
 	while ( cur <= buff->last_idx ) {
 
@@ -19,6 +19,42 @@ uint8_t	write_page( uint8_t addrH, buffer *buff, write_funcptr wr_func )
 	//TODO error check/report
 	return SUCCESS;
 } 
+
+uint8_t	write_page_verify( uint8_t addrH, buffer *buff, write_rv_funcptr wr_func )
+{
+	uint16_t cur = buff->cur_byte;
+	uint8_t	n = buff->cur_byte;
+	uint8_t read;
+
+	while ( cur <= buff->last_idx ) {
+
+		//only works for NROM right now..
+		read = wr_func( ((addrH<<8)| n), buff->data[n] );
+		//write function returns read back data post flash attempt
+	
+		//TODO create flag/static variable to determine what behavior to have
+		//if write fails
+		if ( read != buff->data[n] ) {
+			LED_OP();
+			LED_HI();
+		} 
+		else { //next byte
+			LED_IP_PU();	
+			//LED_LO();
+			//if there's a WDT the device should reset if get stuck here
+    			n++;
+			cur++;
+		}
+		//put this increment only in pass case if want to retry
+		//n++;
+    		//cur++;
+	}
+	buff->cur_byte = n;
+
+	//TODO error check/report
+	return SUCCESS;
+} 
+
 
 //only used by cninja currently..
 uint8_t	write_page_cninja( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlock2, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
@@ -67,47 +103,6 @@ uint8_t	write_page_mm2( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t 
 			LED_OP();
 			LED_HI();
 		}
-	}
-	buff->cur_byte = n;
-	return SUCCESS;
-} 
-
-uint8_t	write_page_bank_map30( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlock2, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
-{
-	uint16_t cur = buff->cur_byte;
-	uint8_t	n = buff->cur_byte;
-	uint8_t read;
-	while ( cur <= buff->last_idx ) {
-
-		//select first bank for unlock sequence
-		//wr_func( 0x5555, 0xAA );
-		nes_cpu_wr( 0xC000, 0x01 );
-		wr_func( unlock1, 0xAA );
-		//wr_func( 0x2AAA, 0x55 );
-		nes_cpu_wr( 0xC000, 0x00 );
-		wr_func( unlock2, 0x55 );
-		//wr_func( 0x5555, 0xA0 );
-		nes_cpu_wr( 0xC000, 0x01 );
-		wr_func( unlock1, 0xA0 );
-
-		//now need to select bank for the actual write!
-		nes_cpu_wr( 0xC000, bank );
-		wr_func( ((addrH<<8)| n), buff->data[n] );
-		do {
-			usbPoll();
-			read = rd_func((addrH<<8)|n);
-	
-		} while( read != rd_func((addrH<<8)|n) );
-		if (read == buff->data[n]) {
-	    		n++;
-	    		cur++;
-			LED_IP_PU();	
-			LED_LO();
-		} else {
-			LED_OP();
-			LED_HI();
-		}
-
 	}
 	buff->cur_byte = n;
 	return SUCCESS;
@@ -396,7 +391,7 @@ uint8_t flash_buff( buffer *buff ) {
 			
 			if (buff->mapper == NROM) {
 				//used by other 32KB PRG bank discrete mappers like BNROM, CNROM, & color dreams
-				write_page( (0x80+addrH), buff, nrom_prgrom_flash_wr);
+				write_page_verify( (0x80+addrH), buff, nrom_prgrom_flash_wr);
 			}
 			if (buff->mapper == MMC1) {
 				write_page( (0x80+addrH), buff, mmc1_prgrom_flash_wr);
@@ -405,7 +400,7 @@ uint8_t flash_buff( buffer *buff ) {
 				write_page( (0x80+addrH), buff, unrom_prgrom_flash_wr);
 			}
 			if (buff->mapper == MMC3) {
-				write_page( (0x80+addrH), buff, mmc3_prgrom_flash_wr);
+				write_page_verify( (0x80+addrH), buff, mmc3_prgrom_flash_wr);
 			}
 			if (buff->mapper == MMC4) {
 				write_page( (0x80+addrH), buff, mmc4_prgrom_sop_flash_wr);
@@ -421,14 +416,7 @@ uint8_t flash_buff( buffer *buff ) {
 				write_page_mm2( bank, addrH, 0x5555, 0x2AAA, buff, disc_push_exp0_prgrom_wr, nes_cpu_rd );
 			}
 			if (buff->mapper == MAP30) {
-				//addrH &= 0b1011 1111 A14 must always be low
-				addrH &= 0x3F;
-				addrH |= 0x80;
-				//write bank value
-				//page_num shift by 6 bits A14 >> A8(0)
-				bank = buff->page_num >> 6;
-				//bank gets written inside flash algo
-				write_page_bank_map30( bank, addrH, 0x9555, 0xAAAA, buff, nes_cpu_wr, nes_cpu_rd );
+				write_page_verify( (0x80+addrH), buff, map30_prgrom_flash_wr);
 			}
 			if (buff->mapper == CNINJA) {
 				//addrH &= 0b1001 1111 A14-13 must always be low

@@ -44,10 +44,6 @@ function main ()
 	local cart = require "scripts.app.cart"
 	local nes = require "scripts.app.nes"
 	local snes = require "scripts.app.snes"
---	local gameboy = require "scripts.app.gameboy"
---	local gba = require "scripts.app.gba"
---	local sega = require "scripts.app.sega"
---	local n64 = require "scripts.app.n64"
 	local dump = require "scripts.app.dump"
 	local erase = require "scripts.app.erase"
 	local flash = require "scripts.app.flash"
@@ -55,8 +51,7 @@ function main ()
 	local jtag = require "scripts.app.jtag"
 	local ciccom = require "scripts.app.ciccom"
 	local fwupdate = require "scripts.app.fwupdate"
---	local bootload = require "scripts.app.bootload"
---	local crc32 = require "scripts.app.crc32"
+	local files = require "scripts.app.files"
 
 
 -- =====================================================
@@ -64,7 +59,9 @@ function main ()
 --	The -- comments out a line, so you can add/remove the -- to select/deselect mapper scripts
 -- =====================================================
 	--cart/mapper specific scripts
-	--local curcart = require "scripts.nes.nrom"
+	
+	--NES mappers
+	local curcart = require "scripts.nes.nrom"
 	--local curcart = require "scripts.nes.mmc1"
 	--local curcart = require "scripts.nes.unrom"
 	--local curcart = require "scripts.nes.cnrom"
@@ -72,7 +69,8 @@ function main ()
 	--local curcart = require "scripts.nes.mmc2"
 	--local curcart = require "scripts.nes.mmc4"
 	--local curcart = require "scripts.nes.mm2"
-	--local curcart = require "scripts.nes.mapper30"
+	--local curcart = require "scripts.nes.mapper30"	--old version supported by v2.1
+	--local curcart = require "scripts.nes.mapper30v2"	--has things required by v2.3.1
 	--local curcart = require "scripts.nes.bnrom"
 	--local curcart = require "scripts.nes.cdream"
 	--local curcart = require "scripts.nes.cninja"
@@ -81,21 +79,25 @@ function main ()
 	--local curcart = require "scripts.nes.easyNSF"
 	--local curcart = require "scripts.nes.fme7"
 	--local curcart = require "scripts.nes.dualport"
-	--local curcart = require "scripts.snes.v3"  --and GAMEBOY for now
+	
+	--SNES boards
+	--local curcart = require "scripts.snes.v3"
 	--local curcart = require "scripts.snes.lorom_5volt"  --catskull design
 	--local curcart = require "scripts.snes.v2proto"
-	--local curcart = require "scripts.snes.v2proto_hirom"  --quickly becoming the master SNES script...
+	--local curcart = require "scripts.snes.v2proto_hirom"  --becoming the master SNES script...
+	
+	--GAMEBOY boards
 	--local curcart = require "scripts.gb.romonly"
-	local curcart = require "scripts.gb.mbc1"
+	--local curcart = require "scripts.gb.mbc1"
 	
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
 -- =====================================================
-	--local cart_console = "NES" 	--includes Famicom
+	local cart_console = "NES" 	--includes Famicom
 	--local cart_console = "SNES"
 	--local cart_console = "SEGA"
 	--local cart_console = "N64"
-	local cart_console = "DMG"
+	--local cart_console = "DMG"
 	--local cart_console = "GBA"
 	--local cart_console = "SMS"
 
@@ -113,10 +115,10 @@ function main ()
 		verify = false,
 		dumpram = false,
 		writeram = false,
-		dumpfile = "ignore/dump.bin",
-		flashfile = "",
-		verifyfile = "",
-		dumpram_filename = "",
+		dump_filename = "ignore/dump.bin",
+		flash_filename = "ignore/flash.bin",
+		verify_filename = "ignore/verifyout.bin",
+		dumpram_filename = "ignore/ramdump.bin",
 		writeram_filename = "",
 	}
 -- =====================================================
@@ -124,75 +126,29 @@ function main ()
 -- These options can vary from cartridge to cartridge depending on specific hardware it contains.
 -- =====================================================
 	local console_opts = {
-		mirror = "V", -- Only used by NROM, also possible to set to "H"
-		prg_rom_size_kb = 128, -- Size of NES PRG-ROM in kb
-		chr_rom_size_kb = 128, -- Size of NES CHR-ROM in kb
-		wram_size_kb = 0,      -- Size of NES wram in kb
+		mirror = nil, -- Only used by latest INL discrete flash boards, set to "H" or "V" to change board mirroring
+		prg_rom_size_kb = 32,	-- Size of NES PRG-ROM in KByte
+		chr_rom_size_kb = 8,	-- Size of NES CHR-ROM in KByte
+		wram_size_kb = 0,	-- Size of NES PRG-RAM/WRAM in KByte
 	}
 
-	local rv
---	rv = dict.pinport( "DATA_SET", 0xAA )
---	rv = dict.pinport( "DATA_RD" )
---	rv = dict.io("IO_RESET")
-
---[[	--TEST GB power
-	rv = dict.pinport( "CTL_ENABLE", "CIN" )
-	rv = dict.pinport( "CTL_OP", "CIN")
-	rv = dict.pinport( "CTL_SET_LO", "CIN")
-	print("CIN low 5v GB")
-	jtag.sleep(5)
-	rv = dict.pinport( "CTL_SET_HI", "CIN")
-	print("CIN high 3v GBA")
-	jtag.sleep(90)
-	rv = dict.pinport( "CTL_SET_LO", "CIN")
-	print("CIN low 5v GB")
-	jtag.sleep(10)
-	rv = dict.pinport( "CTL_SET_HI", "CIN")
-	print("CIN high 3v GBA")
-	jtag.sleep(10)
-	--]]
-
-
-	--if rv then
-	--	print(string.format("%X", rv))
-	--end
-
---	print(dict.io("EXP0_PULLUP_TEST"))	
---
-
-	--BOOTLOADER TEST
---	print("jumping...")
-
-	--jump to 0xDEADBEEF
-	--dict.bootload("LOAD_ADDRH", 0xDEAD)	
-	--dict.bootload("JUMP_ADDR",  0xBEEF)	--for ARM LSbit must be odd (Thumb mode)
---	dict.bootload("LOAD_ADDRH", 0x1FFF)	
---	dict.bootload("JUMP_ADDR",  0xCAC5)	
---	dict.bootload("LOAD_ADDRH", 0x0800)	
---	dict.bootload("JUMP_ADDR",  0x00C1)	
---
---	dict.bootload("LOAD_ADDRH", 0x2000)	
---	dict.bootload("JUMP_ADDR",  0x0430)	
-
---	dict.bootload("JUMP_BL")	
---	dict.bootload("JUMP_TEST")	
---	print("jumped")
---
 
 	--Firmware update testing
 
 	--active development path (based on makefile in use)
-	--fwupdate.update_firmware("../firmware/build_stm/inlretro_stm.bin")
+	--fwupdate.update_firmware("../firmware/build_stm/inlretro_stm.bin", nil, true ) --Know what I'm doing? force the update
+	--fwupdate.update_firmware("../firmware/build_stm/inlretro_stm.bin", 0x6DC, false) --INL6 skip ram pointer
+	--fwupdate.update_firmware("../firmware/build_stm/inlretro_stm.bin", 0x6E8, false) --INL_NES skip ram pointer
 	
 	--released INL6 path (big square boards)
 	--fwupdate.update_firmware("../firmware/build_stm6/inlretro_stm_AV00.bin")
+	--fwupdate.update_firmware("../firmware/build_stm6/inlretro_stm_AV01.bin", 0x6DC, false) --INL6 skip ram pointer
 	
 	--released INL_N path (smaller NESmaker boards)
 	--fwupdate.update_firmware("../firmware/build_stmn/inlretro_stm_AV00.bin")
+	--fwupdate.update_firmware("../firmware/build_stmn/inlretro_stm_AV01.bin", 0x6E8, false) --INL_NES skip ram pointer
 		
 
---	debug = true
---	rv = cart.detect(debug)
 
 --DETECT WHICH CART IS INSERTED, 
 --or take user input for manual override 
@@ -209,116 +165,6 @@ function main ()
 			dict.io("IO_RESET")	
 			dict.io("NES_INIT")	
 			
-		---[[
-			--NES detect mirroring to gain mapper info
-			nes.detect_mapper_mirroring(true)
-		--[[
-			--NES detect memories to gain more mapper/board info	
-				--check for CHR-RAM
-			nes.ppu_ram_sense(0x1000, true)
-				--check CHR-ROM flash ID
-			nes.read_flashID_chrrom_8K(true)
-				--check for EXP0 pullup..?
-			print("EXP0 pull-up test:", dict.io("EXP0_PULLUP_TEST"))	
-				--try to read flash ID
-			--setup to fail if 16KB banks
-			print("32KB banks:")
-			dict.nes("NES_CPU_WR", 0x8000, 0xFF)
-			nes.read_flashID_prgrom_exp0(true)
-			--setup to pass if 16KB banks
-			print("16KB banks:")
-			dict.nes("NES_CPU_WR", 0x8000, 0x00)
-			nes.read_flashID_prgrom_exp0(true)
-				--try mapper 30 flash ID
-			print("\n")
-		--]]
-
-
-		--	jtag.run_jtag()
-
-
-			--Check for SWIM on A0
-		--[[
-			dict.io("IO_RESET")	
-			print("start swim")
-
-			dict.io("SWIM_INIT", "SWIM_ON_A0")	
-			----[[
-			if swim.start(true) then
-				--SWIM is now established and running at HIGH SPEED
-				snes_swimcart = false	--don't want to use SWIM pin to control flash /OE, use SNES RESET (EXP0) instead
-
-				swim.swim_test()
-
-				--swim.write_optn_bytes( true, true ) -- enable ROP, debug
-
-				--check if ROP set, allow clearing ROP and erasing CIC
-				--blindly erase STM8 CIC for now by disabling ROP
-				swim.disable_ROP_erase(true)
-				
-				--open CIC file
-				local cic_file = assert(io.open("stm8_8KB_zero.bin", "rb"))
-				--local cic_file = assert(io.open("stm8_8KB_0xff.bin", "rb"))
-				--local cic_file = assert(io.open("stm8_8KB_testpattern.bin", "rb"))
-				--local cic_file = assert(io.open("NESCIC.bin", "rb"))
-				--local cic_file = assert(io.open("LIZv1.bin", "rb"))
-
-				--write CIC file
-				swim.write_flash( cic_file )
-
-				--close CIC file
-				assert(cic_file:close())
-
-				--set ROP & AFR0
-				swim.write_optn_bytes( true, true ) -- ROP not set, debug set
-
-				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
-				swim.stop_and_reset()
-			else
-				print("ERROR problem with STM8 CIC")
-			end
-
-			print("done flashing STM8 on A0")
-
-			dict.io("IO_RESET")	
-
-			--]]
-
-		--[[
-		
-
-			ciccom.start()
-			ciccom.set_opcode("M")
-			--now send operand "V" (0x56) or "H" (0x48)
-			ciccom.write("H")
-
-			
-
-			dict.io("IO_RESET")	
-			jtag.sleep(0.01) --10msec to be overly safe
-
-
-		---[[
-			--the CIC won't update the H/V stack flag unless it's reset
-			--reset caused during swim init doesn't count either bc it halts at reset vector
-
-			--test reading back CIC version
-			dict.io("SWIM_INIT", "SWIM_ON_A0")	
-			--dict.io("SWIM_INIT", "SWIM_ON_EXP0")	
-			if swim.start(true) then
-
-				swim.read_stack()
-
-			else
-				print("ERROR trying to read back CIC signature stack data")
-			end
-			swim.stop_and_reset()
-
-			print("done reading STM8 stack on A0\n")
-
-			dict.io("IO_RESET")	
-		--]]
-
 
 			--determined all that could about mapper board
 			--set rom types and sizes
@@ -328,35 +174,9 @@ function main ()
 			-- Perform requested operations with provided options.
 			curcart.process(process_opts, console_opts)
 			
-		--[[
-			--FLASHING:
-			--erase cart
-			erase.erase_nes( true )
-			--open file
-			local file 
-			--file = assert(io.open("inltest.bin", "rb"))
-			--file = assert(io.open("ignore/ddug2.bin", "rb"))
-			file = assert(io.open("ignore/lizard_v1.bin", "rb"))
-			--determine if auto-doubling, deinterleaving, etc, 
-			--needs done to make board compatible with rom
-			--flash cart
-			flash.flash_nes( file, true )
-			--close file
-			assert(file:close())
 
-			--DUMPING:
-			--create new file
-			local file 
-			file = assert(io.open("dump.bin", "wb"))
-			--dump cart into file
-			dump.dump_nes( file, true )
-
-			--close file
-			assert(file:close())
-		--]]
-
-
-	--		dict.io("IO_RESET")	
+			--always end with and gpio reset incase the script didn't
+			dict.io("IO_RESET")	
 
 		elseif cart_console == "SNES" then
 
@@ -376,160 +196,19 @@ function main ()
 			--curcart.process( false, false, false, false, false, nil, nil, nil, true, true, "ignore/ramdump.bin", "ignore/dkc_paul.bin")
 
 
---			--old SNES code
---		
---			snes_swimcart = nil
---			dict.io("IO_RESET")	
---			print("start swim")
---
---			dict.io("SWIM_INIT", "SWIM_ON_A0")	
---			--[[
---			if swim.start(true) then
---				--SWIM is now established and running at HIGH SPEED
---				snes_swimcart = false	--don't want to use SWIM pin to control flash /OE, use SNES RESET (EXP0) instead
---			print("swim prgm mode")
---
---				--check if ROP set, allow clearing ROP and erasing CIC
---				--blindly erase STM8 CIC for now by disabling ROP
---				swim.disable_ROP_erase(true)
---				
---				--open CIC file
---				local cic_file = assert(io.open("SNESCIC_flashmode.bin", "rb"))
---
---				--write CIC file
---				swim.write_flash( cic_file )
---
---				--close CIC file
---				assert(cic_file:close())
---
---				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
---				swim.stop_and_reset()
---			else
---				print("ERROR problem with STM8 CIC")
---			end
---			--]]
---
---			dict.io("IO_RESET")	
---			dict.io("SNES_INIT")	
---
---
---			--SNES detect HiROM or LoROM 
---			--nes.detect_mapper_mirroring(true)
---			local snes_mapping = "LOROM"
---			--SNES detect if there's save ram and size
---
---		---[[
---			--SNES detect if able to read flash ID's
---			if not snes.read_flashID(true) then
---				print("ERROR unable to read flash ID")
---				return
---			end
---
---			erase.erase_snes( false )
---			--quick lame check to see if chip erased
---			---[[
---			if snes.read_reset_vector(0, true) ~= 0xFFFF then
---				erase.erase_snes( false )
---			end
---			if snes.read_reset_vector( 1, true) ~= 0xFFFF then
---				erase.erase_snes( false )
---			end
---			if snes.read_reset_vector( 20, true) ~= 0xFFFF then
---				erase.erase_snes( false )
---			end
---			if snes.read_reset_vector( 63, true) ~= 0xFFFF then
---				erase.erase_snes( false )
---			end
---			--]]
---
---			--FLASHING:
---			--erase cart
-----			erase.erase_snes( false )
---			--open file
---			local file 
---	---[[      	file = assert(io.open("flash.bin", "rb"))
---		      	--file = assert(io.open("SF2_PTdump_capcomFINAL.bin", "rb"))
---		      	file = assert(io.open("ignore/MMXdump.bin", "rb"))
---
---			--calculate checksum
---			--local data = file:read("*all")
---			--print(crc32.hash(data))
---
---			--determine if auto-doubling, deinterleaving, etc, 
---			--needs done to make board compatible with rom
---			--flash cart
---			flash.flash_snes( file, true )
---			--close file
---			assert(file:close())
---			--]]
---
---			dict.io("IO_RESET")	
---			dict.io("SNES_INIT")	
---			print("start swim")
---
---		--[[
---			dict.io("SWIM_INIT", "SWIM_ON_A0")	
---			--flash final CIC code
---			if swim.start(true) then
---				--SWIM is now established and running at HIGH SPEED
---				--swim.printCSR()
---				--snes_swimcart = false
---				--print("main swimcart", snes_swimcart)
---
---				print("swimming")
---				swim.swim_test()
---
---				--check if ROP set, allow clearing ROP and erasing CIC
---				--blindly erase STM8 CIC for now by disabling ROP
---		--		swim.disable_ROP_erase(true)
---				
---				--open CIC file
---				local cic_file = assert(io.open("SNESCIC.bin", "rb"))
---
---				--write CIC file
-----				swim.write_flash( cic_file )
---
---				--close CIC file
---				assert(cic_file:close())
---
---				--write option bytes
---						    -- enable ROP, debug
-----				swim.write_optn_bytes( false, true )
---
---				--read stack
---				swim.read_stack(true)
---
---				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
---				swim.stop_and_reset()
---
---			else
---				print("ERROR problem with STM8 CIC")
---			end
---		--]]
---
---
---			--DUMPING:
---			--create new file
---			print("dumping SNES")
---			snes.read_reset_vector(0, true)
---			local file 
---			file = assert(io.open("snesdump.bin", "wb"))
---			--dump cart into file
---		--	swim.start()
---			dump.dump_snes( file, snes_mapping, true )
---
---			--close file
---			assert(file:close())
 
-
-		--trick to do this at end while debugging so don't have to wait for it before starting
-	--		erase.erase_snes( false )
-
+			--always end with and gpio reset incase the script didn't
 			dict.io("IO_RESET")	
 
 		elseif cart_console == "SEGA" then
 
+			--always end with and gpio reset incase the script didn't
+			dict.io("IO_RESET")	
+
 		elseif cart_console == "N64" then
+
+			--always end with and gpio reset incase the script didn't
+			dict.io("IO_RESET")	
 
 		elseif cart_console == "DMG" then
 
@@ -554,12 +233,18 @@ function main ()
 				print("GBP reset (pullup) = 3v")
 				--]]
 			
+			--always end with and gpio reset incase the script didn't
 			dict.io("IO_RESET")	
 
 		elseif cart_console == "GBA" then
 
+			--always end with and gpio reset incase the script didn't
+			dict.io("IO_RESET")	
+
 		elseif cart_console == "SMS" then
 
+			--always end with and gpio reset incase the script didn't
+			dict.io("IO_RESET")	
 		end
 
 	end

@@ -111,6 +111,7 @@
 	#define	SWD_		17
 //	PC18 "SWC" 	mcu debug
 	#define	C18_		18
+	#define	SWC_		18
 //	PC19 "AFL" 	flipflop addr expansion for FF0-7 (also CIC RESET on NES)
 	#define	C19_		19
 	#define	AFL_		19

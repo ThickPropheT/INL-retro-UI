@@ -41,7 +41,9 @@ local function erase_main()
 
 end
 
-local function update_firmware(newbuild)
+--skip is used because there is a ram pointer that often varies between builds
+--we're never going back to main so this mismatch is allowed
+local function update_firmware(newbuild, skip, forceup)
 
 	local error = false
 
@@ -109,13 +111,19 @@ local function update_firmware(newbuild)
 
 		--	print("read data:", string.format("%X", readdata) )
 			if readdata ~= data then
-				print("\n\nERROR!!!! verifying byte number", help.hex(byte_num), 
+				print("\n\nUnable to verify byte number", help.hex(byte_num), 
 					" to flash expected:", help.hex(data), "was:", help.hex(readdata))
-				print("exiting because it's not safe to proceed...")
-				print("no changes to device flash were made\n\n")
-
-				error = true
-				break
+				if forceup then
+					print("continuing anyway because force update was set...")
+				elseif byte_num == skip then
+					print("there was an expected mismatch at byte:", help.hex(byte_num))
+				else
+					print("\n\nPROBLEM! with firmware updater verification exiting")
+					print("exiting because it's not safe to proceed...")
+					print("no changes to device flash were made\n\n")
+					error = true
+					break
+				end
 			--else
 			--	print("verified byte number", help.hex(byte_num), 
 			--		" of flash ", help.hex(data), help.hex(readdata))

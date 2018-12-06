@@ -617,3 +617,53 @@ swim.stop_and_reset = stop_and_reset
 
 -- return the module's table
 return swim
+
+
+-- NOTES old code that was once used to flash STM8 CICs from inlretro.lua
+
+			--Check for SWIM on A0
+		--[[
+			dict.io("IO_RESET")	
+			print("start swim")
+
+			dict.io("SWIM_INIT", "SWIM_ON_A0")	
+			----[[
+			if swim.start(true) then
+				--SWIM is now established and running at HIGH SPEED
+				snes_swimcart = false	--don't want to use SWIM pin to control flash /OE, use SNES RESET (EXP0) instead
+
+				swim.swim_test()
+
+				--swim.write_optn_bytes( true, true ) -- enable ROP, debug
+
+				--check if ROP set, allow clearing ROP and erasing CIC
+				--blindly erase STM8 CIC for now by disabling ROP
+				swim.disable_ROP_erase(true)
+				
+				--open CIC file
+				local cic_file = assert(io.open("stm8_8KB_zero.bin", "rb"))
+				--local cic_file = assert(io.open("stm8_8KB_0xff.bin", "rb"))
+				--local cic_file = assert(io.open("stm8_8KB_testpattern.bin", "rb"))
+				--local cic_file = assert(io.open("NESCIC.bin", "rb"))
+				--local cic_file = assert(io.open("LIZv1.bin", "rb"))
+
+				--write CIC file
+				swim.write_flash( cic_file )
+
+				--close CIC file
+				assert(cic_file:close())
+
+				--set ROP & AFR0
+				swim.write_optn_bytes( true, true ) -- ROP not set, debug set
+
+				-- reset STM8 CIC and end SWIM comms to it can execute what we just flashed
+				swim.stop_and_reset()
+			else
+				print("ERROR problem with STM8 CIC")
+			end
+
+			print("done flashing STM8 on A0")
+
+			dict.io("IO_RESET")	
+
+			--]]

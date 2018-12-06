@@ -197,7 +197,6 @@ local function wr_bank_table(base, entries, numtables)
 end
 
 
---host flash one byte/bank at a time...
 --this is controlled from the host side one bank at a time
 --but requires mapper specific firmware flashing functions
 local function flash_prgrom(file, rom_size_KB, debug)

@@ -21,7 +21,15 @@
 //goal to be safe state for all hardware
 //LED is pulled up (DIM) to help indicate this io state
 //FFs are disabled due to pull up on /OE
-#define IO_RESET	0
+#define IO_RESET	0	
+	//operand: 1-disable STM SW DEBUG PORT in the process
+	//SWD & SWC pins have default GPIO settings different from all others
+	//this sets a static variable so anytime the firmware calls io_reset
+	//the debug remains disabled.  But if the host calls IO_RESET
+	//whatever operand is provided is set.
+	#define	DISABLE_STM_DEBUG	0x10
+	//sending no operand (0) clears the disable debug setting in firmware
+	
 
 //NES cartridge interfacing setup
 //set outputs as required
@@ -69,6 +77,8 @@
 //be careful not to drive GBA cartridge with 5v as it's supposed to only be 3v
 #define GB_POWER_5V	9
 #define GB_POWER_3V	10
+
+
 
 
 //Test EXP0 drive with pull up 
