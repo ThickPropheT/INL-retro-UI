@@ -23,8 +23,10 @@ function nes_exec(mapper, dump_filename, flash_filename, verify_filename, ramdum
     local do_read = not isempty(dump_filename)
     
     -- If a flash filename was provided, write its contents to the cartridge.
+    -- TODO: Check for erase + dump at same time, not permitted.
     local do_erase = not isempty(flash_filename)
     -- If writing, always erase.
+    -- TODO: Check for program and dump at same time, not permitted.
     local do_program = do_erase
     
     -- If a verify_filename was provided, dump data from cartridge after flash to a file.
