@@ -82,6 +82,11 @@ uint8_t dump_buff( buffer *buff ) {
 							//id contains MSb of page when <256B buffer
 							buff->last_idx, 1 );
 			break;
+		case GBA_ROM_PAGE:
+			//address must have already been latched
+			//we're only telling page_rd the number of bytes to read, and where to put it
+			buff->cur_byte = gba_page_rd( buff->data, buff->last_idx );
+			break;
 		#endif
 
 		#ifdef NES_CONN

@@ -48,7 +48,7 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 		case GB_POWER_5V:	
 				GBP_OP(); GBP_5V(); 		break;
 		case GAMEBOY_INIT:	gameboy_init();		break;
-//		case GBA_INIT:	gba_init();			break;
+		case GBA_INIT:	gba_init();			break;
 		#endif
 		#ifdef SEGA_CONN
 		case SEGA_INIT:	sega_init();			break;
@@ -326,18 +326,17 @@ void gba_init()
 	io_reset();
 
 	//enable control outputs and disable memories
-	//ROM
+	//ROM-RAM
 	ROMSEL_OP();
-	ROMSEL_HI();
+	ROMSEL_HI();	//gameboy pin 5 ADDRESS LATCH
 	CSRD_OP();
-	CSRD_HI();
+	CSRD_HI();	//gameboy pin 4 /RD
 	CSWR_OP();
-	CSWR_HI();
+	CSWR_HI();	//gameboy pin 3 /WR
 
 	//Set #RESET pin low
 	EXP0_LO();
-	EXP0_OP();
-	//if SWIM is active, EXP0 must be set to pullup prior to SWIM transfers
+	EXP0_HI();	//gameboy pin 30 "GAMEBOY /RESET" (GBA /CS2)
 
 	//other control pins are inputs or unused, leave as IP pullup from reset
 
@@ -346,9 +345,12 @@ void gba_init()
 	DATA_IP_PU();
 
 	//now meet conditions to call other macros
-	//setup address $0000
-	ADDR_ENABLE();
-	ADDR_SET(0x0000);
+	ADDR_ENABLE();	//turns on GPIO block & sets to output
+	ADDR_IP();	//ad0-15 input
+	ADDR_PU();	//ad0-15 pullup
+	ADDR_SET(0x0000);	//output set to zero, but won't take effect until outputed
+
+	//All AD0-15 & D0-7 are bidir pins, don't drive them until ready
 
 	//default is 3v on gameboy/GBA port
 

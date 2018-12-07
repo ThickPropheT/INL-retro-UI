@@ -121,6 +121,7 @@
 	#define SNESROM_PAGE	0x24	//mapper byte specifies A15-8 ROMSEL low
 	#define SNESSYS_PAGE	0x25	//mapper byte specifies A15-8 ROMSEL high
 	#define GAMEBOY_PAGE	0x26	//mapper byte specifies A15-8
+	#define GBA_ROM_PAGE	0x27	//address must have already been latched with gba dictionary
 
 	//operand LSB
 	//SST 39SF0x0 manf/prod IDs

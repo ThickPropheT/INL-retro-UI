@@ -7,7 +7,8 @@
 
 uint8_t gba_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rdata );
 
-uint8_t	gba_rd( uint16_t addr );
-void	gba_wr( uint16_t addr, uint8_t data );
+uint16_t gba_rd();
+void gba_latch_addr( uint16_t addr_lo, uint8_t addr_hi);
+uint8_t gba_page_rd( uint8_t *data, uint8_t len);
 
 #endif

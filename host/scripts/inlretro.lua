@@ -90,6 +90,9 @@ function main ()
 	--local curcart = require "scripts.gb.romonly"
 	--local curcart = require "scripts.gb.mbc1"
 	
+	--GBA 
+	--local curcart = require "scripts.gba.basic"
+	
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
 -- =====================================================
@@ -143,10 +146,12 @@ function main ()
 	--released INL6 path (big square boards)
 	--fwupdate.update_firmware("../firmware/build_stm6/inlretro_stm_AV00.bin")
 	--fwupdate.update_firmware("../firmware/build_stm6/inlretro_stm_AV01.bin", 0x6DC, false) --INL6 skip ram pointer
+	--fwupdate.update_firmware("../firmware/build_stm6/inlretro_stm.bin",      0x6DC, false) --nightly build
 	
 	--released INL_N path (smaller NESmaker boards)
 	--fwupdate.update_firmware("../firmware/build_stmn/inlretro_stm_AV00.bin")
 	--fwupdate.update_firmware("../firmware/build_stmn/inlretro_stm_AV01.bin", 0x6E8, false) --INL_NES skip ram pointer
+	--fwupdate.update_firmware("../firmware/build_stmn/inlretro_stm.bin",      0x6E8, false) --nightly build
 		
 
 
@@ -237,6 +242,8 @@ function main ()
 			dict.io("IO_RESET")	
 
 		elseif cart_console == "GBA" then
+
+			curcart.process(process_opts, console_opts)
 
 			--always end with and gpio reset incase the script didn't
 			dict.io("IO_RESET")	

@@ -3,6 +3,9 @@
 //only need this file if connector is present on the device
 #ifdef GB_CONN 
 
+uint16_t cur_addr_lo;
+uint8_t cur_addr_hi;
+
 //=================================================================================================
 //
 //	GBA operations
@@ -26,20 +29,32 @@ uint8_t gba_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 #define	RD_LEN	0
 #define	RD0	1
 #define	RD1	2
+//resist temptation to make these 16bit indexes
+//will break rule of accessing usb_buff in half word aligned access
+//would have to use RD1-RD2 for 16bit aligned access..
 
 #define	BYTE_LEN 1
 #define	HWORD_LEN 2
 	
 	switch (opcode) { 
 //		//no return value:
-		case GBA_WR:	
-			gba_wr( operand, miscdata );
+		case LATCH_ADDR:	
+			//operand A0-15, miscdata A16-23->D0-7
+			gba_latch_addr( operand, miscdata );
+			break;
+		case RELEASE_BUS:
+			ROMSEL_HI();
+			DATA_IP();	//A16-23 are output here during reads
 			break;
 
 		//8bit return values:
 		case GBA_RD:
-			rdata[RD_LEN] = BYTE_LEN;
-			rdata[RD0] = gba_rd( operand );
+			//address must have been latched already
+			rdata[RD_LEN] = HWORD_LEN;
+			//can use operand as a variable
+			operand = gba_rd();
+			rdata[RD0] = operand;
+			rdata[RD1] = operand>>8;
 			break;
 		default:
 			 //macro doesn't exist
@@ -50,15 +65,85 @@ uint8_t gba_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 
 }
 
-uint8_t	gba_rd( uint16_t addr )
+//latches A0-23, leaves /CS low for subsequent accesses
+void gba_latch_addr( uint16_t addr_lo, uint8_t addr_hi)
 {
-	return 0xAA;
-}
+	//store address so other functions can keep track of incrementing
+	cur_addr_lo = addr_lo;
+	cur_addr_hi = addr_hi;
+	
+	//set addr & data bus to output
+	ADDR_OP();
+	DATA_OP();
 
+	//place addr on the bus
+	ADDR_SET(addr_lo);
+	DATA_SET(addr_hi);
 
-void	gba_wr( uint16_t addr, uint8_t data )
-{
+	//latch the address
+	//leave it low for subsequent access
+	ROMSEL_LO();
+
+	//leave AD0-15 as input for subsequent access
+	ADDR_IP();
+
+	//leave A16-23 as output for subsequent access
+
 	return;
 }
+
+//address must already have been latched
+//will increment address variables and A16-23
+//ready to read next byte
+uint16_t gba_rd()
+{
+	uint16_t read;
+
+	if( cur_addr_lo == 0xFFFF ) {
+		//going to have a roll over when incrementing
+		cur_addr_hi++;
+		//don't output it till this access is done though
+	}
+
+	CSRD_LO();
+	cur_addr_lo++;	//increment to next byte that will be read
+	read = ADDR_VAL;
+	CSRD_HI();
+
+	//if we had a 16bit addr roll over, need to increment A16-23
+	DATA_SET(cur_addr_hi);
+
+	return read;
+}
+
+//can only read 255 bytes, len can't be 255 else it would create infinite loop
+//TODO get a 16bit data pointer
+uint8_t gba_page_rd( uint8_t *data, uint8_t len)
+{
+	uint8_t i;
+	uint16_t read;
+
+	for( i=0; i<=len; i++ ) {
+
+		//usbPoll();	//Call usbdrv.h usb polling while waiting for data
+
+		//read 16bits
+		read = gba_rd();
+
+		//store lower byte little endian
+		data[i] = read;
+
+		//upper byte
+		i++;
+
+		//store upper byte
+		data[i] = read>>8;
+	}
+
+	//return index of last byte read
+	return i;
+}
+
+
 
 #endif //GB_CONN

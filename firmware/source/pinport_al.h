@@ -1142,6 +1142,11 @@ void software_AXL_CLK();
 //	Write/Output: Byte/half word access only, no bit accesses
 //	Read/Input: Not supported
 //
+//	Broke the rules above for devices with GBA ports, let them be inputs
+//	don't really need to define a whole new port, just need to be able to
+//	read from the current definition.  Old kazzo's and STM_NES can't
+//	do these functions, but they don't have GBA/N64 connectors..
+//
 //	---------------------------------------------------------------------------------------
 
 #if defined (STM_INL6_PROTO) || defined(STM_INL6)
@@ -1160,6 +1165,8 @@ void software_AXL_CLK();
 	//Appears to be working for setting A10, but not A11 reguardless of order of execution..
 	//TODO really these macros should be making byte writes to the registers, not 16bit RMW
 	#define ADDR_SET(hword)	Abank->ODR = hword
+	#define ADDR_RD(hword)	hword = Abank->IDR
+	#define ADDR_VAL	(Abank->IDR)
 
 	#define ADDR_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_ADDR
 	#define ADDR_ENABLE()	ADDR_EN_CLK(); ADDR_OP()
