@@ -31,6 +31,11 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 #define ROMSEL_LO()	CTL_SET_LO(ROMSELbank, ROMSEL)
 #define ROMSEL_HI()	CTL_SET_HI(ROMSELbank, ROMSEL)
 #define ROMSEL_RD(val)	CTL_RD(ROMSELbank, ROMSEL, val)
+// same pin: N64 ALE_L
+#define	ALE_L_OP()	CTL_OP(ROMSELbank, ROMSEL)
+#define	ALE_L_IP_PU()	CTL_IP_PU(ROMSELbank, ROMSEL)
+#define ALE_L_LO()	CTL_SET_LO(ROMSELbank, ROMSEL)
+#define ALE_L_HI()	CTL_SET_HI(ROMSELbank, ROMSEL)
 
 //     PC2  "PRGRW"
 #define	PRGRW_IP_PU()	CTL_IP_PU(PRGRWbank, PRGRW)
@@ -39,6 +44,11 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 #define PRGRW_LO()	CTL_SET_LO(PRGRWbank, PRGRW)
 #define PRGRW_HI()	CTL_SET_HI(PRGRWbank, PRGRW)
 #define PRGRW_RD(val)	CTL_RD(PRGRWbank, PRGRW, val)
+// same pin: N64 ALE_H
+#define	ALE_H_IP_PU()	CTL_IP_PU(PRGRWbank, PRGRW)
+#define	ALE_H_OP()	CTL_OP(PRGRWbank, PRGRW)
+#define ALE_H_LO()	CTL_SET_LO(PRGRWbank, PRGRW)
+#define ALE_H_HI()	CTL_SET_HI(PRGRWbank, PRGRW)
 
 //     PC3  "FREE"
 #ifndef C3nodef

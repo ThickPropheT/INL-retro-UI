@@ -92,6 +92,12 @@ function main ()
 	
 	--GBA 
 	--local curcart = require "scripts.gba.basic"
+
+	--SEGA GENESIS 
+	--local curcart = require "scripts.sega.genesis_v1"
+	
+	--N64 
+	--local curcart = require "scripts.n64.basic"
 	
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
@@ -111,7 +117,7 @@ function main ()
 -- will be ignored by mappers that don't support RAM.
 -- =====================================================
 	local process_opts = {
-		test = true,
+		test = false,
 		read = true,
 		erase = false,
 		program = false,
@@ -131,6 +137,7 @@ function main ()
 	local console_opts = {
 		mirror = nil, -- Only used by latest INL discrete flash boards, set to "H" or "V" to change board mirroring
 		prg_rom_size_kb = 32,	-- Size of NES PRG-ROM in KByte
+		--prg_rom_size_kb = 8*1024,	-- 8MByte ROM size example
 		chr_rom_size_kb = 8,	-- Size of NES CHR-ROM in KByte
 		wram_size_kb = 0,	-- Size of NES PRG-RAM/WRAM in KByte
 	}
@@ -207,11 +214,14 @@ function main ()
 
 		elseif cart_console == "SEGA" then
 
+			curcart.process(process_opts, console_opts)
+
 			--always end with and gpio reset incase the script didn't
 			dict.io("IO_RESET")	
 
 		elseif cart_console == "N64" then
 
+			curcart.process(process_opts, console_opts)
 			--always end with and gpio reset incase the script didn't
 			dict.io("IO_RESET")	
 
@@ -250,6 +260,7 @@ function main ()
 
 		elseif cart_console == "SMS" then
 
+			curcart.process(process_opts, console_opts)
 			--always end with and gpio reset incase the script didn't
 			dict.io("IO_RESET")	
 		end

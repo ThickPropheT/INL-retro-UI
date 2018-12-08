@@ -163,6 +163,7 @@
 #define ADDR_IP_	15
 #define ADDR_OP_	16
 #define ADDR_SET_	17
+#define ADDR_RD_	26	//doesn't work on devices without direct access to 16bit address bus
 
 //============================
 //EXP PORT 8bit ACCESS (bits1-8)
@@ -181,5 +182,20 @@
 #define HADDR_ENABLE_	21
 #define HADDR_DISABLE_	22
 #define HADDR_SET_	23
+
+//	CTL_OD_		24 above
+//	CTL_PP_		25 above
+//	ADDR_RD_	26 above
+
+//============================
+//FLIPFLOP ADDR PORT 8bit WIDE ACCESS
+//SEGA: FF0-7 connecto to A17-18, #AS, A20-23, #TIME
+//opcode: type of operation
+//operand: value to place on bus
+//NOTE: these operations corrupt the ADDR bus, so call this first 
+//============================
+#define FFADDR_ENABLE_	27
+#define FFADDR_DISABLE_	28
+#define FFADDR_SET_	29
 
 #endif

@@ -16,8 +16,13 @@
 //=============================================================================================
 //=============================================================================================
 
+//TODO THESE ARE JUST PLACE HOLDERS...
 #define	SEGA_RD	0	//RL=3  return error code, data len = 1, 1 byte of data
 #define	SEGA_WR	1
+
+// GENESIS ADDR A17-23 along with #LO_MEM & #TIME
+// TODO separate #LO_MEM & #TIME, they're currently fixed high
+#define SET_BANK 2	
 
 
 #endif

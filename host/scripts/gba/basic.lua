@@ -121,7 +121,7 @@ local function process(process_opts, console_opts)
 		--dump cart into file
 		time.start()
 		dump_rom(file, rom_size, false)
-		time.report(rom_size_KB)
+		time.report(rom_size)
 
 		--close file
 		assert(file:close())
@@ -160,7 +160,7 @@ local function process(process_opts, console_opts)
 		--dump cart into file
 		time.start()
 		dump_rom(file, rom_size, false)
-		time.report(rom_size_KB)
+		time.report(rom_size)
 
 		--close file
 		assert(file:close())

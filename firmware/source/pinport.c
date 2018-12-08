@@ -391,6 +391,12 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 		case ADDR_IP_: 		ADDR_IP();		break;
 		case ADDR_OP_: 		ADDR_OP();		break;
 		case ADDR_SET_:		ADDR_SET(operand);	break;
+		#ifdef ADDR_VAL
+		case ADDR_RD_:		rdata[RD_LEN] = 1;
+					rdata[RD0] = ADDR_VAL;
+					rdata[RD1] = ADDR_VAL>>8;	break;
+		#endif
+
 
 		//============================
 		//EXP PORT 8bit ACCESS (bits1-8)
@@ -400,6 +406,7 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 		case EXP_ENABLE_:	EXP_ENABLE();		break;
 		case EXP_DISABLE_:	EXP_DISABLE();		break;
 		case EXP_SET_:		EXP_SET(operand);	break;
+
 
 		//============================
 		//HIGH ADDR PORT 8bit WIDE ACCESS
@@ -411,6 +418,19 @@ uint8_t pinport_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_
 		case HADDR_DISABLE_:	HADDR_DISABLE();	break;
 		case HADDR_SET_:	HADDR_SET(operand);	break;
 		#endif
+
+
+		//============================
+		//FLIPFLOP ADDR PORT 8bit WIDE ACCESS
+		//opcode: type of operation
+		//operand: value to place on bus
+		//============================
+		#ifdef SEGA_CONN
+		case FFADDR_ENABLE_:	FFADDR_ENABLE();	break;
+		case FFADDR_DISABLE_:	FFADDR_DISABLE();	break;
+		case FFADDR_SET_:	FFADDR_SET(operand);	break;
+		#endif
+
 
 		default:
 			 //macro doesn't exist or isn't on this PCB version

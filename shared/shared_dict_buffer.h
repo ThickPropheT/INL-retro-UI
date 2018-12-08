@@ -122,6 +122,10 @@
 	#define SNESSYS_PAGE	0x25	//mapper byte specifies A15-8 ROMSEL high
 	#define GAMEBOY_PAGE	0x26	//mapper byte specifies A15-8
 	#define GBA_ROM_PAGE	0x27	//address must have already been latched with gba dictionary
+	#define GENESIS_ROM_PAGE0 0x28	//bank address A17-23 must have been latched already
+		//TODO come up with better way to handle genesis address complications
+	#define GENESIS_ROM_PAGE1 0x29	//bank address A17-23 must have been latched already
+	#define N64_ROM_PAGE	0x30
 
 	//operand LSB
 	//SST 39SF0x0 manf/prod IDs

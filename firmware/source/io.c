@@ -54,7 +54,7 @@ uint8_t io_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *rd
 		case SEGA_INIT:	sega_init();			break;
 		#endif
 		#ifdef N64_CONN
-//		case N64_INIT:	n64_init();			break;
+		case N64_INIT:	n64_init();			break;
 		#endif
 		case SWIM_INIT:	
 			return swim_init(operand);		break;
@@ -370,38 +370,176 @@ void sega_init()
 	io_reset();
 
 	//enable control outputs and disable memories
-	//ROM
+	
+	// CONSOLE OUTPUTS:
+	// #C_CE B17  CPU access $00_0000 - 03_FFFF 4MByte cart space
+	// 		address decode depends on #CART
+	// 		cart normally drives low (00-03), 
+	// 		but if driven high (like CD sram cart) decodes to $04_0000 - 07_FFFF
 	ROMSEL_OP();
-	ROMSEL_HI();	// #C_CE
+	ROMSEL_HI();	
+
+	// #C_OE B16  CPU access $00_0000 - 0D_FFFF entire 68k map except bank 0E-FF (64K RAM)
 	CSRD_OP();
-	CSRD_HI();	// #C_OE
-	CSWR_OP();
-	CSWR_HI();	// #UDSW
-	PRGRW_OP();
-	PRGRW_HI();	// #LDSW
+	CSRD_HI();	
 
-	//disable SRAM and put cart in PLAY mode
-	EXP0_HI();
+	// #AS B18  CPU access entire memory map, indicating address bus valid
+	// TODO create another macro over the top of this..
+	GBP_OP();
+	GBP_HI();
+
+	// #LO_MEM B26 CPU access $00_0000 - 07_FFFF 8MByte cart space
+	// TODO FF2
+
+	// #RESET (aka vRES) B27  resets cart logic, stays low in SMS mode
 	EXP0_OP();
-	//if SWIM is active, EXP0 must be set to pullup prior to SWIM transfers
+	EXP0_HI();
 
-	//other control pins are inputs or unused, leave as IP pullup from reset
+	// #LDSW B28  CPU D0-7 data strobe
+	PRGRW_OP();
+	PRGRW_HI();	
+
+	// #UDSW B29  CPU D8-15 data strobe
+	CSWR_OP();
+	CSWR_HI();	
+
+	// #TIME B31  CPU access $A1_3000 - A1_30FF "SSF2 mapper" uses this to decode mapper register writes
+	// TODO FF7
+
+	// CLK B19 7Mhz clock? 
+	// HS_CLK B15 13/53Mhz clock?
+	// TODO PA8 both clock pins are wired to this mcu pin
+	
+	// #CAS B21 when CPU is halted, pulses at 60Khz probably refreshing some DRAM..
+	// 	mcu ties with CPU A1 (address)
+	//
+	// VIDEO B12 non-NTSC EGA?
+	// 	mcu ties with CPU A3 (address)
+	//
+	// Vsync B13 60Khz?
+	// 	mcu ties with CPU A2 (address)
+	//
+	// Hsync B14 16Khz?
+	// 	mcu ties with AFL (for A17+ flipflop clk/oen)
+
+
+	// CONSOLE INPUTS:
+	// #H_RESET B2 (aka nMRES)  console input, causes a hard reset, like what happens at power up
+	// 		enables the OS rom which verifies "SEGA" present
+	//
+	// #S_RESET B30 (aka SEL0) console input, causes a soft reset, like pressing reset on the console
+	// 		SMS power adapter grounds this pin
+	// TODO SWCLK PA14
+	//
+	// #CART_IN B32 controls the address mapping of #C_CE, most carts ground this pin, CD ram adapter ties VCC
+	// TODO PD2 (COUT)
+	//
+	// SOUND_LEFT B1 cart audio output
+	// TODO ADC IN PA4 (AUDL)
+	//
+	// SOUND_RIGHT B3 cart audio output
+	// TODO ADC IN PA5 (AUDR)
+
+
+	// CONSOLE BIDIR:
+	// #DTACK B20 bidirectional indicates end of data transfer, think the CPU stalls till memory drives
+	// 		for non-cart space (wired to mcu pin PA13 (SWDIO)
+
+
+	//now meet conditions to call other macros
+	//setup address $00_0000
+	ADDR_ENABLE();	//A1-16
+
+	//A17-18, #LO_MEM, A20-23, #TIME
+	//behind AFL
+	FFADDR_ENABLE();
+	//	  0b1000_0100	#LO_MEM & #TIME high
+#define LOMEM_TIME_MSK 0x84	//TODO put this in pinport?
+	FFADDR_SET(LOMEM_TIME_MSK);	//corrupts A1-16
+
+	//A1-16
+	ADDR_SET(0x0000);
+
+	//A19 (pin B7) SMS power adapter drives this pin for #IORQ
+	IRQ_OP();
+	IRQ_LO();	//A19 low
 
 	//memories are now disabled Data bus should be clear
+	
+	// SEGA D0-7
 	DATA_ENABLE();
 	DATA_IP_PU();
 
-	//now meet conditions to call other macros
-	//setup address $0000
-	ADDR_ENABLE();
-	ADDR_SET(0x0000);
-
-	//setup HIGH ADDR with bank $00
+	//SEGA D8-15
 	HADDR_ENABLE();
-	HADDR_SET(0x00);
+	HADDR_IP();
+	HADDR_PU();
 
 }
 #endif
+
+
+//N64 cartridge interfacing setup
+//set outputs as required
+//latch address of $0000
+//disable cart memories
+#ifdef N64_CONN
+void n64_init() 
+{
+	//start with a reset
+	//expecting user to do this but just to be sure
+	//this also sets power to 3v
+	io_reset();
+
+	//enable control outputs and disable memories
+	//ROM-RAM
+	
+	// ALE_L
+	ALE_L_OP();	//ROMSEL_OP();
+	ALE_L_HI();	//ROMSEL_HI();
+
+	// ALE_H
+	ALE_H_OP();	//PRGRW_OP();
+	ALE_H_OP();	//PRGRW_HI();	
+
+	// RD
+	CSRD_OP();
+	CSRD_HI();
+
+	// WR
+	CSWR_OP();
+	CSWR_HI();
+
+	// COLD #RESET
+	EXP0_OP();
+	EXP0_HI();
+
+	//TODO 
+	//1.6Mhz clock -> D4 (PB12)
+	//S_DAT -> D5 (PB13)
+	//CIC_D2 -> D14 (PA9)
+	//JTAG_CLK_44 -> D15 (PA10)
+	//BLANK 14 & 39 -> D9/D10 (PB3/4)
+	//CIC_D1 -> D11 (PB5)
+	//VIDEO_CLK_46 -> D12 (PB6)
+	//OS_EVENT -> D13 (PB7)
+	//
+	// SOUND_LEFT 
+	// TODO ADC IN PA4 (AUDL)
+	//
+	// SOUND_RIGHT
+	// TODO ADC IN PA5 (AUDR)
+
+	//AD0-15 leave as input pullup
+	ADDR_ENABLE();	//turns on GPIO block & sets to output
+	ADDR_IP();	//ad0-15 input
+	ADDR_PU();	//ad0-15 pullup
+	ADDR_SET(0x0000);	//output set to zero, but won't take effect until outputed
+
+
+}
+#endif
+
 
 //Initialization of SWIM "single wire interface module" communications
 //the SWIM pin depends on INL board design.

@@ -85,9 +85,40 @@ uint8_t dump_buff( buffer *buff ) {
 		case GBA_ROM_PAGE:
 			//address must have already been latched
 			//we're only telling page_rd the number of bytes to read, and where to put it
-			buff->cur_byte = gba_page_rd( buff->data, buff->last_idx );
+						     // takes 16bit pointer, 127 / 2 = 63.5 -> 63 so it works
+			buff->cur_byte = gba_page_rd( (uint16_t*)buff->data, (buff->last_idx>>1) );
+			//buff->cur_byte = gba_page_rd( buff->data, buff->last_idx );
 			break;
 		#endif
+
+		#ifdef SEGA_CONN
+		case GENESIS_ROM_PAGE0:
+			//mapper byte specifies Genesis CPU A15-8
+			addrH |= (buff->mapper); //no shift needed
+			buff->cur_byte = genesis_page_rd( buff->data, addrH, buff->id, 
+							//id contains MSb of page when <256B buffer
+							buff->last_idx);
+			break;
+		case GENESIS_ROM_PAGE1:
+			//mapper byte specifies Genesis CPU A15-8
+			addrH |= (buff->mapper); //no shift needed
+			buff->cur_byte = genesis_page_rd( buff->data, addrH+0x0100, buff->id, 
+							//id contains MSb of page when <256B buffer
+							buff->last_idx);
+			break;
+		#endif
+
+		#ifdef N64_CONN
+		case N64_ROM_PAGE:
+			//mapper byte specifies SNES CPU A15-8
+	//uint8_t addrH = buff->page_num;	//A15:8  while accessing page
+	//		addrH |= (buff->mapper); //no shift needed
+			buff->cur_byte = n64_page_rd( buff->data, addrH, buff->id, 
+							//id contains MSb of page when <256B buffer
+							buff->last_idx);
+			break;
+		#endif
+
 
 		#ifdef NES_CONN
 		case PRGROM:

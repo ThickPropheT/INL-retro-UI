@@ -1165,8 +1165,9 @@ void software_AXL_CLK();
 	//Appears to be working for setting A10, but not A11 reguardless of order of execution..
 	//TODO really these macros should be making byte writes to the registers, not 16bit RMW
 	#define ADDR_SET(hword)	Abank->ODR = hword
-	#define ADDR_RD(hword)	hword = Abank->IDR
-	#define ADDR_VAL	(Abank->IDR)
+	#define ADDR_CUR	(Abank->ODR)		//can use this to determine current address
+	#define ADDR_RD(hword)	hword = Abank->IDR	//can use this as a function ADDR_RD(data)
+	#define ADDR_VAL	(Abank->IDR)		//can use this to assign:  data = ADDR_VAL
 
 	#define ADDR_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_ADDR
 	#define ADDR_ENABLE()	ADDR_EN_CLK(); ADDR_OP()
@@ -1214,6 +1215,36 @@ void software_AXL_CLK();
 	#define ADDR_ENABLE()	DATA_ENABLE(); ADDR_EN_FF(); ADDR_OP();
 
 #endif	//AVR_KAZZO
+
+
+//	---------------------------------------------------------------------------------------
+//	FLIPFLOP ADDR PORT 8bit
+//	
+//	This port is present on devices with sega connectors, and SNES if supports EXP pins
+//	It's behind the 8x Flipflop to give access to Sega A17-18, #AS, A20-23, #TIME
+//	SNES doesn't connect to FF0-3, but FF4-7 connect to /PARD, /PAWR, REFRESH, /WRAMSEL
+//	Directionality: All pins are forced output 
+//	Driver: All pins are push-pull
+//	Write/Output: Byte access only, no bit accesses
+//	Read/Input: Not supported
+//
+//	---------------------------------------------------------------------------------------
+
+#if defined(STM_INL6) || defined(STM_INL6_PROTO)
+
+	//These are behind the AFL flipflop similar to how the STM_NES has A8-15 behind AHL flipflop
+	//But the Flipflop's inputs are AD0-7
+	#define FFADDR_ENABLE()		CTL_OP(AFLbank, AFL); CTL_SET_LO(AFLbank, AFL)
+	#define FFADDR_DISABLE()	CTL_IP_PU(AFLbank, AFL);
+
+	//FFADDR must already be enabled
+	#define AFL_CLK()		CTL_SET_HI(AFLbank, AFL); CTL_SET_LO(AFLbank, AFL)
+
+	//assumes A0-7 are enabled & outputs, corrupts AD0-15 (sega A1-16), AFL must be enabled & low/clocked
+	#define FFADDR_SET(high)	ADDR_SET(high); AFL_CLK();
+
+
+#endif	//STM_INL6
 
 
 //	---------------------------------------------------------------------------------------
@@ -1399,6 +1430,8 @@ void software_AXL_CLK();
 
 	#define HADDR_SET(val)	A16_21bank->ODR = ((A16_21bank->ODR&0x03FF) | (val<<10 & 0xFC00)); A22_23bank->ODR = ((A22_23bank->ODR & 0xF9FF) | (val<<3 & 0x0600))
 
+
+
 	#define HADDR_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_HADDR
 	#define HADDR_ENABLE()	HADDR_EN_CLK(); HADDR_OP()
 	#define HADDR_DISABLE()	HADDR_PU(); HADDR_IP()
@@ -1417,6 +1450,12 @@ void software_AXL_CLK();
 	#define HADDR_OP()	A16_21bank->MODER |= (MODER_OP_ALL & 0x0000FFF0); A22_23bank->MODER |= (MODER_OP_ALL & 0x003C0000)
 
 	#define HADDR_SET(val)	A16_21bank->ODR = ((A16_21bank->ODR&0xFF03) | (val<<2 & 0x00FC)); A22_23bank->ODR = ((A22_23bank->ODR & 0xF9FF) | (val<<3 & 0x0600))
+
+	//sega reading D8-15
+	//D8-13  are on PB2-7
+	//D14-15 are on PA9-10
+	#define HDATA_VAL	(((A16_21bank->IDR)&0x00FC)>>2)	| (((A22_23bank->IDR)&0x0600) >>3)	
+	//can use this to assign:  data = HDATA_VAL
 
 	#define HADDR_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_HADDR
 	#define HADDR_ENABLE()	HADDR_EN_CLK(); HADDR_OP()

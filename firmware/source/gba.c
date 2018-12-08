@@ -32,6 +32,8 @@ uint8_t gba_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 //resist temptation to make these 16bit indexes
 //will break rule of accessing usb_buff in half word aligned access
 //would have to use RD1-RD2 for 16bit aligned access..
+//Actually.. that's not true.  return & RD_LEN are index 0-1, so RD0-1 would be index 2-3
+//so it should be half word aligned..
 
 #define	BYTE_LEN 1
 #define	HWORD_LEN 2
@@ -117,8 +119,8 @@ uint16_t gba_rd()
 }
 
 //can only read 255 bytes, len can't be 255 else it would create infinite loop
-//TODO get a 16bit data pointer
-uint8_t gba_page_rd( uint8_t *data, uint8_t len)
+// I think the byte read version is actually slightly faster...?
+uint8_t gba_page_rd( uint16_t *data, uint8_t len)
 {
 	uint8_t i;
 	uint16_t read;
@@ -131,13 +133,14 @@ uint8_t gba_page_rd( uint8_t *data, uint8_t len)
 		read = gba_rd();
 
 		//store lower byte little endian
+		//now stores entire 16bit read at once
 		data[i] = read;
 
 		//upper byte
-		i++;
+		//i++;
 
 		//store upper byte
-		data[i] = read>>8;
+		//data[i] = read>>8;
 	}
 
 	//return index of last byte read

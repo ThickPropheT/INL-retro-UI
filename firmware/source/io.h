@@ -15,6 +15,7 @@ void snes_init();
 void gameboy_init();
 void gba_init();
 void sega_init();
+void n64_init();
 uint8_t swim_init(uint8_t opcode);
 uint8_t jtag_init(uint8_t opcode);
 uint8_t exp0_pullup_test();
