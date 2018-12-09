@@ -71,8 +71,17 @@ INLOptions* parseOptions(int argc, char *argv[]) {
 	int rv = 0;
 	// opterr = 0;
 
+	// Create options struct.
 	INLOptions *opts = calloc(1, sizeof(INLOptions));
-	
+	opts->console_name = "";
+	opts->ramdump_filename = "";
+	opts->ramwrite_filename = "";
+	opts->dump_filename = "";
+	opts->mapper_name = "";
+	opts->program_filename = "";
+	opts->lua_filename = "";
+	opts->verify_filename = "";
+
 	//getopt returns args till done then returns -1
 	//string of possible args : denotes 1 required additional arg
 	//:: denotes optional additional arg follows	
@@ -158,13 +167,45 @@ void load (lua_State *L, const char *fname, int *w, int *h) {
 }
 
 // Setup Lua environment.
-lua_State *lua_init() {
+lua_State *lua_init(INLOptions *opts) {
 	lua_State *L = luaL_newstate(); //opens Lua
 	luaL_openlibs(L); //opens the standard libraries
 
 	// Register C functions that can be called from Lua.
 	lua_pushcfunction(L, lua_usb_vend_xfr);
 	lua_setglobal(L, "usb_vend_xfr");
+
+	// Pass args to Lua
+	// TODO: Do this in a less terrible way / don't register a million globals.
+	lua_pushstring(L, opts->console_name);
+	lua_setglobal(L, "console_name");
+
+	lua_pushstring(L, opts->mapper_name);
+	lua_setglobal(L, "mapper_name");
+
+	lua_pushstring(L, opts->dump_filename);
+	lua_setglobal(L, "dump_filename");
+
+	lua_pushstring(L, opts->program_filename);
+	lua_setglobal(L, "flash_filename");
+
+	lua_pushstring(L, opts->verify_filename);
+	lua_setglobal(L, "verify_filename");
+
+	lua_pushstring(L, opts->ramdump_filename);
+	lua_setglobal(L, "ramdump_filename");
+
+	lua_pushstring(L, opts->ramwrite_filename);
+	lua_setglobal(L, "ramwrite_filename");
+
+	lua_pushinteger(L, opts->wram_size_kb);
+	lua_setglobal(L, "nes_wram_size_kb");
+
+	lua_pushinteger(L, opts->prg_rom_size_kb);
+	lua_setglobal(L, "nes_prg_rom_size_kb");
+
+	lua_pushinteger(L, opts->chr_rom_size_kb);
+	lua_setglobal(L, "nes_chr_rom_size_kb");
 	return L;
 }
 
@@ -239,8 +280,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// Start up Lua
-	L = lua_init();
+	// Start up Lua.
+	L = lua_init(opts);
 	
     // Setup and check connection to USB Device.
 	// TODO get usb device settings from usb_device.lua
@@ -258,43 +299,11 @@ int main(int argc, char *argv[])
 	check_mem(transfer);
 	check(transfer->handle != NULL, "Unable to open INL retro-prog usb device handle.");
 
-	// Pass args to Lua
-	// TODO: Move to luainit
-	lua_pushstring(L, opts->console_name);
-	lua_setglobal(L, "console_name");
-
-	lua_pushstring(L, opts->mapper_name);
-	lua_setglobal(L, "mapper_name");
-
-	lua_pushstring(L, opts->dump_filename);
-	lua_setglobal(L, "dump_filename");
-
-	lua_pushstring(L, opts->program_filename);
-	lua_setglobal(L, "flash_filename");
-
-	lua_pushstring(L, opts->verify_filename);
-	lua_setglobal(L, "verify_filename");
-
-	lua_pushstring(L, opts->ramdump_filename);
-	lua_setglobal(L, "ramdump_filename");
-
-	lua_pushstring(L, opts->ramwrite_filename);
-	lua_setglobal(L, "ramwrite_filename");
-
-	lua_pushinteger(L, opts->wram_size_kb);
-	lua_setglobal(L, "nes_wram_size_kb");
-
-	lua_pushinteger(L, opts->prg_rom_size_kb);
-	lua_setglobal(L, "nes_prg_rom_size_kb");
-
-	lua_pushinteger(L, opts->chr_rom_size_kb);
-	lua_setglobal(L, "nes_chr_rom_size_kb");
-	
 	// USB device is open, pass args and control over to Lua.
 	// If lua_filename isn't set from args, use default script.
 	char *DEFAULT_SCRIPT = "scripts/inlretro.lua";
 	char *script = DEFAULT_SCRIPT;
-	if (opts->lua_filename) {
+	if (strlen(opts->lua_filename)) {
 		script = opts->lua_filename;
 	}
 	check(!(luaL_loadfile(L, script) || lua_pcall(L, 0, 0, 0)),
