@@ -1,6 +1,6 @@
 
 -- create the module's table
-local genesis_v1 = {}
+local n64 = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
@@ -72,7 +72,7 @@ local function process(process_opts, console_opts)
 
 	local rv = nil
 	local file 
-	local rom_size = console_opts["prg_rom_size_kb"]
+	local rom_size = console_opts["rom_size_mbit"] * 128
 	local wram_size = console_opts["wram_size_kb"]
 	local mirror = console_opts["mirror"]
 
@@ -197,7 +197,7 @@ end
 
 
 -- functions other modules are able to call
-genesis_v1.process = process
+n64.process = process
 
 -- return the module's table
-return genesis_v1
+return n64

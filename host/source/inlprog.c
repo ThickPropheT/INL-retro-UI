@@ -34,7 +34,8 @@ const char *HELP =  "Usage: inlretro [options]\n\n"\
 					"  -v [verify_filename]\tIf provided, writeback written rom to this filename\n"
 					"  -w [wram_size_kb]\tNES-only, size of WRAM in kb\n"\
 					"  -x [prg_rom_size_kb]\tNES-only, size of PRG-ROM in kb\n"\
-					"  -y [chr_rom_size_kb]\tNES-only, size of CHR-ROM in kb\n";
+					"  -y [chr_rom_size_kb]\tNES-only, size of CHR-ROM in kb\n"\
+					"  -z [rom_size_mbit]\tSize of ROM in megabits, non-NES systems."; 
 
 // Struct used to control functionality.
 typedef struct {
@@ -47,6 +48,8 @@ typedef struct {
 	int prg_rom_size_kb;
 	int wram_size_kb;
 
+	// General Functionality
+	int rom_size_mbit;
 	char *dump_filename;
 	char *program_filename;
 	char *ramdump_filename;
@@ -66,7 +69,7 @@ int isValidROMSize(int x, int min) {
 INLOptions* parseOptions(int argc, char *argv[]) {
 	// lower case flags suggested for average user
 
-	const char *FLAG_FORMAT = "a:b:hc:d:m:p:s:v:w:x:y:";
+	const char *FLAG_FORMAT = "a:b:hc:d:m:p:s:v:w:x:y:z:";
 	int index = 0;
 	int rv = 0;
 	// opterr = 0;
@@ -101,6 +104,7 @@ INLOptions* parseOptions(int argc, char *argv[]) {
 			case 'w': opts->wram_size_kb = atoi(optarg); break;
 			case 'x': opts->prg_rom_size_kb = atoi(optarg); break;
 			case 'y': opts->chr_rom_size_kb = atoi(optarg); break;
+			case 'z': opts->rom_size_mbit = atoi(optarg); break;
 			case '?':
 				if(
 				   ( optopt == 'c' )
@@ -197,6 +201,9 @@ lua_State *lua_init(INLOptions *opts) {
 
 	lua_pushstring(L, opts->ramwrite_filename);
 	lua_setglobal(L, "ramwrite_filename");
+
+	lua_pushinteger(L, opts->rom_size_mbit);
+	lua_setglobal(L, "rom_size_mbit");
 
 	lua_pushinteger(L, opts->wram_size_kb);
 	lua_setglobal(L, "nes_wram_size_kb");
