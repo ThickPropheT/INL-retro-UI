@@ -61,7 +61,7 @@ function main ()
 	--cart/mapper specific scripts
 	
 	--NES mappers
-	local curcart = require "scripts.nes.nrom"
+	--local curcart = require "scripts.nes.nrom"
 	--local curcart = require "scripts.nes.mmc1"
 	--local curcart = require "scripts.nes.unrom"
 	--local curcart = require "scripts.nes.cnrom"
@@ -97,15 +97,15 @@ function main ()
 	--local curcart = require "scripts.sega.genesis_v1"
 	
 	--N64 
-	--local curcart = require "scripts.n64.basic"
+	local curcart = require "scripts.n64.basic"
 	
 -- =====================================================
 -- USERS: set cart_console to the  to point to the mapper script you would like to use here.
 -- =====================================================
-	local cart_console = "NES" 	--includes Famicom
+	--local cart_console = "NES" 	--includes Famicom
 	--local cart_console = "SNES"
 	--local cart_console = "SEGA"
-	--local cart_console = "N64"
+	local cart_console = "N64"
 	--local cart_console = "DMG"
 	--local cart_console = "GBA"
 	--local cart_console = "SMS"
@@ -136,10 +136,10 @@ function main ()
 -- =====================================================
 	local console_opts = {
 		mirror = nil, -- Only used by latest INL discrete flash boards, set to "H" or "V" to change board mirroring
-		prg_rom_size_kb = 32,	-- Size of NES PRG-ROM in KByte
-		--prg_rom_size_kb = 8*1024,	-- 8MByte ROM size example
-		chr_rom_size_kb = 8,	-- Size of NES CHR-ROM in KByte
-		wram_size_kb = 0,	-- Size of NES PRG-RAM/WRAM in KByte
+		prg_rom_size_kb = 256 * 128,	-- Size of NES PRG-ROM in KByte
+		chr_rom_size_kb = 8,			-- Size of NES CHR-ROM in KByte
+		wram_size_kb = 0,				-- Size of NES PRG-RAM/WRAM in KByte
+		rom_size_mbit = 8, 				-- Size of ROM in Megabits, used for non-NES consoles.
 	}
 
 
