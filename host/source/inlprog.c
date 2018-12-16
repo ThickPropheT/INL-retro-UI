@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,23 +20,22 @@
 #include "lua/lauxlib.h"
 #include "lua/lualib.h"
 
-// TODO: Migrate to argp for more descriptive flags.
 const char *HELP =  "Usage: inlretro [options]\n\n"\
-					"Options:\n"\
-					"  -a [dumpram_filename]\tIf provided write ram to this filename\n"\
-					"  -b [writeram_filename]If provided write this file's contents to ram\n"\
-					"  -c [console]\t\tConsole port, {NES}\n"\
-					"  -d [dump_filename]\tIf provided, dump cartridge ROMs to this filename\n"\
-					"  -h\t\t\tDisplays this message.\n"\
-					"  -m [mapper]\t\tNES console only, mapper ASIC on cartridge\n"\
-					"  \t\t\t{mmc1,mmc3,nrom}\n"\
-					"  -p [program_filename]\tIf provided, write this data to cartridge\n"\
-					"  -s [lua_script]\tIf provided, use this script for main application logic\n"\
-					"  -v [verify_filename]\tIf provided, writeback written rom to this filename\n"
-					"  -w [wram_size_kb]\tNES-only, size of WRAM in kb\n"\
-					"  -x [prg_rom_size_kb]\tNES-only, size of PRG-ROM in kb\n"\
-					"  -y [chr_rom_size_kb]\tNES-only, size of CHR-ROM in kb\n"\
-					"  -z [rom_size_mbit]\tSize of ROM in megabits, non-NES systems."; 
+					"Options/Flags:\n"\
+					"  --console=console, -c console\t\t\tConsole port, {NES}\n"\
+					"  --dump_filename=filename, -d filename\t\tIf provided, dump cartridge ROMs to this filename\n"\
+					"  --dump_ram_filename=filename, -a filename\tIf provided write ram to this filename\n"\
+					"  --help, -h\t\t\t\t\tDisplays this message.\n"\
+					"  --lua_filename=filename, -s filename\t\tIf provided, use this script for main application logic\n"\
+					"  --mapper=mapper, -m mapper\t\t\tNES console only, mapper ASIC on cartridge\n"\
+					"  \t\t\t\t\t\t{mmc1,mmc3,nrom}\n"\
+					"  --nes_prg_rom_size_kbyte=size, -x size_kbytes\tNES-only, size of PRG-ROM in kilobytes\n"\
+					"  --nes_chr_rom_size_kbyte=size, -y size_kbytes\tNES-only, size of CHR-ROM in kilobytes\n"\
+					"  --rom_size_mbit=size, -z size_mbits\t\tSize of ROM in megabits, non-NES systems.\n"\
+					"  --verify_filename=filename, -v filename\tIf provided, writeback written rom to this filename\n"\
+					"  --wram_size_kbyte=size, -w size_kbytes\tNES-only, size of WRAM in kilobytes\n"\
+					"  --write_filename=filename, -p filename\tIf provided, write this data to cartridge\n"\
+					"  --write_ram_filename=filename, -b filename\tIf provided write this file's contents to ram\n";
 
 // Struct used to control functionality.
 typedef struct {
@@ -67,12 +67,30 @@ int isValidROMSize(int x, int min) {
 
 // Parse options and flags, create struct to drive program.
 INLOptions* parseOptions(int argc, char *argv[]) {
-	// lower case flags suggested for average user
 
+	// Declare command line flags/options.
+	struct option longopts[] = {
+		{"help", optional_argument, NULL, 'h'},
+		{"console", required_argument, NULL, 'c'},
+		{"mapper", optional_argument, NULL, 'm'},
+		{"dump_filename", optional_argument, NULL, 'd'},
+		{"dump_ram_filename", optional_argument, NULL, 'a'},
+		{"write_filename", optional_argument, NULL, 'p'},
+		{"write_ram_filename", optional_argument, NULL, 'b'},
+		{"verify_filename", optional_argument, NULL, 'v'},
+		{"lua_filename", optional_argument, NULL, 's'},
+		{"nes_prg_rom_size_kbyte", optional_argument, NULL, 'x'},
+		{"nes_chr_rom_size_kbyte", optional_argument, NULL, 'y'},
+		{"wram_size_kbyte", optional_argument, NULL, 'w'},
+		{"rom_size_mbit", optional_argument, NULL, 'z'},
+		{0, 0, 0, 0} // longopts must end in {0, 0, 0, 0}
+	};
+
+	// FLAG_FORMAT must be kept in sync with any short options used in longopts.
 	const char *FLAG_FORMAT = "a:b:hc:d:m:p:s:v:w:x:y:z:";
 	int index = 0;
 	int rv = 0;
-	// opterr = 0;
+	opterr = 0;
 
 	// Create options struct.
 	INLOptions *opts = calloc(1, sizeof(INLOptions));
@@ -88,7 +106,7 @@ INLOptions* parseOptions(int argc, char *argv[]) {
 	//getopt returns args till done then returns -1
 	//string of possible args : denotes 1 required additional arg
 	//:: denotes optional additional arg follows	
-	while((rv = getopt(argc, argv, FLAG_FORMAT)) != -1) {
+	while((rv = getopt_long(argc, argv, FLAG_FORMAT, longopts, NULL)) != -1) {
 		
 		switch(rv) {
 
