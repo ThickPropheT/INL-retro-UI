@@ -108,7 +108,7 @@ function main()
         dump_filename = dump_filename,
         erase = do_erase,
         program = do_program,
-        program_filename = flash_filename,
+        flash_filename = flash_filename,
         verify = do_verify,
         verify_filename = verify_filename,
         dumpram = do_dumpram,
