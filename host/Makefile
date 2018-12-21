@@ -20,7 +20,7 @@ DEPS=$(OBJECTS:.o=.d)
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
-.PHONY: clean linux osx
+.PHONY: clean linux macosx
 
 # TODO: Pass through platform when building liblua.
 liblua:
