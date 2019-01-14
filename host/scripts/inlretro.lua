@@ -139,7 +139,10 @@ function main ()
 		prg_rom_size_kb = 256 * 128,	-- Size of NES PRG-ROM in KByte
 		chr_rom_size_kb = 8,			-- Size of NES CHR-ROM in KByte
 		wram_size_kb = 0,				-- Size of NES PRG-RAM/WRAM in KByte
-		rom_size_kbyte = 8 * 128, 		-- Size of ROM in Megabits, used for non-NES consoles.
+		rom_size_kbyte = 8 * 128, 		-- Size of ROM in kilobytes, used for non-NES consoles.
+		
+		-- If more convienient, specifying size in megabits is also supported.
+		-- rom_size_kbyte = 8, 			-- Size of ROM in megabits, used for non-NES consoles.
 	}
 
 
