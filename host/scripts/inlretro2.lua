@@ -11,10 +11,30 @@ end
 function default_exec(process_opts, console_opts)
     -- Defensively filter out any console options that aren't standard.
     local default_opts = {
-        rom_size_mbit = console_opts["rom_size_mbit"],
+        rom_size_kbyte = console_opts["rom_size_kbyte"],
         wram_size_kb = console_opts["wram_size_kb"],
     }
     console_opts["console_process_script"].process(process_opts, default_opts)
+end
+
+-- Wrapper for managing original Gameboy operations.
+function gb_exec(process_opts, console_opts)
+    -- Defensively filter out any console options that aren't standard.
+    local gb_opts = {
+        rom_size_kbyte = console_opts["rom_size_kbyte"],  
+    }
+    local mappers = {
+        romonly = require "scripts.gb.romonly",
+        mbc1 = require "scripts.gb.mbc1",
+    }
+    m = mappers[console_opts["mapper"]]
+    if m == nil then
+        print("UNSUPPORTED MAPPER: ", console_opts["mapper"])
+    else
+        -- Attempt requested operations with hardware!
+        -- TODO: Do plumbing for interacting with RAM.
+        m.process(process_opts, console_opts)
+    end
 end
 
 -- Wrapper for managing NES/Famicom operations.
@@ -69,15 +89,17 @@ end
 function main()
 
     -- Globals passed in from C: 
-    --  console_name:    string, name of console.
-    --  mapper_name:     string, name of mapper.
-    --  dump_filename:   string, filename used for writing dumped data.
-    --  flash_filename:  string, filename containing data to write cartridge.
-    --  verify_filename: string, filename used for writing back data written to cartridge for verification.
+    --  console_name:      string, name of console.
+    --  mapper_name:       string, name of mapper.
+    --  dump_filename:     string, filename used for writing dumped data.
+    --  flash_filename:    string, filename containing data to write cartridge.
+    --  verify_filename:   string, filename used for writing back data written to cartridge for verification.
+    --  ramdump_filename:  string, filename used for writing dumped ram data.
+    --  ramwrite_filename: string, filename containing data to write to ram on cartridge.
     --  nes_prg_rom_size_kb:    int, size of cartridge PRG-ROM in kilobytes.
     --  nes_chr_rom_size_kb:    int, size of cartridge CHR-ROM in kilobytes.
     --  nes_wram_size_kb:       int, size of cartridge WRAM in kilobytes.
-    --  rom_size_mbit:          int, size of cartridge ROM in megabits.
+    --  rom_size_kbyte:          int, size of cartridge ROM in kilobytes.
 
     -- TODO: This should probably be one level up.
     -- TODO: Ram probably needs a verify file as well?
@@ -119,6 +141,8 @@ function main()
 
     -- TODO: Add SNES support, as it appears to be currently usable?
     local consoles = {
+        dmg = gb_exec,
+        gb = gb_exec, -- Support two names for gameboy
         gba = default_exec,
         genesis = default_exec,
         n64 = default_exec,
@@ -139,7 +163,7 @@ function main()
             wram_size_kb = nes_wram_size_kb,
             prg_rom_size_kb = nes_prg_rom_size_kb,
             chr_rom_size_kb = nes_chr_rom_size_kb,
-            rom_size_mbit = rom_size_mbit,
+            rom_size_kbyte = rom_size_kbyte,
             console_process_script = console_process_script,
             mapper = mapper_name,
         }

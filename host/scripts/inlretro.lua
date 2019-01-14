@@ -139,7 +139,7 @@ function main ()
 		prg_rom_size_kb = 256 * 128,	-- Size of NES PRG-ROM in KByte
 		chr_rom_size_kb = 8,			-- Size of NES CHR-ROM in KByte
 		wram_size_kb = 0,				-- Size of NES PRG-RAM/WRAM in KByte
-		rom_size_mbit = 8, 				-- Size of ROM in Megabits, used for non-NES consoles.
+		rom_size_kbyte = 8 * 128, 		-- Size of ROM in Megabits, used for non-NES consoles.
 	}
 
 
@@ -231,7 +231,7 @@ function main ()
 
 			dict.io("IO_RESET")	
 
-			curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/gameboy.bin", "ignore/verifyout.bin")
+			curcart.process(process_opts, console_opts)
 			--[[	--TEST GB power
 				dict.io("GB_POWER_3V")
 				print("GBP high 3v GBA")
