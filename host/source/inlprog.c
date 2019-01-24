@@ -27,10 +27,11 @@ const char *HELP =  "Usage: inlretro [options]\n\n"\
 					"  --dump_ram_filename=filename, -a filename\tIf provided write ram to this filename\n"\
 					"  --help, -h\t\t\t\t\tDisplays this message.\n"\
 					"  --lua_filename=filename, -s filename\t\tIf provided, use this script for main application logic\n"\
-					"  --mapper=mapper, -m mapper\t\t\tNES, GB consoles only, mapper ASIC on cartridge\n"\
+					"  --mapper=mapper, -m mapper\t\t\tNES, SNES, GB consoles only, mapper ASIC on cartridge\n"\
 					"  \t\t\t\t\t\tNES:\t{action53,bnrom,cdream,cninja,cnrom,dualport,easynsf,fme7,\n"\
 					"  \t\t\t\t\t\t\t mapper30,mmc1,mmc3,mmc4,mmc5,nrom,unrom}\n"\
 					"  \t\t\t\t\t\tGB:\t{mbc1,romonly}\n"\
+					"  \t\t\t\t\t\tSNES:\t{lorom,hirom}\n"\
 					"  --nes_prg_rom_size_kbyte=size, -x size_kbytes\tNES-only, size of PRG-ROM in kilobytes\n"\
 					"  --nes_chr_rom_size_kbyte=size, -y size_kbytes\tNES-only, size of CHR-ROM in kilobytes\n"\
 					"  --rom_size_kbyte=size, -k size_kbytes\t\tSize of ROM in kilobytes, non-NES systems.\n"\

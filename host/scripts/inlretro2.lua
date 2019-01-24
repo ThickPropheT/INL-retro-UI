@@ -17,6 +17,17 @@ function default_exec(process_opts, console_opts)
     console_opts["console_process_script"].process(process_opts, default_opts)
 end
 
+-- Wrapper for managing Super Nintendo operations.
+function snes_exec(process_opts, console_opts)
+    -- Defensively filter out any console options that aren't standard.
+    local snes_opts = {
+        rom_size_kbyte = console_opts["rom_size_kbyte"],  
+        wram_size_kb = console_opts["wram_size_kb"],
+        mapper = console_opts["mapper"]
+    }
+    console_opts["console_process_script"].process(process_opts, console_opts)
+end
+
 -- Wrapper for managing original Gameboy operations.
 function gb_exec(process_opts, console_opts)
     -- Defensively filter out any console options that aren't standard.
@@ -139,7 +150,6 @@ function main()
         writeram_filename = ramwrite_filename,
     }
 
-    -- TODO: Add SNES support, as it appears to be currently usable?
     local consoles = {
         dmg = gb_exec,
         gb = gb_exec, -- Support two names for gameboy
@@ -147,12 +157,14 @@ function main()
         genesis = default_exec,
         n64 = default_exec,
         nes = nes_exec,
+        snes = snes_exec,
     }
     local console_scripts = {
         n64 = require "scripts.n64.basic",
         nes = require "scripts.app.nes",
         gba = require "scripts.gba.basic",
-        genesis = require "scripts.sega.genesis_v1"
+        genesis = require "scripts.sega.genesis_v1",
+        snes = require "scripts.snes.v2proto_hirom"
     }
     local console_exec = consoles[console_name]
     local console_process_script = console_scripts[console_name]

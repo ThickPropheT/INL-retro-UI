@@ -198,19 +198,8 @@ function main ()
 			--new SNES code 
 			
 			--SNES
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/MMXdump.bin", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, false, "ignore/dump.bin", "ignore/smw.sfc", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/SF2.bin", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/dkc.bin", "ignore/verifyout.bin")
-			--curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/dkc_orig.bin", "ignore/verifyout.bin")
-			--curcart.process( false, false, false, false, false, "ignore/dump.bin", "ignore/smw.sfc", "ignore/verifyout.bin", true, true, "ignore/ramdump.bin", "ignore/smw_lauren.bin")
-			--curcart.process( true, true, false, false, false, "ignore/dump.bin", "ignore/hsbm_4Mbit_Lo.sfc", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_4Mbit_Lo.sfc", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_4Mbit_Hi.sfc", "ignore/verifyout.bin")
-			--curcart.process( true, false, true, true, true, "ignore/dump.bin", "ignore/hsbm_32Mbit_Hi.sfc", "ignore/verifyout.bin")
-			--curcart.process( false, false, false, false, false, nil, nil, nil, true, true, "ignore/ramdump.bin", "ignore/dkc_paul.bin")
-
-
+			-- Only v2proto_hirom currently works with process_opts/console_opts.
+			curcart.process(process_opts, console_opts)
 
 			--always end with and gpio reset incase the script didn't
 			dict.io("IO_RESET")	
