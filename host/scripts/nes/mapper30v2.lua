@@ -12,6 +12,7 @@ local files = require "scripts.app.files"
 local ciccom = require "scripts.app.ciccom"
 local time = require "scripts.app.time"
 local swim = require "scripts.app.swim"
+local mapper30_legacy = require "scripts.nes.mapper30"
 
 -- file constants & variables
 local mapname = "MAP30"
@@ -390,6 +391,24 @@ local function flash_prgrom(file, rom_size_KB, debug)
 
 end
 
+local function is_old_firmware( debug )
+
+	if debug then print("checking for old firmware") end
+
+	--check if CIRAM_A10_MIRRORING opcode is present
+	--this was cut from later versions
+	local rv
+	rv = dict.nes("CIRAM_A10_MIRROR", nil, nil, nil, true)
+	
+	if debug then 
+		if rv then print("old firmware sensed, running legacy mode")
+		else print("later firmware sensed, running default scripts")
+		end
+	end
+
+	return rv
+
+end
 
 --Cart should be in reset state upon calling this function 
 --this function processes all user requests for this specific board/mapper
@@ -408,8 +427,15 @@ local function process(process_opts, console_opts)
 	-- TODO: Cleanup needed here, support chrrom, make this look more like other mapper scripts.
 	local prg_size = console_opts["prg_rom_size_kb"]
 
-	--local filetype = "nes"
-	local filetype = "bin"
+	local filetype = "nes"
+	--local filetype = "bin"
+
+	if is_old_firmware(true) then
+		--call legacy mapper30 script
+--local mapper30_legacy = require "scripts.nes.mapper30"
+		mapper30_legacy.process(process_opts, console_opts)
+		return
+	end
 
 --initialize device i/o for NES
 	dict.io("IO_RESET")
@@ -437,8 +463,8 @@ local function process(process_opts, console_opts)
 		if not rv then return end 
 
 		--test software mirroring switch
-		rv = test_soft_mir_switch()
-		if not rv then return end 
+		--rv = test_soft_mir_switch()
+		--if not rv then return end 
 
 
 	end
@@ -532,7 +558,6 @@ local function process(process_opts, console_opts)
 
 --verify flashfile is on the cart
 	if verify then
-		--for now let's just dump the file and verify manually
 
 		file = assert(io.open(verifyfile, "wb"))
 
