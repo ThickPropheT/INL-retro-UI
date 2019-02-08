@@ -402,7 +402,7 @@ local function is_old_firmware( debug )
 	
 	if debug then 
 		if rv then print("old firmware sensed, running legacy mode")
-		else print("later firmware sensed, running default scripts")
+		else print("later firmware sensed, running current script")
 		end
 	end
 
@@ -458,9 +458,9 @@ local function process(process_opts, console_opts)
 		if not rv then return end 
 
 		--test CHR-RAM
-		rv = exercise_chrram()
+		--rv = exercise_chrram()
 		--exit script if test fails
-		if not rv then return end 
+		--if not rv then return end 
 
 		--test software mirroring switch
 		--rv = test_soft_mir_switch()
