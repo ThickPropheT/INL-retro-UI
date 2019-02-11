@@ -758,7 +758,8 @@ local function process(process_opts, console_opts)
 	local internal_header = get_header()
 	local snes_mapping = console_opts["mapper"]
 	if snes_mapping == "" then 
-		snes_mapping = internal_header["mapping"]
+		snes_mapping = lorom_name	
+		if (internal_header["map_mode"] & 1) == 1 then map_mode_str = hirom_name end
 		print("Mapping not provided, " .. snes_mapping .. " detected.")
 	end
 
