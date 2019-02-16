@@ -79,7 +79,8 @@ function nes_exec(process_opts, console_opts)
         mmc4 = require "scripts.nes.mmc4",
         mmc5 = require "scripts.nes.mmc5",
         nrom = require "scripts.nes.nrom",
-        unrom = require "scripts.nes.unrom"
+        unrom = require "scripts.nes.unrom",
+        gtrom = require "scripts.nes.gtrom"
     }
 
     dict.io("IO_RESET")	
