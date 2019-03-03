@@ -59,6 +59,7 @@
 #define MMC4_PRG_SOP_FLASH_WR		0x10	//current bank must be selected, & needs cur_bank set prior to calling
 #define MMC4_CHR_FLASH_WR		0x11	//needs cur_bank set prior to calling
 #define MAP30_PRG_FLASH_WR		0x12	//needs cur_bank set prior to calling
+#define GTROM_PRG_FLASH_WR		0x13	//desired bank must be selected
 
 
 #define	SET_CUR_BANK			0x20
