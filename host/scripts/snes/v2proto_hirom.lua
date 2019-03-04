@@ -24,6 +24,17 @@ local hardware_type = {
     [0x02] = "ROM and Save RAM",
     [0x03] = "ROM and DSP1"
 }
+--[[
+	TODO: Investigate these configurations.
+	4   ROM, RAM and DSP1 chip
+	5   ROM, Save RAM and DSP1 chip
+	19  ROM and Super FX chip
+   227  ROM, RAM and GameBoy data
+   246  ROM and DSP2 chip
+   0x001A -> Stunt Race FX
+   0x00F3 -> Megaman X2, X3
+   0x0043 -> SF Alpha 2
+--]]
 
 -- Upperbound for ROM size, actual program size may be smaller.
 local rom_ubound = {
@@ -45,11 +56,19 @@ local rom_size_kb_tbl = {
     [0x0D] = 64 * 128,
 }
 
-local ram_size = {
+local ram_size_tbl = {
     [0x00] = "No sram",
     [0x01] = "16 kilobits",
     [0x02] = "32 kilobits",
     [0x03] = "64 kilobits",
+}
+
+-- Translates ram size in header to KBytes.
+local ram_size_kb_tbl = {
+	[0x00] = 0,
+    [0x01] = 2,
+    [0x02] = 4,
+    [0x03] = 8,
 }
 
 local destination_code = {
@@ -243,7 +262,7 @@ function detect_mapping()
     local maybe_map_mode = dict.snes("SNES_ROM_RD", map_mode_addr)
     local valid_hirom_rom_type = hardware_type[dict.snes("SNES_ROM_RD", addr_rom_type)]
     local valid_hirom_rom_size = rom_ubound[dict.snes("SNES_ROM_RD", addr_rom_size)]
-    local valid_hirom_sram_size = ram_size[dict.snes("SNES_ROM_RD", addr_sram_size)]
+    local valid_hirom_sram_size = ram_size_tbl[dict.snes("SNES_ROM_RD", addr_sram_size)]
     local valid_hirom_destination_code = destination_code[dict.snes("SNES_ROM_RD", addr_destination_code)]
     local maybe_hirom = (maybe_map_mode & 1)
 
@@ -287,14 +306,35 @@ end
 
 function print_header(internal_header)
     local map_mode_str = lorom_name
-    if (internal_header["map_mode"] & 1) == 1 then map_mode_str = hirom_name end
-    print("Rom Title:\t\t" .. internal_header["rom_name"])
-    print("Map Mode:\t\t" .. map_mode_str)
-    print("Hardware Type:\t\t" .. hardware_type[internal_header["rom_type"]])
-    print("Rom Size Upper Bound:\t" .. rom_ubound[internal_header["rom_size"]])
-    print("SRAM Size:\t\t" .. ram_size[internal_header["sram_size"]])
-    print("Destination Code:\t" .. destination_code[internal_header["destination_code"]])
-    print("Developer:\t\t" .. developer_code[internal_header["developer_code"]])
+	if (internal_header["map_mode"] & 1) == 1 then map_mode_str = hirom_name end
+	
+	-- For each field, default to showing hex value so program doesn't crash if a value is unexpected.
+	local rom_type_str = "UNKNOWN - " .. hexfmt(internal_header["rom_type"])
+	if hardware_type[internal_header["rom_type"]] then rom_type_str = hardware_type[internal_header["rom_type"]] end
+
+	local rom_size_str = "UNKNOWN - " .. hexfmt(internal_header["rom_size"])
+	if rom_ubound[internal_header["rom_size"]] then rom_size_str = rom_ubound[internal_header["rom_size"]] end
+
+	local sram_size_str = "UNKNOWN - " .. hexfmt(internal_header["sram_size"])
+	if ram_size_tbl[internal_header["sram_size"]] then sram_size_str = ram_size_tbl[internal_header["sram_size"]] end
+
+	local destination_code_str = "UNKNOWN - " .. hexfmt(internal_header["destination_code"])
+	if destination_code[internal_header["destination_code"]] then
+		destination_code_str = destination_code[internal_header["destination_code"]]
+	end
+
+	local developer_code_str = "UNKNOWN - " .. hexfmt(internal_header["developer_code"])
+	if developer_code[internal_header["developer_code"]] then
+		developer_code_str = developer_code[internal_header["developer_code"]]
+	end
+	
+	print("Rom Title:\t\t" .. internal_header["rom_name"])
+    print("Map Mode:\t\t" .. map_mode_str .. " - " .. hexfmt(internal_header["map_mode"]))
+    print("Hardware Type:\t\t" .. rom_type_str)
+    print("Rom Size Upper Bound:\t" .. rom_size_str)
+    print("SRAM Size:\t\t" .. sram_size_str)
+    print("Destination Code:\t" .. destination_code_str)
+    print("Developer:\t\t" .. developer_code_str)
     print("Version:\t\t" .. hexfmt(internal_header["version"]))
     print("Checksum:\t\t" ..  hexfmt(internal_header["checksum"]))
 end
@@ -756,29 +796,33 @@ local function process(process_opts, console_opts)
 	dict.io("SNES_INIT")
 
 	local internal_header = get_header()
+	-- Use specified mapper if provided, otherwise autodetect.
 	local snes_mapping = console_opts["mapper"]
 	if snes_mapping == "" then 
 		snes_mapping = lorom_name	
-		if (internal_header["map_mode"] & 1) == 1 then map_mode_str = hirom_name end
+		if (internal_header["map_mode"] & 1) == 1 then snes_mapping = hirom_name end
 		print("Mapping not provided, " .. snes_mapping .. " detected.")
 	end
 
-
-	--local ram_size = 448 --max LOROM RAM size 32KByte * 0x70-0x7D banks
-	--local ram_size = 32 --just a single bank of LOROM RAM
-	--local ram_size = 8 --just a single bank of HIROM RAM
-	--local ram_size = 2 --smallest SRAM cartridge RAM size (16kbit)
-	local ram_size = console_opts["wram_size_kb"] 
 	local dumpram = process_opts["dumpram"]
 	local ramdumpfile = process_opts["dumpram_filename"]
 
-	local rom_size = console_opts["rom_size_kbyte"]
+	-- Use specified ram size if provided, otherwise autodetect.
+	local ram_size = console_opts["wram_size_kb"]
+	if ram_size == 0 then
+		ram_size = ram_size_kb_tbl[internal_header["sram_size"]]
+		print("RAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
+	end
 
+	-- Use specified rom size if provided, otherwise autodetect.
+	local rom_size = console_opts["rom_size_kbyte"]
+	
 	if rom_size == 0 then
 		rom_size = rom_size_kb_tbl[internal_header["rom_size"]]
 		print("ROM Size not provided, " .. rom_ubound[internal_header["rom_size"]] .. " detected.")
 	end
 
+	-- TODO: Put this in a function.
 	-- SNES memory map banking
 	-- A15 always high for LOROM (A22 is typically low too)
 	-- A22 always high for HIROM
@@ -789,7 +833,7 @@ local function process(process_opts, console_opts)
 	
 	local rombank --first bank of rom byte that contains A23-16
 	local rambank --first bank of ram
-	
+
 	if (snes_mapping == lorom_name) then
 		-- LOROM typically sees the upper half (A15=1) of the first address 0b0000:1000_0000
 		rombank = 0x00
@@ -811,10 +855,8 @@ local function process(process_opts, console_opts)
 
 		print("Testing SNES board");
 		test()
-		--[[
-		--SNES detect HiROM or LoROM & RAM
 
-		--SNES detect if able to read flash ID's
+		--[[SNES detect if able to read flash ID's
 		if not rom_manf_id(true) then
 			print("ERROR unable to read flash ID")
 			return
