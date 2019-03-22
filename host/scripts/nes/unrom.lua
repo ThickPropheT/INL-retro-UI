@@ -7,10 +7,13 @@ local dict = require "scripts.app.dict"
 local nes = require "scripts.app.nes"
 local dump = require "scripts.app.dump"
 local flash = require "scripts.app.flash"
+local buffers = require "scripts.app.buffers"
 
 -- file constants & variables
 local mapname = "UxROM"
-local banktable_base = nil
+
+--local banktable_base = nil
+local banktable_base = 0xE473
 		--Nomolos' bank table is at $CC84
 		--wr_bank_table(0xCC84, 32)
 		--Owlia bank table
@@ -23,7 +26,17 @@ local banktable_base = nil
 		--wr_bank_table(0xFD69, 8)
 --local rom_FF_addr = 0x8000
 
+
 -- local functions
+
+local function create_header( file, prgKB, chrKB )
+
+	local mirroring = nes.detect_mapper_mirroring()
+
+	--write_header( file, prgKB, chrKB, mapper, mirroring )
+	nes.write_header( file, prgKB, 0, op_buffer[mapname], mirroring)
+end
+
 local function init_mapper( debug )
 	--need to select bank0 so PRG-ROM A14 is low when writting to lower bank
 	--TODO this needs to be written to rom where value is 0x00 due to bus conflicts
@@ -326,6 +339,9 @@ local function process(process_opts, console_opts)
 				print( "found banktable addr = " .. banktable_base )
 			end
 		end
+
+		--create header: pass open & empty file & rom sizes
+		create_header(file, prg_size, chr_size)
 
 		--dump cart into file
 		--dump.dumptofile( file, prg_size, "UxROM", "PRGROM", true )

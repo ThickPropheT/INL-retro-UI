@@ -51,6 +51,8 @@ local function update_firmware(newbuild, skip, forceup)
 	--open new file first, don't bother continuing if can't find it.
 	file = assert(io.open(newbuild, "rb"))
 
+	--TODO REPORT build time stamp so can be certain it was a build just made if desired
+
 	--TODO read the fwupdater & app version from the provided file
 	--compare to current device and determine if they're compatible
 	--test let's tinker with SRAM

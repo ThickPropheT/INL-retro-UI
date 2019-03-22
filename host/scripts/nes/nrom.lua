@@ -9,11 +9,21 @@ local dump = require "scripts.app.dump"
 local flash = require "scripts.app.flash"
 local swim = require "scripts.app.swim"
 local ciccom = require "scripts.app.ciccom"
+local buffers = require "scripts.app.buffers"
 
 -- file constants
 local mapname = "NROM"
 
 -- local functions
+
+local function create_header( file, prgKB, chrKB )
+
+	local mirroring = nes.detect_mapper_mirroring()
+
+	--write_header( file, prgKB, chrKB, mapper, mirroring )
+	nes.write_header( file, prgKB, chrKB, op_buffer[mapname], mirroring)
+end
+
 
 --read PRG-ROM flash ID
 local function prgrom_manf_id( debug )
@@ -299,10 +309,22 @@ local function process(process_opts, console_opts)
 
 		nes.detect_mapper_mirroring(true)
 		print("EXP0 pull-up test:", dict.io("EXP0_PULLUP_TEST"))	
+
+	--	dict.io("SWIM_INIT", "SWIM_ON_A0")	
+	--	if swim.start(true) then
+
+	--		swim.read_stack()
+
+	--	else
+	--		print("ERROR trying to read back CIC signature stack data")
+	--	end
+	--	swim.stop_and_reset()
+
 		--nes.read_flashID_prgrom_exp0(true)
 		prgrom_manf_id(true)
 		--nes.read_flashID_chrrom_8K(true)
 		chrrom_manf_id(true)
+
 	end
 
 --change mirroring
@@ -346,6 +368,9 @@ local function process(process_opts, console_opts)
 		--init_mapper()
 		
 		file = assert(io.open(dumpfile, "wb"))
+
+		--create header: pass open & empty file & rom sizes
+		create_header(file, prg_size, chr_size)
 
 		--dump cart into file
 		dump_prgrom(file, prg_size, false)

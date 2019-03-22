@@ -390,29 +390,23 @@ SOFTWARE & FIRMWARE BUILDING
 Some build instructions follow, but they shouldn't be needed if you're running the
 released firmware on Windows.
 
-This section needs some updating....  Don't be afraid to contact me if you'd like to build
-your own firmware.  Or are having issues building the host application on linux/mac
-
 
 ===================
-Linux
+Linux/Mac
 ===================
 
 HOST APPLICATION:
 install libusb:
 sudo apt-get install libusb-1.0-0-dev
 
-make:
-gcc -I include inlretro.c -o inlretro -lusb-1.0
-or just run make unix from host folder.
-As noted in windows instructions below, lua must be built first
--cd host/source/lua, make o a, then make from host/source
+make from host folder:
+make unix
 
 run:
 ./inlretro
 
 
-AVR FIRMWARE:
+If you want to build your own AVR FIRMWARE:
 install avr-gcc and avr-libc:
 sudo apt-get install gcc-avr
 sudo apt-get install avr-libc
@@ -486,16 +480,10 @@ So that might help if you have similar issues...
 	
 Now host app can be built from windows command prompt command make when in host directory
 
-Currently setup to compile lua separate from host app.  Need to get better at writing makefiles..
-But whatever it works and saves ~12sec of compile time with current setup.
--go to host/source/lua
--make o a
--go back to host
--make
-This way lua is compiled separately using it's provided make file.
-make clean still deletes lua object files, so this process must be reperformed if cleaned.
+-go to host
+-make all
 
-AVR FIRMWARE:
+If you want to build your own AVR FIRMWARE:
 Download and Install WinAVR
 	optional: install programmer's notepad has handy feature to make clean, all, program in tools menu
 		this is nifty if you are scared of the command prompt for some strange reason...

@@ -3,13 +3,23 @@
 local action53_tsop = {}
 
 -- import required modules
+local nes = require "scripts.app.nes"
 local dict = require "scripts.app.dict"
 local dump = require "scripts.app.dump"
 local flash = require "scripts.app.flash"
+local buffers = require "scripts.app.buffers"
 
 -- file constants
+local mapname = "A53"
 
 -- local functions
+
+local function create_header( file, prgKB, chrKB )
+
+	--write_header( file, prgKB, chrKB, mapper, mirroring )
+	nes.write_header( file, prgKB, 0, op_buffer[mapname], 0)
+end
+
 
 --local function wr_flash_byte(addr, value, debug)
 
@@ -135,10 +145,10 @@ local function write_gift(base, off)
 	--off = off + 1	--increase to start of message but index starting at 1
 	i = 1
 
-	--local msg1 = "Regular Edition"
+	--regular editions don't have gift messages
 	--local msg1 = "Contributor Edition"
-	local msg1 = "Limited Edition"
-	local msg2 = "82 of 100"	--  all flashed
+	--local msg1 = "Limited Edition"
+	--local msg2 = "82 of 100"	--  all flashed
 
 	--local msg1 = " Contributor Edition "
 	--local msg2 = " PinoBatch "	--issue if capital P or R is first char for some reason..
@@ -211,7 +221,9 @@ local function process(process_opts, console_opts)
 
 	local rv = nil
 	local file 
-	-- TODO: Handle variable ROM sizes.
+	local prg_size = console_opts["prg_rom_size_kb"]
+	local chr_size = console_opts["chr_rom_size_kb"]
+	local wram_size = console_opts["wram_size_kb"]
 
 --initialize device i/o for NES
 	dict.io("IO_RESET")
@@ -225,9 +237,9 @@ local function process(process_opts, console_opts)
 		local base = 0x8BD0
 		local start_offset = 0xC
 		local len = 80
-		read_gift(base, len)
+		--read_gift(base, len)
 
-		write_gift(base, start_offset)
+		--write_gift(base, start_offset)
 
 		read_gift(base, len)
 	end
@@ -239,9 +251,11 @@ local function process(process_opts, console_opts)
 
 		file = assert(io.open(dumpfile, "wb"))
 
-		--TODO find bank table to avoid bus conflicts!
+		--create header: pass open & empty file & rom sizes
+		create_header(file, prg_size, chr_size)
+
 		--dump cart into file
-		dump.dumptofile( file, 1024, "A53", "PRGROM", true )
+		dump.dumptofile( file, prg_size, "A53", "PRGROM", true )
 
 		--close file
 		assert(file:close())
