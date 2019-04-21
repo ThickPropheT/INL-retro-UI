@@ -95,9 +95,10 @@ end
 --dump the PRG ROM
 local function dump_prgrom( file, rom_size_KB, debug )
 
-	--PRG-ROM dump all 32KB, most of this code is overkill for NROM.
-	--	but follows same format as banked mappers
 	local KB_per_read = 32
+	-- Handle 16KB nroms.
+	if rom_size_KB < KB_per_read then KB_per_read = rom_size_KB end
+
 	local num_reads = rom_size_KB / KB_per_read
 	local read_count = 0
 	local addr_base = 0x08	-- $8000
