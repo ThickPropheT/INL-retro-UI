@@ -22,7 +22,10 @@ local hardware_type = {
     [0x00] = "ROM Only",
     [0x01] = "ROM and RAM",
     [0x02] = "ROM and Save RAM",
-    [0x03] = "ROM and DSP1"
+	[0x03] = "ROM and DSP1",
+	[0x43] = "ROM and S-DD1",
+	[0xF3] = "ROM and CX4",
+
 }
 --[[
 	TODO: Investigate these configurations.
@@ -249,30 +252,8 @@ function hexfmt(val)
     return string.format("0x%04X", val)
 end
 
--- Function that determines if cartridge is lorom or hirom.
-function detect_mapping()
-    local mapping = "unknown"
-    local map_mode_addr = 0xFFD5
-    local addr_rom_type = 0xFFD6
-    local addr_rom_size = 0xFFD7
-    local addr_sram_size = 0xFFD8
-    local addr_destination_code = 0xFFD9
-    
-    dict.snes("SNES_SET_BANK", 0x00)
-    local maybe_map_mode = dict.snes("SNES_ROM_RD", map_mode_addr)
-    local valid_hirom_rom_type = hardware_type[dict.snes("SNES_ROM_RD", addr_rom_type)]
-    local valid_hirom_rom_size = rom_ubound[dict.snes("SNES_ROM_RD", addr_rom_size)]
-    local valid_hirom_sram_size = ram_size_tbl[dict.snes("SNES_ROM_RD", addr_sram_size)]
-    local valid_hirom_destination_code = destination_code[dict.snes("SNES_ROM_RD", addr_destination_code)]
-    local maybe_hirom = (maybe_map_mode & 1)
-
-    if (valid_hirom_rom_type and valid_hirom_rom_size and valid_hirom_sram_size and
-        valid_hirom_destination_code and maybe_hirom) then
-        mapping = hirom_name
-    else 
-        mapping = lorom_name
-    end
-    return mapping
+local function isempty(s)
+    return s == nil or s == ""
 end
 
 function seq_read(base_addr, n)
@@ -339,11 +320,8 @@ function print_header(internal_header)
     print("Checksum:\t\t" ..  hexfmt(internal_header["checksum"]))
 end
 
-function get_header()
-    local map_adjust = 0 -- Might be set to 0x8000 depending on mapping.
-	local mapping = detect_mapping()
-    if mapping == lorom_name then map_adjust = 0x8000 end
-
+function get_header(map_adjust)
+	local mapping = "unknown"
     -- Rom Registration Addresses (15 bytes)
     local addr_maker_code = 0xFFB0 - map_adjust             -- 2 bytes
     local addr_game_code = 0xFFB2 - map_adjust              -- 4 bytes
@@ -379,9 +357,40 @@ function get_header()
     return internal_header
 end
 
+function mappingfrommapmode(map_mode_byte)
+	local is_hirom = (map_mode_byte & 1) > 0
+	if is_hirom then return hirom_name
+	else return lorom_name
+	end
+end
+
+function isvalidheader(internal_header)
+	-- Spot check a few fields.
+	-- TODO: Check more/all fields, look for printable name?
+	local valid_rom_type = hardware_type[internal_header["rom_type"]]
+    local valid_rom_size = rom_ubound[internal_header["rom_size"]]
+    local valid_sram_size = ram_size_tbl[internal_header["sram_size"]]
+	local valid_destination_code = destination_code[internal_header["destination_code"]]
+    return valid_rom_type and valid_rom_size and valid_sram_size and valid_destination_code
+end
+
 function test() 
-    local internal_header = get_header()
-    print_header(internal_header)
+	local hirom_header = get_header(0x0000)
+	local lorom_header = get_header(0x8000)
+	local internal_header = nil
+	if isvalidheader(hirom_header) then
+		print("Valid header found at HiROM address.")
+		internal_header = hirom_header
+	elseif isvalidheader(lorom_header) then
+		print("Valid header found at LoROM address.")
+		internal_header = lorom_header
+	end
+	if internal_header then
+		internal_header["mapping"] = mappingfrommapmode(internal_header["map_mode"])
+	else
+		print("Could not parse internal ROM header.")
+	end
+	return internal_header
 end
 
 -- local functions
@@ -795,13 +804,20 @@ local function process(process_opts, console_opts)
 	dict.io("IO_RESET")
 	dict.io("SNES_INIT")
 
-	local internal_header = get_header()
+	local internal_header = nil
+	
 	-- Use specified mapper if provided, otherwise autodetect.
 	local snes_mapping = console_opts["mapper"]
-	if snes_mapping == "" then 
-		snes_mapping = lorom_name	
-		if (internal_header["map_mode"] & 1) == 1 then snes_mapping = hirom_name end
-		print("Mapping not provided, " .. snes_mapping .. " detected.")
+	if (snes_mapping == lorom_name) then
+		-- LOROM typically sees the upper half (A15=1) of the first address 0b0000:1000_0000
+		rombank = 0x00
+		rambank = 0x70 --LOROM maps from 0x70 to 0x7D
+				--some for lower half of bank only, some for both halfs...
+	elseif (snes_mapping == hirom_name) then
+		-- HIROM typically sees the last 4MByte as the first addresses = 0b1100:0000_0000
+		rombank = 0xC0
+		--rombank = 0x40 --second HiROM bank (slow)
+		rambank = 0x30
 	end
 
 	local dumpram = process_opts["dumpram"]
@@ -809,18 +825,12 @@ local function process(process_opts, console_opts)
 
 	-- Use specified ram size if provided, otherwise autodetect.
 	local ram_size = console_opts["wram_size_kb"]
-	if ram_size == 0 then
-		ram_size = ram_size_kb_tbl[internal_header["sram_size"]]
-		print("RAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
-	end
+	
 
 	-- Use specified rom size if provided, otherwise autodetect.
 	local rom_size = console_opts["rom_size_kbyte"]
 	
-	if rom_size == 0 then
-		rom_size = rom_size_kb_tbl[internal_header["rom_size"]]
-		print("ROM Size not provided, " .. rom_ubound[internal_header["rom_size"]] .. " detected.")
-	end
+	
 
 	-- TODO: Put this in a function.
 	-- SNES memory map banking
@@ -834,27 +844,39 @@ local function process(process_opts, console_opts)
 	local rombank --first bank of rom byte that contains A23-16
 	local rambank --first bank of ram
 
-	if (snes_mapping == lorom_name) then
-		-- LOROM typically sees the upper half (A15=1) of the first address 0b0000:1000_0000
-		rombank = 0x00
-		rambank = 0x70 --LOROM maps from 0x70 to 0x7D
-				--some for lower half of bank only, some for both halfs...
-	elseif (snes_mapping == hirom_name) then
-		-- HIROM typically sees the last 4MByte as the first addresses = 0b1100:0000_0000
-		rombank = 0xC0
-		--rombank = 0x40 --second HiROM bank (slow)
-		rambank = 0x30
-	end
-
-
-
-
-
 --test cart by reading manf/prod ID
 	if test then
 
 		print("Testing SNES board");
-		test()
+		internal_header = test()
+		print_header(internal_header)
+
+		-- Autodetect any missing parameters.
+		if isempty(snes_mapping) then 
+			snes_mapping = internal_header["mapping"]	
+			print("Mapping not provided, " .. snes_mapping .. " detected.")
+			if (snes_mapping == lorom_name) then
+				-- LOROM typically sees the upper half (A15=1) of the first address 0b0000:1000_0000
+				rombank = 0x00
+				rambank = 0x70 --LOROM maps from 0x70 to 0x7D
+						--some for lower half of bank only, some for both halfs...
+			elseif (snes_mapping == hirom_name) then
+				-- HIROM typically sees the last 4MByte as the first addresses = 0b1100:0000_0000
+				rombank = 0xC0
+				--rombank = 0x40 --second HiROM bank (slow)
+				rambank = 0x30
+			end	
+		end
+
+		if ram_size == 0 then
+			ram_size = ram_size_kb_tbl[internal_header["sram_size"]]
+			print("RAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
+		end
+
+		if rom_size == 0 then
+			rom_size = rom_size_kb_tbl[internal_header["rom_size"]]
+			print("ROM Size not provided, " .. rom_ubound[internal_header["rom_size"]] .. " detected.")
+		end
 
 		--[[SNES detect if able to read flash ID's
 		if not rom_manf_id(true) then
