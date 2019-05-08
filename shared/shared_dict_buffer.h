@@ -152,8 +152,8 @@
 	//operand MSB mapper
 	#define NROM	0
 	#define MMC1	1
-	#define CNROM	2
-	#define UxROM	3
+	#define UxROM	2
+	#define CNROM	3
 	#define MMC3	4
 	#define MMC5	5
 	#define AxROM	7
