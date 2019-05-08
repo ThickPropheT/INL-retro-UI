@@ -110,6 +110,8 @@ local function dump_prgrom( file, rom_size_KB, debug )
 
 	--same as NROM
 	local KB_per_read = 32
+	if rom_size_KB < KB_per_read then KB_per_read = rom_size_KB end
+
 	local num_reads = rom_size_KB / KB_per_read
 	local read_count = 0
 	local addr_base = 0x08	-- $8000
