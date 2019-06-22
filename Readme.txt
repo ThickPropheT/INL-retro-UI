@@ -170,6 +170,19 @@ purchased it.
    It might help to have a freind plug in the USB cable while you short the pins.
    Once it's plugged in you don't have to keep the pins shorted anymore.
 
+-PCB VERSION 2.1 released Feb 2019
+   This PCB version replaced the BL/RUN slide/toggle switch with a 
+   momentary button.  It's otherwise similar to v2.0 above.  This
+   version also started coming with a 3D printed chipset enclosure
+   by default.  The bootloader (BL) switch is closest to the edge
+   of the PCB, and the 3D printed button is recessed.  The Reset
+   switch is closer to the center of the PCB and is not recessed.
+   To enter bootloader mode, hold the BL switch while plugging in
+   the USB cable.  You can release the BL button after the device
+   is recognized by your PC.  You can tap the reset button to exit
+   bootloader mode.  Effectively the position of the BL switch only
+   matters when the device powers up, or boots from reset.  
+
 -PCB VERSION 2.0N smaller device with NES Connector alone
    These are the majority of the basic NESmaker kickstarter kits.
    You really shouldn't be going through this process unless you
