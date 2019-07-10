@@ -288,7 +288,7 @@ end
 function print_header(internal_header)
     local map_mode_str = lorom_name
 	if (internal_header["map_mode"] & 1) == 1 then map_mode_str = hirom_name end
-	
+
 	-- For each field, default to showing hex value so program doesn't crash if a value is unexpected.
 	local rom_type_str = "UNKNOWN - " .. hexfmt(internal_header["rom_type"])
 	if hardware_type[internal_header["rom_type"]] then rom_type_str = hardware_type[internal_header["rom_type"]] end
@@ -308,7 +308,7 @@ function print_header(internal_header)
 	if developer_code[internal_header["developer_code"]] then
 		developer_code_str = developer_code[internal_header["developer_code"]]
 	end
-	
+
 	print("Rom Title:\t\t" .. internal_header["rom_name"])
     print("Map Mode:\t\t" .. map_mode_str .. " - " .. hexfmt(internal_header["map_mode"]))
     print("Hardware Type:\t\t" .. rom_type_str)
@@ -338,7 +338,7 @@ function get_header(map_adjust)
     local addr_destination_code = 0xFFD9 - map_adjust   -- 1 byte
     local addr_developer_code = 0xFFDA - map_adjust     -- 1 byte (This is actually manufacturer ID)
     local addr_version = 0xFFDB - map_adjust            -- 1 byte
-    local addr_compliment_check = 0xFFDC - map_adjust   -- 2 bytes 
+    local addr_compliment_check = 0xFFDC - map_adjust   -- 2 bytes
     local addr_checksum = 0xFFDD - map_adjust           -- 2 bytes
 
     local internal_header = {
@@ -368,13 +368,11 @@ function isvalidheader(internal_header)
 	-- Spot check a few fields.
 	-- TODO: Check more/all fields, look for printable name?
 	local valid_rom_type = hardware_type[internal_header["rom_type"]]
-    local valid_rom_size = rom_ubound[internal_header["rom_size"]]
-    local valid_sram_size = ram_size_tbl[internal_header["sram_size"]]
 	local valid_destination_code = destination_code[internal_header["destination_code"]]
-    return valid_rom_type and valid_rom_size and valid_sram_size and valid_destination_code
+    return valid_rom_type and internal_header["rom_size"] and internal_header["sram_size"] and valid_destination_code
 end
 
-function test() 
+function test()
 	local hirom_header = get_header(0x0000)
 	local lorom_header = get_header(0x8000)
 	local internal_header = nil
@@ -396,7 +394,7 @@ end
 -- local functions
 
 
--- Desc: attempt to read flash rom ID 
+-- Desc: attempt to read flash rom ID
 -- Pre: snes_init() been called to setup i/o
 -- Post:Address left on bus memories disabled
 -- Rtn: true if proper flash ID found
@@ -650,7 +648,7 @@ local function flash_rom(file, rom_size_KB, mapping, debug)
 
 		--program the entire bank's worth of data
 
-		--[[  This version of the code programs a single byte at a time but doesn't require 
+		--[[  This version of the code programs a single byte at a time but doesn't require
 		--	board specific functions in the firmware
 		print("This is slow as molasses, but gets the job done")
 		byte_num = 0  --current byte within the bank
@@ -703,7 +701,7 @@ local function wr_ram(file, first_bank, ram_size_KB, mapping, debug)
 	--last of 512KB
 --	dict.snes("SNES_SET_BANK", 0x0F) wr_flash_byte(0x8000, 0xF5, true) wr_flash_byte(0xFFFF, 0xFA, true)
 
-	local base_addr 
+	local base_addr
 	local bank_size
 	local buff_size = 1      --number of bytes to write at a time
 	local cur_bank = 0
@@ -750,7 +748,7 @@ local function wr_ram(file, first_bank, ram_size_KB, mapping, debug)
 
 		--program the entire bank's worth of data
 
-		---[[  This version of the code programs a single byte at a time but doesn't require 
+		---[[  This version of the code programs a single byte at a time but doesn't require
 		--	board specific functions in the firmware
 		print("This is slow as molasses, but gets the job done")
 		byte_num = 0  --current byte within the bank
@@ -794,18 +792,18 @@ end
 
 
 
---Cart should be in reset state upon calling this function 
+--Cart should be in reset state upon calling this function
 --this function processes all user requests for this specific board/mapper
 local function process(process_opts, console_opts)
 	local rv = nil
-	local file 
+	local file
 
 	--initialize device i/o for SNES
 	dict.io("IO_RESET")
 	dict.io("SNES_INIT")
 
 	local internal_header = nil
-	
+
 	-- Use specified mapper if provided, otherwise autodetect.
 	local snes_mapping = console_opts["mapper"]
 	if (snes_mapping == lorom_name) then
@@ -825,12 +823,12 @@ local function process(process_opts, console_opts)
 
 	-- Use specified ram size if provided, otherwise autodetect.
 	local ram_size = console_opts["wram_size_kb"]
-	
+
 
 	-- Use specified rom size if provided, otherwise autodetect.
 	local rom_size = console_opts["rom_size_kbyte"]
-	
-	
+
+
 
 	-- TODO: Put this in a function.
 	-- SNES memory map banking
@@ -839,8 +837,8 @@ local function process(process_opts, console_opts)
 	-- A23 splits the map in half
 	-- A22 splits it in quarters (between what's typically low half and high half)
 	-- b 7  6  5  4 :  3  2  1  0
-	-- A23 22 21 20 : 19 18 17 16 
-	
+	-- A23 22 21 20 : 19 18 17 16
+
 	local rombank --first bank of rom byte that contains A23-16
 	local rambank --first bank of ram
 
@@ -852,8 +850,8 @@ local function process(process_opts, console_opts)
 		print_header(internal_header)
 
 		-- Autodetect any missing parameters.
-		if isempty(snes_mapping) then 
-			snes_mapping = internal_header["mapping"]	
+		if isempty(snes_mapping) then
+			snes_mapping = internal_header["mapping"]
 			print("Mapping not provided, " .. snes_mapping .. " detected.")
 			if (snes_mapping == lorom_name) then
 				-- LOROM typically sees the upper half (A15=1) of the first address 0b0000:1000_0000
@@ -865,7 +863,7 @@ local function process(process_opts, console_opts)
 				rombank = 0xC0
 				--rombank = 0x40 --second HiROM bank (slow)
 				rambank = 0x30
-			end	
+			end
 		end
 
 		if ram_size == 0 then
@@ -887,7 +885,7 @@ local function process(process_opts, console_opts)
 	end
 
 
---dump the ram to file 
+--dump the ram to file
 	if dumpram then
 
 		print("\nDumping SAVE RAM...")
@@ -950,7 +948,7 @@ local function process(process_opts, console_opts)
 
 		--open file
 		file = assert(io.open(flashfile, "rb"))
-		--determine if auto-doubling, deinterleaving, etc, 
+		--determine if auto-doubling, deinterleaving, etc,
 		--needs done to make board compatible with rom
 
 		--flash cart
