@@ -370,10 +370,8 @@ function isvalidheader(internal_header)
 	-- Spot check a few fields.
 	-- TODO: Check more/all fields, look for printable name?
 	local valid_rom_type = hardware_type[internal_header["rom_type"]]
-    local valid_rom_size = rom_ubound[internal_header["rom_size"]]
-    local valid_sram_size = ram_size_tbl[internal_header["sram_size"]]
 	local valid_destination_code = destination_code[internal_header["destination_code"]]
-    return valid_rom_type and valid_rom_size and valid_sram_size and valid_destination_code
+    return valid_rom_type and internal_header["rom_size"] and internal_header["sram_size"] and valid_destination_code
 end
 
 function test()
@@ -872,11 +870,13 @@ local function process(process_opts, console_opts)
 
 		if ram_size == 0 then
 			ram_size = ram_size_kb_tbl[internal_header["sram_size"]]
-			print("RAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
+            assert(ram_size, "SRAM Size unknown and not provided, please add ram size to console_opts")
+			print("SRAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
 		end
 
 		if rom_size == 0 then
 			rom_size = rom_size_kb_tbl[internal_header["rom_size"]]
+            assert(rom_size, "ROM Size unknown and not provided, please add rom size to console_opts")
 			print("ROM Size not provided, " .. rom_ubound[internal_header["rom_size"]] .. " detected.")
 		end
 
