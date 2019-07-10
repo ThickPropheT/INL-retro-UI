@@ -868,11 +868,13 @@ local function process(process_opts, console_opts)
 
 		if ram_size == 0 then
 			ram_size = ram_size_kb_tbl[internal_header["sram_size"]]
-			print("RAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
+            assert(ram_size, "SRAM Size unknown and not provided, please add ram size to console_opts")
+			print("SRAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
 		end
 
 		if rom_size == 0 then
 			rom_size = rom_size_kb_tbl[internal_header["rom_size"]]
+            assert(rom_size, "ROM Size unknown and not provided, please add rom size to console_opts")
 			print("ROM Size not provided, " .. rom_ubound[internal_header["rom_size"]] .. " detected.")
 		end
 
