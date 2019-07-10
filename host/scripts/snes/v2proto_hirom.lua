@@ -536,6 +536,7 @@ local function dump_ram( file, start_bank, ram_size_KB, mapping, debug )
 	local num_banks
 
 	--determine how much ram to read per bank
+    if ram_size_KB == nil then ram_size_KB = 0 end
 	if (ram_size_KB < KB_per_bank) then
 		num_banks = 1
 		KB_per_bank = ram_size_KB
@@ -868,13 +869,13 @@ local function process(process_opts, console_opts)
 			end
 		end
 
-		if ram_size == 0 then
+		if (ram_size == 0) or (ram_size == nil) then
 			ram_size = ram_size_kb_tbl[internal_header["sram_size"]]
             assert(ram_size, "SRAM Size unknown and not provided, please add ram size to console_opts")
 			print("SRAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
 		end
 
-		if rom_size == 0 then
+		if (rom_size == 0) or (rom_size == nil) then
 			rom_size = rom_size_kb_tbl[internal_header["rom_size"]]
             assert(rom_size, "ROM Size unknown and not provided, please add rom size to console_opts")
 			print("ROM Size not provided, " .. rom_ubound[internal_header["rom_size"]] .. " detected.")
