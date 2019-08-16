@@ -13,8 +13,8 @@ local buffers = require "scripts.app.buffers"
 
 -- file constants & variables
 local mapname = "CNROM"
-local banktable_base = 0xFFC8 --galf
-local rom_FF_addr = 0x8008 --galf
+local banktable_base = 0x8000 --alwa
+local rom_FF_addr = banktable_base+3 --generic 32KB CHR-ROM
 
 -- local functions
 

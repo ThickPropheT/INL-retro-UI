@@ -8,6 +8,8 @@ local nes = require "scripts.app.nes"
 local dump = require "scripts.app.dump"
 local flash = require "scripts.app.flash"
 local buffers = require "scripts.app.buffers"
+local time = require "scripts.app.time"
+local files = require "scripts.app.files"
 
 -- file constants
 local mapname = "MMC3"
@@ -192,6 +194,7 @@ local function dump_prgrom( file, rom_size_KB, debug )
 	local num_reads = rom_size_KB / KB_per_read
 	local read_count = 0
 	local addr_base = 0x08	-- $8000
+	--TODO update to NES_CPU_PAGE instead of NES_CPU_4KB
 
 	while ( read_count < num_reads ) do
 
@@ -422,7 +425,7 @@ local function flash_prgrom(file, rom_size_KB, debug)
 
 		--Have the device write a banks worth of data
 		--FAST!  13sec for 512KB = 39KBps
-		flash.write_file( file, 8, mapname, "PRGROM", false )
+		flash.write_file( file, bank_size/1024, mapname, "PRGROM", false )
 
 		cur_bank = cur_bank + 1
 	end
@@ -533,8 +536,8 @@ local function process(process_opts, console_opts)
 	local wram_size = console_opts["wram_size_kb"]
 
 
-	--local filetype = "nes"
-	local filetype = "bin"
+	local filetype = "nes"
+	--local filetype = "bin"
 
 --initialize device i/o for NES
 	dict.io("IO_RESET")
@@ -720,14 +723,25 @@ local function process(process_opts, console_opts)
 
 		file = assert(io.open(verifyfile, "wb"))
 
+		--create header: pass open & empty file & rom sizes
+		create_header(file, prg_size, chr_size)
+
+		print("DONE post dumping PRG & CHR ROMs")
 		--dump cart into file
+		time.start()
 		dump_prgrom(file, prg_size, false)
 		dump_chrrom(file, chr_size, false)
+		time.report(prg_size+chr_size)
 
 		--close file
 		assert(file:close())
 
-		print("DONE post dumping PRG & CHR ROMs")
+		--compare the flash file vs post dump file
+		if (files.compare( verifyfile, flashfile, true ) ) then
+			print("\nSUCCESS! Flash verified")
+		else
+			print("\n\n\n FAILURE! Flash verification did not match")
+		end
 	end
 
 	dict.io("IO_RESET")

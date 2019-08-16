@@ -217,6 +217,7 @@ local function dump_wram( file, rom_size_KB, debug )
 	local num_reads = rom_size_KB / KB_per_read
 	local read_count = 0
 	local addr_base = 0x06	-- $6000
+	--TODO update to NES_CPU_PAGE instead of NES_CPU_4KB
 
 	while ( read_count < num_reads ) do
 

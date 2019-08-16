@@ -133,6 +133,18 @@ local function dump_chrrom( file, rom_size_KB, debug )
 		read_count = read_count + 1
 	end
 
+	--Zorchenhimer had issues dumping "Popeye no Eigo Asobi" http://bootgod.dyndns.org:7777/profile.php?id=3867
+	--which appears to have 2 transistors with connections to PPU A12 and CHR-ROM /OE.?
+	--not sure what's going on there, but slowly dumping one byte at at time instead of 128Byte read bursts
+	--with normal dumping method above corrected the issue.
+	--[[
+	for i = 0x0000,0x1FFF,1 do
+		val = dict.nes("NES_PPU_RD", i)
+		file:write(string.char(val))
+	end
+        file:flush()
+	--]]
+
 end
 
 
@@ -300,6 +312,9 @@ local function process(process_opts, console_opts)
 	local wram_size = console_opts["wram_size_kb"]
 	local mirror = console_opts["mirror"]
 
+	local filetype = "nes"
+	--local filetype = "bin"
+
 --initialize device i/o for NES
 	dict.io("IO_RESET")
 	dict.io("NES_INIT")
@@ -433,6 +448,22 @@ local function process(process_opts, console_opts)
 		file = assert(io.open(flashfile, "rb"))
 		--determine if auto-doubling, deinterleaving, etc, 
 		--needs done to make board compatible with rom
+
+		if filetype == "nes" then
+		--advance past the 16byte header
+		--TODO set mirroring bit via ciccom
+			local buffsize = 1
+			local byte
+			local count = 1
+
+			for byte in file:lines(buffsize) do
+				local data = string.unpack("B", byte, 1)
+				--print(string.format("%X", data))
+				count = count + 1
+				if count == 17 then break end
+			end
+		end
+
 		--flash cart
 		--flash.write_file( file, 32, "NROM", "PRGROM", true )
 		--flash.write_file( file, 8, "NROM", "CHRROM", true )
