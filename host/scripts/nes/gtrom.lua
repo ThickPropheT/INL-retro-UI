@@ -186,6 +186,7 @@ local function flash_prgrom(file, rom_size_KB, debug)
 
 		--select bank to flash
 		dict.nes("NES_CPU_WR", 0x5000, cur_bank)
+		dict.nes("SET_CUR_BANK", cur_bank) 
 
 		--program the entire bank's worth of data
 
@@ -207,6 +208,7 @@ local function flash_prgrom(file, rom_size_KB, debug)
 
 			if (true) then
 				readdata = dict.nes("NES_CPU_RD", base_addr+byte_num)
+			--		print("flashed byte number", byte_num, " in bank",cur_bank, " to flash ", data, readdata)
 				if readdata ~= data then
 					print("ERROR flashing byte number", byte_num, " in bank",cur_bank, " to flash ", data, readdata)
 				end
