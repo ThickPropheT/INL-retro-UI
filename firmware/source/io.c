@@ -476,7 +476,7 @@ void sega_init()
 //	HADDR_ENABLE();
 //	HADDR_IP();
 //	HADDR_PU();
-	//TODO ERROR DATA16_ENABLE();
+	DATA16_ENABLE();
 //	DATA16_IP();
 //	DATA16_PU();
 

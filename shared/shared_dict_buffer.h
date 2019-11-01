@@ -105,6 +105,7 @@
 	#define PRGRAM		0x12
 	#define SNESROM		0x13
 	#define SNESRAM		0x14
+	#define GENESISROM	0x15
 
 	//Read specific sections of memory map
 	// 4KB/1KB naming designates the granularity of the starting address
@@ -130,6 +131,7 @@
 
 	#define NESPPU_1KB_TOGGLE 0x31	//similar to PPU page read but /RD signal toggles with each read
 	#define NESCPU_4KB_TOGGLE 0x32	//similar to CPU page read but M2 toggles with each read
+	#define GENESIS_RAM_PAGE  0x33	//bank address A17-23 must have been latched already
 
 	//operand LSB
 	//SST 39SF0x0 manf/prod IDs

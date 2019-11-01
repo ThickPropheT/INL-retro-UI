@@ -641,6 +641,7 @@ void software_AXL_CLK();
 #define RCC_AHBENR_ADDR	 	 RCC_AHBENR_GPIOCEN
 #define RCC_AHBENR_HADDR 	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
 #define RCC_AHBENR_DATA	 	 RCC_AHBENR_GPIOBEN
+#define RCC_AHBENR_DATA16 	(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
 #define RCC_AHBENR_EXP		(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN)
 
 
@@ -1113,11 +1114,13 @@ void software_AXL_CLK();
 
 	//IP and OP assume MODER[1] is clear (ie not set to Alt Func)
 	//also assume PUPDR is reset default floating
+//TODO for input MODER=00 why not just clear both bits???
 	#define DATA_IP_PU()	Dbank->MODER &= ~(MODER_OP_ALL & 0xFFFF0000); Dbank->PUPDR |= (PUPDR_PU_ALL & 0xFFFF0000)
 	#define DATA_IP()	Dbank->MODER &= ~(MODER_OP_ALL & 0xFFFF0000)
 	#define DATA_OP()	Dbank->MODER |=  (MODER_OP_ALL & 0xFFFF0000)
 	//TODO create byte wide port structs to grant byte accesses so doesn't need shifted
 	#define DATA_SET(data)	Dbank->ODR = (Dbank->ODR & 0x00FF) | (data<<8)			
+//TODO the 0x00FF mask shouldn't be necessary as they're reserved and expected to be clear
 	#define DATA_RD(data)	data = (Dbank->IDR>>8) & 0x00FF
 
 	#define DATA_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_DATA
@@ -1391,17 +1394,42 @@ void software_AXL_CLK();
 #ifdef STM_INL6 
 
 	//Combine 8bit DATA0-7 and 8bit EXP1-8
+//	//A16-21 are on PB10-15	these also map to EXP1-5, & 7
+//	//A22-23 are on PA9-10 these also map to CIRAM A10 & CIRAM /CE respectively
+//	#define A16_21bank	GPIOB 
+//	#define A22_23bank 	GPIOA 
+//
+	//D0-7 are on PB8-15, D8-13 are on PB2-7
+	// MSByte: 7654_3210 LSByte: 13-12-11-10_9-8-X-X
+	#define D0_13bank	GPIOB  //all of B except PB0-1
+	//D14-15 are on PA9-10
+	#define D14_15bank	GPIOA
+	
+//
+//	#define HADDR_PU()	A16_21bank->PUPDR |= (PUPDR_PU_ALL & 0xFFF00000); A22_23bank->PUPDR |= (PUPDR_PU_ALL & 0x003C0000)
+//	#define HADDR_IP()	A16_21bank->MODER &=~(MODER_OP_ALL & 0xFFF00000); A22_23bank->MODER &=~(MODER_OP_ALL & 0x003C0000)
+//	#define HADDR_OP()	A16_21bank->MODER |= (MODER_OP_ALL & 0xFFF00000); A22_23bank->MODER |= (MODER_OP_ALL & 0x003C0000)
+//
+//	#define HADDR_SET(val)	A16_21bank->ODR = ((A16_21bank->ODR&0x03FF) | (val<<10 & 0xFC00)); A22_23bank->ODR = ((A22_23bank->ODR & 0xF9FF) | (val<<3 & 0x0600))
 
 	//IP and OP assume MODER[1] is clear (ie not set to Alt Func)
 	//also assume PUPDR is reset default floating
-//	#define DATA16_IP_PU()	DATA_IP_PU(); = ~(MODER_OP_ALL & 0xFFFF0000); Dbank->PUPDR |= (PUPDR_PU_ALL & 0xFFFF0000)
-//	#define DATA_IP()	Dbank->MODER &= ~(MODER_OP_ALL & 0xFFFF0000)
-//	#define DATA_OP()	Dbank->MODER |=  (MODER_OP_ALL & 0xFFFF0000)
-//	#define DATA_SET(data)	Dbank->ODR = (Dbank->ODR & 0x00FF) | (data<<8)			
-//	#define DATA_RD(data)	data = (Dbank->IDR>>8) & 0x00FF
-//
-//	#define DATA_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_DATA
-//	#define DATA_ENABLE()	DATA_EN_CLK(); DATA_IP_PU();
+	#define DATA16_IP()	D0_13bank->MODER &= 0x0000000F; D14_15bank->MODER &= 0xFFC3FFFF
+	#define DATA16_OP()	D0_13bank->MODER |= (MODER_OP_ALL & 0xFFFFFFF0); D14_15bank->MODER |= (MODER_OP_ALL & 0x003C0000)
+	#define DATA16_PU()	D0_13bank->PUPDR |= (PUPDR_PU_ALL & 0xFFFFFFF0); D14_15bank->PUPDR |= (PUPDR_PU_ALL & 0x003C0000)
+//	#define DATA16_IP_PU()	DATA16_IP(); DATA16_PU()
+
+//	#define DATA_SET(data)		Dbank->ODR = (Dbank->ODR & 0x00FF) | (data<<8)			
+	#define DATA16L_RD(data)	data = (D0_13bank->IDR>>8)// & 0x00FF
+	// MSByte: 7654_3210 LSByte: 13-12-11-10_9-8-X-X
+	#define DATA16H_RD(data)	data = ((D0_13bank->IDR>>2)&0x003F) | ((D14_15bank->IDR>>3)&0x00C0)
+
+	#define DATA16L_SET(data)	D0_13bank->ODR = (D0_13bank->ODR & 0x00FF) | (data<<8)
+	//TODO rethink these macros!
+	#define DATA16H_SET(data)	D0_13bank->ODR = (D0_13bank->ODR & 0xFF03) | (data<<2); D14_15bank->ODR= (D14_15bank->ODR& 0xF9FF) | (data<<3)
+
+	#define DATA16_EN_CLK()	RCC->AHBENR |= RCC_AHBENR_DATA16
+	#define DATA16_ENABLE()	DATA16_EN_CLK(); DATA16_IP(); DATA16_PU()
 
 
 #endif	//STM_INL6

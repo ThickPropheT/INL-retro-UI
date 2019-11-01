@@ -120,6 +120,9 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 		case MMC3S_PRG_FLASH_WR:	
 			mmc3s_prgrom_flash_wr( operand, miscdata );
 			break;
+		case PPU_PAGE_WR_LFSR:
+			ppu_page_wr_lfsr( operand, miscdata );
+			break;
 
 
 		//8bit return values:
@@ -156,8 +159,9 @@ uint8_t nes_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *r
 			rdata[RD_LEN] = BYTE_LEN;
 			rdata[RD0] = num_prg_banks;
 			break;
-		case PPU_PAGE_WR_LFSR:
-			ppu_page_wr_lfsr( operand, miscdata );
+		case MMC5_PRG_RAM_WR:	
+			rdata[RD_LEN] = BYTE_LEN;
+			rdata[RD0] = mmc5_prgram_wr( operand, miscdata );
 			break;
 		default:
 			 //macro doesn't exist
@@ -839,10 +843,10 @@ uint8_t nes_cpu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	ADDRH(addrH);
 	
 	//set M2 and /ROMSEL
-	M2_HI();
 	if( addrH >= 0x80 ) {	//addressing cart rom space
 		ROMSEL_LO();	//romsel trails M2 during CPU operations
 	}
+	M2_HI();
 
 	//set lower address bits
 	ADDRL(first);		//doing this prior to entry and right after latching
@@ -885,7 +889,7 @@ uint8_t nes_cpu_page_rd_toggle( uint8_t *data, uint8_t addrH, uint8_t first, uin
 	//set address bus
 	ADDRH(addrH);
 	
-	//set M2 and /ROMSEL
+	//set /ROMSEL
 	if( addrH >= 0x80 ) {	//addressing cart rom space
 		ROMSEL_LO();	//romsel trails M2 during CPU operations
 	}
@@ -1748,5 +1752,17 @@ uint8_t tssop_prgrom_flash_wr( uint16_t addr, uint8_t data )
 
 	return rv;
 }
+
+uint8_t	mmc5_prgram_wr( uint16_t addr, uint8_t data )
+{
+	nes_cpu_wr(0x5102, 0x02); //PRG-RAM protect 1
+	nes_cpu_wr(0x5103, 0x01); //PRG-RAM protect 2
+	nes_cpu_wr(0x5102, 0x02); //need an additional M2 cycling, may as well be a write to a prot reg 
+	//if there is an interrupt durring this time the write could fail if >11.2usec
+	nes_cpu_wr(addr, data);
+	
+	return nes_cpu_rd(addr);
+}
+
 
 #endif //NES_CONN

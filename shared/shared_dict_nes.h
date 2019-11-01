@@ -80,6 +80,7 @@
 						//being used to write to 3v tssop flash
 #define MMC3S_PRG_FLASH_WR		0x26	//TODO set return lengths for all these functions
 
+
 //=============================================================================================
 //	OPCODES WITH OPERAND AND RETURN VALUE plus SUCCESS/ERROR_CODE
 //=============================================================================================
@@ -109,5 +110,8 @@
 #define	GET_CUR_BANK			0x85	//RL=3
 #define	GET_BANK_TABLE			0x86	//RL=4 16bit value so 2 bytes need returned
 #define	GET_NUM_PRG_BANKS		0x87	//RL=3 
+
+#define MMC5_PRG_RAM_WR			0x88	//RL=3 Enable writting to PRG-RAM and then write a single byte
+						//after written read back for verification as a timeout would cause fail
 
 #endif

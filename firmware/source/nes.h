@@ -50,6 +50,7 @@ uint8_t	gtrom_prgrom_flash_wr( uint16_t addr, uint8_t data );
 void 	ppu_page_wr_lfsr( uint16_t addr, uint8_t data );
 uint8_t a53_tssop_prgrom_flash_wr( uint16_t addr, uint8_t data );
 uint8_t tssop_prgrom_flash_wr( uint16_t addr, uint8_t data );
+uint8_t	mmc5_prgram_wr( uint16_t addr, uint8_t data );
 
 
 

@@ -20,6 +20,39 @@ uint8_t	write_page( uint8_t addrH, buffer *buff, write_funcptr wr_func )
 	//TODO error check/report
 	return SUCCESS;
 } 
+/*
+uint8_t	write_page_mmc5( uint8_t addrH, buffer *buff, write_funcptr wr_func )
+{
+	uint16_t cur = buff->cur_byte;
+	uint8_t	n = buff->cur_byte;
+//	uint8_t read;
+
+	//enable PRG-RAM writting and then quickly write to it and make sure don't timeout
+	//disable write protection, and enable WRAM
+	//for save data safety start by disabling WRAM writes
+	//dict.nes("NES_CPU_WR", 0x5102, 0x02)    --bits 1&0 must be '01' (ie 0x02) to allow writes to WRAM
+	//dict.nes("NES_CPU_WR", 0x5103, 0x01)    --bits 1&0 must be '10' (ie 0x01) to allow writes to WRAM
+	__disable_irq();		//clear's processor PRIMASK register bit to allow interrupts to be taken
+	nes_cpu_wr(0x5102, 0x02);
+	nes_cpu_wr(0x5103, 0x01);
+	nes_cpu_wr(0x5102, 0x02);
+	nes_cpu_wr(0x5103, 0x01);
+	while ( cur <= buff->last_idx ) {
+
+		wr_func( ((addrH<<8)| n), buff->data[n] );
+		//write function returns when it's complete or errors out
+	
+    		n++;
+    		cur++;
+	}
+	__enable_irq();		//clear's processor PRIMASK register bit to allow interrupts to be taken
+	buff->cur_byte = n;
+
+	//TODO error check/report
+	return SUCCESS;
+} 
+*/
+
 
 uint8_t	write_page_verify( uint8_t addrH, buffer *buff, write_rv_funcptr wr_func )
 {
@@ -440,6 +473,13 @@ uint8_t flash_buff( buffer *buff ) {
 	uint8_t addrH = buff->page_num;	//A15:8  while accessing page
 	uint8_t	bank;
 
+#ifdef SEGA_CONN
+	uint16_t cur ;//= buff->cur_byte;
+	uint8_t	n ;//= buff->cur_byte;
+	uint16_t temp;
+	uint16_t addr;
+#endif
+
 	switch ( buff->mem_type ) {
 		#ifdef NES_CONN
 		case PRGROM:		//$8000
@@ -607,7 +647,11 @@ uint8_t flash_buff( buffer *buff ) {
 			break;
 
 		case PRGRAM:
-			write_page( addrH+0x60, buff, nes_cpu_wr);
+			//if (buff->mapper == MMC5) {
+			//	write_page_mmc5( addrH+0x60, buff, nes_cpu_wr);
+			//} else {
+				write_page( addrH+0x60, buff, nes_cpu_wr);
+			//}
 			break;
 		#endif
 
@@ -672,6 +716,48 @@ uint8_t flash_buff( buffer *buff ) {
 //warn			addrX = ((buff->page_num)>>8);
 			break;
 		#endif
+
+		#ifdef SEGA_CONN
+		case GENESISROM:
+			//if (buff->mapper == LOROM_5VOLT) {
+				//LOROM banks start at $XX:8000
+				//write_page_16bit( addrH+0x80, buff, snes_5v_flash_wr);
+			//}
+			//uint8_t	write_page( uint8_t addrH, buffer *buff, write_funcptr wr_func )
+			//{
+				cur = buff->cur_byte;
+				n = buff->cur_byte;
+				addr = addrH;
+				addr = addr<<8;
+			//	uint8_t read;
+			
+				while ( cur <= buff->last_idx ) {
+
+			//TODO this is broke, first 256 bytes keep getting written over and over again
+					temp = buff->data[n];
+					temp = temp<<8;
+					n++;
+					temp += buff->data[n];
+			
+					//n--;
+					gen_sst_flash_wr( (addr|(n>>1)), temp);
+
+					//wr_func( ((addrH<<8)| n), buff->data[n] );
+					//write function returns when it's complete or errors out
+				
+					addr++;
+			    		//n++;
+			    		cur++;
+			    		n++;
+			    		cur++;
+				}
+				buff->cur_byte = n;
+			
+				//TODO error check/report
+			//	return SUCCESS;
+			//} 
+		#endif
+
 
 		default:
 			return ERR_BUFF_UNSUP_MEM_TYPE;
