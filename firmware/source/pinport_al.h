@@ -19,10 +19,19 @@
 	#define NES_CONN	//famicom isn't actually present but a pin adapter should work
 #endif
 
-#if defined(STM_INL6) || defined(STM_INL6_PROTO)
+//#if defined(STM_INL6) || defined(STM_INL6_PROTO)
+#if defined(STM_INL6) 
 	#define NES_CONN	//includes famicom as definitions are effectively the same
 	#define SNES_CONN
 	#define SEGA_CONN
+	#define GB_CONN
+	#define N64_CONN
+#endif
+
+#if defined(STM_INL6_PROTO)
+	#define NES_CONN	//includes famicom as definitions are effectively the same
+	#define SNES_CONN
+//	#define SEGA_CONN	//don't feel like fixing these definitions right now..
 	#define GB_CONN
 	#define N64_CONN
 #endif
@@ -1510,7 +1519,7 @@ void software_AXL_CLK();
 //
 //	---------------------------------------------------------------------------------------
 
-#if defined (STM_INL6_PROTO) || defined(STM_INL6)
+#if STM_INL6_PROTO
 
 	//     PE0  "A0"	mcupinC0
 	#define E0bank 		GPIOC 
@@ -1533,10 +1542,36 @@ void software_AXL_CLK();
 	#define E4		(12U)
 
 
-#endif //STM_INL6 & PROTO
+#endif //STM_INL6_PROTO
+
+#ifdef STM_INL6
+
+	//     PE0  "A0"	mcupinC0
+	#define E0bank 		GPIOC 
+	#define E0		(0U)
+
+	//     PE1  "D0"	mcupinB8
+	#define E1bank 		GPIOB 
+	#define E1		(8U)
+
+	//     PE2  "D8"	mcupinB2
+	#define E2bank 		GPIOB 
+	#define E2		(2U)
+
+	//     PE3  "D9"	mcupinB3
+	#define E3bank 		GPIOB 
+	#define E3		(3U)
+
+	//     PE4  "D10"	mcupinB4
+	#define E4bank 		GPIOB 
+	#define E4		(4U)
+
+#endif //STM_INL6
+
 
 #ifdef STM_NES
 //TODO BLINDLY COPIED FROM STM6, will not work AS-IS 
+//TODO actually do this
 
 	//     PE0  "A0"	mcupinB2
 	//     			TODO!!!

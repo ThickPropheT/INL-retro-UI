@@ -5,7 +5,7 @@ local romonly = {}
 local dict = require "scripts.app.dict"
 local dump = require "scripts.app.dump"
 local files = require "scripts.app.files"
-local jtag = require "scripts.app.jtag"
+local jtag = require "scripts.jtag.jtag"
 
 -- file constants
 local mapname = "ROMONLY"

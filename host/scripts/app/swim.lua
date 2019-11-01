@@ -4,6 +4,8 @@ local swim = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
+local files = require "scripts.app.files"
+local help = require "scripts.app.help"
 --local buffers = require "scripts.app.buffers"
 
 -- file constants
@@ -163,6 +165,36 @@ local function unlock_flash(hspeed)
 	wotf(0x5062, 0x56, hspeed) 
 	wotf(0x5062, 0xAE, hspeed) 
 end
+
+local function fast_flash_mode(hspeed)
+	--set to fast flash mode
+	--;2. Write 0x10 in FLASH_CR2 (FPRG bit active), and 0xEF in FLASH_NCR2 (NFPRG bit
+	--        ;active).
+	--        mov     FLASH_CR2, #0x10
+	--        mov     FLASH_NCR2, #0xEF
+	wotf(0x505B, 0x10, hspeed) 
+	wotf(0x505C, 0xEF, hspeed) 
+end
+
+local function wait_till_eop_set(hspeed, debug)
+
+	local timeout = 0
+
+	local result, data = rotf(0x505f, hspeed, false )
+
+	while ((data & 0x04) ~= 0x04) do
+		result, data = rotf(0x505f, hspeed, false )
+		if debug then print("FLASH_IAPSR EOP bit wasn't set, polling again.") end
+
+		timeout = timeout+1
+
+		if (timeout == 20) then
+			print("EOP was never set after", timeout, "attempts.  I quit..")
+			return
+		end
+	end
+end
+
 
 local function lock_flash_eeprom(hspeed)
 	--lock eeprom:
@@ -536,6 +568,89 @@ local function write_optn_bytes(rop, debug)
 	if debug then print("done with option byte programming") end
 end
 
+--erase 64Byte blocks starting at addr
+--have to call separately for eeprom/flash, addr desides which to unlock
+local function erase_blocks(addr, num_blocks, debug)
+
+	--TODO take this arg from calling function
+	local hspeed = true
+
+	local block_num = 0
+	local readdata = 0
+	local readresult = 0
+
+	if addr < 0x8000 then
+		unlock_eeprom(true)
+	else --flash
+		unlock_flash(true)
+	end
+
+	if debug then print("SWIM erasing", num_blocks, "* 64Byte blocks starting at:", help.hex(addr)) end
+
+	while (block_num < num_blocks) do
+
+
+		--enable block erase
+		wotf(0x505B, 0x20, hspeed)
+		wotf(0x505C, 0xDF, hspeed) 
+
+		--write 0x00 to first 4 bytes of the block
+		wotf(addr, 0x00, hspeed) 
+		wotf(addr+1, 0x00, hspeed) 
+		wotf(addr+2, 0x00, hspeed) 
+		wotf(addr+3, 0x00, hspeed) 
+
+		--poll EOP
+		wait_till_eop_set(hspeed)
+
+		--next block
+		block_num = block_num+1
+		addr = addr + 64
+	end
+
+end
+
+local function erase_flash(debug)
+	erase_blocks(0x8000, 128, true)
+end
+
+local function erase_eeprom(debug)
+
+	--TODO take arg of device type, for now assume S003
+	--erase_blocks(0x4000, 2, true) --S001/3
+	erase_blocks(0x4000, 10, true)--S103
+end
+
+local function read_memory(file, addr, num_bytes, debug)
+
+	local toprint = debug
+	local buff_size = 1
+	local byte_num = 0
+	local readdata = 0
+	local readresult = 0
+	if debug then print("SWIM Dumping", num_bytes, "starting at:", help.hex(addr)) end
+
+	while (byte_num < num_bytes) do
+		local toprint = false
+		readresult, readdata = rotf(addr+byte_num, true, toprint )
+		byte_num = byte_num+1
+		files.wr_bin_byte(file, readdata)
+	end
+
+end
+
+local function dump_flash(file, debug)
+	read_memory(file, 0x8000, 8*1024, true)
+end
+
+local function dump_eeprom(file, debug)
+	--TODO flag for S001/3 or S103
+	--for now just assume 640Bytes like S103
+	read_memory(file, 0x4000, 640, true)
+end
+
+
+--takes ~37sec to flash entire 8KB, recommend calling fastblock below if flashing entire chip
 local function write_flash(file, debug)
 
 	unlock_flash(true)
@@ -561,6 +676,58 @@ local function write_flash(file, debug)
 		--	return
 		--end
 		byte_num = byte_num + 1
+	end
+
+	print("Done with STM8 CIC flash")
+	lock_flash_eeprom(true)
+end
+
+
+--erases then writes 8KByte of STM8 flash
+--currently writes entire 8KB of flash, file must be exactly 8KByte
+--testing in high speed mode single byte rotf: 5.5sec (same as dump speed)
+--flashing the entire chip takes 37 seconds in single byte mode
+--does not verify as flashing, recommend dumping and comparing files
+local function write_flash_fastblock(file, debug)
+
+	--erase_blocks(0x8000, 128, true)
+	erase_flash()
+
+	unlock_flash(true)
+
+	local toprint = debug
+	local buff_size = 1
+	local byte_num = 0
+	local readdata = 0
+	local readresult = 0
+	print("Programming STM8 CIC flash")
+
+	--for byte in file:lines(buff_size) do
+	while (byte_num < 0x2000) do
+
+		--set to fast mode for each block
+		fast_flash_mode(true)
+		--write 64 bytes, then poll EOP
+		local byteinblock = 0
+
+		while byteinblock<64 do
+
+			local byte = file:read(1)
+			--local byte = files.rd_bin_byte(file)
+			local data = string.unpack("B", byte, 1)
+		--	print(data)
+			wotf(0x8000+byte_num, data, true, toprint)
+			--wotf(0x8000+byte_num, 0xFF, true, true)
+		--	readresult, readdata = rotf(0x8000+byte_num, true, toprint )
+		--	if readdata ~= data then
+		--		print("ERROR flashing byte number", byte_num, "to STM8 CIC", data, readdata)
+		--	end
+			byte_num = byte_num + 1
+			byteinblock = byteinblock + 1
+		end
+
+		--poll EOP till it's set
+		wait_till_eop_set(true)
 	end
 
 	print("Done with STM8 CIC flash")
@@ -604,6 +771,13 @@ end
 -- functions other modules are able to call
 swim.start = start
 swim.write_flash = write_flash
+swim.write_flash_fastblock = write_flash_fastblock
+swim.read_memory = read_memory
+swim.dump_flash = dump_flash
+swim.dump_eeprom = dump_eeprom
+swim.erase_blocks = erase_blocks
+swim.erase_flash = erase_flash
+swim.erase_eeprom = erase_eeprom
 swim.write_optn_bytes = write_optn_bytes
 swim.disable_ROP_erase = disable_ROP_erase
 swim.printCSR = printCSR

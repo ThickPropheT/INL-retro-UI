@@ -278,6 +278,7 @@ USBDESC const uint16_t string2_desc[STRING2_DESC_LEN] = {
 // 1 	bDescriptorType 	1 	Constant	String Descriptor (0x03)
 					((uint16_t)DESC_TYPE_STRING<<8 | STRING2_DESC_LEN),
 // 2 	bString 		n 	Unicode		Unicode Encoded String
-'I','N','L',' ','R','e','t','r','o','-','P','r','o','g'};
+'I','N','L',' ','R','e','t','r','o','-','P','r','o','g'};	//normal
+//'I','N','L',' ','R','e','t','r','o','-','P','r','o','4'};	//numbered devices for mutliple on one machine
 
 #endif

@@ -31,15 +31,20 @@
 					//set to zero if would like 256 clocks to be performed
 					//range is 1-255, 0 equates to 256 clocks
 
-#define		SET_2B_DATA	7
-#define		GET_6B_DATA	8	//RL=8
+#define		SET_2B_DATA	7	//miscdata defines the first byte index 
+					//0=first 2 bytes (16bits) of DATA array
+					//if undefined, should be 0 (first 2 bytes)
+				
+#define		GET_8B_DATA	8	//RL=10 max lua int, miscdata gives offset of first byte
+#define		GET_32B_DATA	9	//RL=34 
 
 
 //PBJE Paul's Basic Jtag engine commands & status'
 #define		PBJE_STATE_CHG	0x01	//data array holds TMS values to clock values bit packed, TDI undefined
+//TMS s bit packed, better for USB data compression (contrary to notes)
 
 
-//DATA SCAN commands, these end with settting TMS to 1 to exit SHIFT-IR/DR completing the SCAN.
+//DATA SCAN commands, these end with setting TMS to 1 to exit SHIFT-IR/DR completing the SCAN.
 //If need to make multiple smaller scans to make up one big scan, this would be the last scan, "HOLD" scans 
 //lower down would be the first to second to last scans
 #define		PBJE_TDI_SCAN	0x02	//ignore TDO	256max
@@ -64,14 +69,16 @@
 #define		PBJE_FULL_SCAN_HOLD	0x10	//TDI = entire data array, TDO dumped into array stomping TDI, TMS=0	256max
 
 
+//TODO, why don't we get unknown opcode when accidentally sending a command as an opcode..? ie dict.jtag("PBJE_INIT")
+//that freezes instead of sending back unknown opcode, because it is known you idiot!...
 //Statuses & commands to get to the status
-#define		PBJE_INIT	0x80
+#define		PBJE_INIT	0x80	//STATE ONLY!  DON'T USE AS COMMAND!!l init with io dict, this is the state only
 #define		PBJE_PROC	0x81
 #define		PBJE_DONE	0x82
 #define		PBJE_CMD_RX	0x83
 #define		PBJE_UNKN_CMD	0xEE
-#define		PBJE_OFF	0xF0
-#define		PBJE_SHUTDOWN	0xFF
+#define		PBJE_OFF	0xF0	//STATE: mcu isn't running the PBJE
+#define		PBJE_SHUTDOWN	0xFF	//COMMAND: tell mcu to shutoff PBJE
 
 
 

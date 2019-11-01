@@ -56,6 +56,66 @@ uint8_t	write_page_verify( uint8_t addrH, buffer *buff, write_rv_funcptr wr_func
 	return SUCCESS;
 } 
 
+uint8_t	write_page_buffer( uint8_t addrH, buffer *buff, write_funcptr_pg wr_func )
+{
+	uint16_t cur = buff->cur_byte;
+	uint8_t	n = buff->cur_byte;
+	uint8_t i;
+	uint8_t rv;
+	uint8_t rv1;
+//	uint8_t read;
+//
+
+	uint16_t addr = addrH<<8;
+
+
+	while ( cur <= buff->last_idx ) {
+
+	//	wr_func( ((addrH<<8)| n), &(buff->data[n]) );
+		//write function returns when it's complete or errors out
+		
+			//unlock and write data
+			snes_wr(0x8AAA, 0xAA, 0);
+			snes_wr(0x8555, 0x55, 0);
+			//write buffer write to SA
+			snes_wr(addr|n, 0x25, 0);
+			//write number of words - 1 to SA
+			snes_wr(addr|n, 31, 0);
+			
+			//write first data to first address, then write others to their address
+			//snes_wr(addr|n, data, 0);
+
+			//write 31 more bytes of data
+			for (i=0;i<32;i++) {
+				snes_wr(addr+i+n, buff->data[n+i], 0);
+			}
+			
+			//write program buffer command
+			snes_wr(addr|n, 0x29, 0);
+
+			//LED_IP_PU();	
+			//LED_LO();
+			//LED_OP();
+			//LED_HI();
+
+			do {
+				rv = snes_rd(addr, 0);
+				rv1 = snes_rd(addr, 0);
+				usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+		//wdt_reset();	
+			////} while (rv != snes_rd(addr, 0));
+			} while (rv != rv1);
+	
+    		//n++;
+    		n +=32;
+    		cur += 32;
+	}
+	buff->cur_byte = n;
+
+	//TODO error check/report
+	return SUCCESS;
+} 
+
 
 //only used by cninja currently..
 uint8_t	write_page_cninja( uint8_t bank, uint8_t addrH, uint16_t unlock1, uint16_t unlock2, buffer *buff, write_funcptr wr_func, read_funcptr rd_func )
@@ -568,6 +628,22 @@ uint8_t flash_buff( buffer *buff ) {
 			if (buff->mapper == HIROM_3VOLT) {
 				//HIROM banks start at $XX:0000
 				write_page( addrH, buff, snes_3v_flash_wr);
+			}
+			if (buff->mapper == LOROM_3V_VERIFY) {
+				//LOROM banks start at $XX:8000
+				write_page_verify( addrH+0x80, buff, snes_3v_verify_wr);
+			}
+			if (buff->mapper == HIROM_3V_VERIFY) {
+				//HIROM banks start at $XX:0000
+				write_page_verify( addrH, buff, snes_3v_verify_wr);
+			}
+			if (buff->mapper == LOROM_3V_PAGE) {
+				//LOROM banks start at $XX:8000
+				write_page_buffer( addrH+0x80, buff, snes_3v_buffer_wr);
+			}
+			if (buff->mapper == HIROM_3V_PAGE) {
+				//HIROM banks start at $XX:0000
+				write_page_buffer( addrH, buff, snes_3v_buffer_wr);
 			}
 
 			if (buff->mapper == LOROM) {

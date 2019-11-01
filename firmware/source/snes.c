@@ -258,12 +258,13 @@ uint8_t snes_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t romsel, uint8_t
 		}
 
 		//gameboy needed some extra NOPS
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		NOP();
+		//I cut these back out because didn't want the delay in SNES
+//		NOP();
+//		NOP();
+//		NOP();
+//		NOP();
+//		NOP();
+//		NOP();
 		//latch data
 		DATA_RD(data[i]);
 
@@ -336,6 +337,68 @@ void snes_3v_flash_wr( uint16_t addr, uint8_t data )
 	} while (rv != snes_rd(addr, 0));
 
 	return;
+}
+
+/* Desc:SNES 3v ROM FLASH VERIFY Write
+ * 	NOTE: /ROMSEL is always taken low
+ * 	NOTE: if the byte isn't erased it will stop over current value
+ * 	NOTE: doesn't hang if write fails, just returns, goal is to be fast
+ * Pre: snes_init() setup of io pins
+ * 	desired bank must already be selected
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+uint8_t snes_3v_verify_wr( uint16_t addr, uint8_t data )
+{
+
+	uint8_t rv;
+
+	//unlock and write data
+	snes_wr(0x8AAA, 0xAA, 0);
+	snes_wr(0x8555, 0x55, 0);
+	snes_wr(0x8AAA, 0xA0, 0);
+	snes_wr(addr, data, 0);
+
+	do {
+		rv = snes_rd(addr, 0);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != snes_rd(addr, 0));
+
+	return rv;
+}
+
+/* Desc:SNES 3v ROM FLASH BUFFER Write 32Bytes at a time
+ * 	NOTE: /ROMSEL is always taken low
+ * 	NOTE: if the byte isn't erased it will stop over current value
+ * 	NOTE: doesn't hang if write fails, just returns, goal is to be fast
+ * Pre: snes_init() setup of io pins
+ * 	desired bank must already be selected
+ * Post:Byte written and ready for another write
+ * Rtn:	None
+ */
+void snes_3v_buffer_wr( uint16_t addr, uint8_t *data )
+{
+
+	/* TODO, actually implement this, currently everything is done on flash.c side
+	uint8_t rv;
+
+	//unlock and write data
+	snes_wr(0x8AAA, 0xAA, 0);
+	snes_wr(0x8555, 0x55, 0);
+	//write buffer write to SA
+	snes_wr(addr, 0x25, 0);
+	//write number of words - 1 to SA
+	
+	//write first data to first address
+	snes_wr(addr, data[1], 0);
+
+	do {
+		rv = snes_rd(addr, 0);
+		usbPoll();	//orignal kazzo needs this frequently to slurp up incoming data
+	} while (rv != snes_rd(addr, 0));
+
+	return;
+	*/
 }
 
 

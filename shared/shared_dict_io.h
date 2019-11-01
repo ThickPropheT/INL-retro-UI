@@ -63,7 +63,8 @@
 //communications with
 #define JTAG_INIT	4
 	//	don't define    0x00 to protect from forgetting to pass jtag lane
-	#define	JTAG_ON_EXP0_3	0x01	//Most NES carts with CPLDs
+	#define	JTAG_ON_EXP0_3	0x01	//Most NES carts with CPLDs EXP0-TDO, EXP1-TDI, EXP2-TMS, EXP3-TCK
+	#define JTAG_ON_SNES_CTL	0x02	//SNES v2.0proto2 SYSCLK-TCK, RESET/EXP0-TMS, WR-TDI, RD-TDO
 
 
 

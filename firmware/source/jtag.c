@@ -24,6 +24,11 @@ uint8_t 	tck_pin;
 uint8_t	pbje_status;	//only engine can write, read only by host
 uint8_t	pbje_command;	//only host can write, read only by engine
 uint8_t	pbje_numclk; 	//numclk is a sticky value, don't modify!
+//TODO I don't think there's much value in having the data array this big
+//We can scan in/out smaller portions of a longer bit streams using the HOLD commands
+//Thinking that 8Bytes may be better max length, which is also max lua int (64bit)
+//But honestly could get by pretty well with 2-4Bytes
+//need to size this down and retest, but works for now
 #define	PBJE_DATA_ARRAY_SIZE 32
 uint8_t	pbje_data[PBJE_DATA_ARRAY_SIZE];
 uint8_t	pbje_cmd_update_flag;
@@ -50,8 +55,11 @@ uint8_t jtag_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 
 #define	BYTE_LEN 1
 #define	HWORD_LEN 2
+	uint8_t temp;
+
 	switch (opcode) { 
-		case PBJE_INIT:		jtag_init_pbje();		break;
+		//case PBJE_INIT:		jtag_init_pbje();		break;
+		//NOTE!  INITIALIZE PBJE with IO dictionary!!!
 
 		case GET_CMD:		rdata[RD0] = pbje_command;
 					rdata[RD_LEN] = BYTE_LEN;	break;
@@ -76,17 +84,24 @@ uint8_t jtag_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 
 		case SET_NUMCLK:	pbje_numclk = operand;		break;
 
-		//GET & SET ARRAY DATA
-		case SET_2B_DATA:	pbje_data[0] = operand;
-					pbje_data[1] = operand>>8;
+		//GET & SET ARRAY DATA, miscdata defines first byte index
+		case SET_2B_DATA:	pbje_data[miscdata] = operand;
+					pbje_data[miscdata+1] = operand>>8;
 									break;
-		case GET_6B_DATA:	rdata[RD0] = pbje_data[0];
-					rdata[RD1] = pbje_data[1];
-					rdata[RD2] = pbje_data[2];
-					rdata[RD3] = pbje_data[3];
-					rdata[RD4] = pbje_data[4];
-					rdata[RD5] = pbje_data[5];
-					rdata[RD_LEN] = 6;
+		case GET_8B_DATA:	//copy over 8B of data starting at miscdata index
+					for (temp=RD0; temp<(RD0+8); temp++) {
+						rdata[temp] = pbje_data[temp-RD0+miscdata];
+					}	
+
+					rdata[RD_LEN] = 8;
+									break;
+		case GET_32B_DATA:	
+					//copy over 32B of data
+					for (temp=RD0; temp<(RD0+32); temp++) {
+						rdata[temp] = pbje_data[temp-RD0];
+					}	
+
+					rdata[RD_LEN] = 32;
 									break;
 
 		
@@ -100,6 +115,7 @@ uint8_t jtag_call( uint8_t opcode, uint8_t miscdata, uint16_t operand, uint8_t *
 
 }
 
+//NOTE!  MUST INITIALIZE JTAG in io.c before calling!!!!
 void jtag_init_pbje()
 {
 	uint8_t i;
@@ -125,15 +141,11 @@ void jtag_init_pbje()
 	exp_byte = 0;
 	EXP_SET(exp_byte);
 #endif
+
 	
 	//enable TDO as input
 	TDO_IP_PU();
 
-	//PBJE initialization
-	//set status & command to INIT
-	pbje_status = PBJE_INIT;
-	//only the host writes to command
-	//pbje_command = PBJE_INIT;
 
 	//set NUM_CLK to max this engine can clock based on DATA_ARRAY bit size
 	pbje_numclk = 0;	//byte variable, 0 -> 256
@@ -142,6 +154,13 @@ void jtag_init_pbje()
 	for( i=0; i<PBJE_DATA_ARRAY_SIZE; i++) {
 		pbje_data[i] = 0;
 	}
+
+	//SET STATE LAST to signal complete
+	//PBJE initialization
+	//set status & command to INIT
+	pbje_status = PBJE_INIT;
+	//only the host writes to command
+	//pbje_command = PBJE_INIT;
 
 }
 

@@ -181,6 +181,7 @@
 
 	#define MM2	253
 	#define DPROM	254	//just a random mapper number for whatever I need it for
+	#define MMC3S	252
 	//	UNKNOWN 255	don't assign to something meaningful
 	//operand LSB mapper variant
 	#define NOVAR	0
@@ -196,6 +197,12 @@
 
 	#define	LOROM_3VOLT	6
 	#define	HIROM_3VOLT	7
+
+	#define	LOROM_3V_PAGE	8
+	#define	HIROM_3V_PAGE	9
+
+	#define	LOROM_3V_VERIFY	10	//same as 3VOLT above, but verifies each byte while writing
+	#define	HIROM_3V_VERIFY	11
 
 
 //set function

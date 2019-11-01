@@ -476,7 +476,7 @@ void sega_init()
 //	HADDR_ENABLE();
 //	HADDR_IP();
 //	HADDR_PU();
-	DATA16_ENABLE();
+	//TODO ERROR DATA16_ENABLE();
 //	DATA16_IP();
 //	DATA16_PU();
 
@@ -582,7 +582,7 @@ uint8_t swim_init( uint8_t swim_lane )
 				EXP0_HI();	//set output high (deasserted)
 				EXP0_OP();	//enable as output to have above take effect
 			#endif
-			swim_pin = EXP0_;	
+			swim_pin = EXP0;	
 			swim_base = EXP0bank;
 			//swim_mask = 1<<EXP0;
 			break;
@@ -629,9 +629,37 @@ uint8_t jtag_init( uint8_t jtag_lane )
 			//initialize PBJE
 			jtag_init_pbje();
 			break;
+
+		case JTAG_ON_SNES_CTL:	//SNES v2.0proto2 SYSCLK-TCK, RESET/EXP0-TMS, WR-TDI, RD-TDO
+
+#ifdef STM_INL6
+			//set base & masks
+			tdo_base = CSRDbank;
+			tdo_pin = CSRD;
+			tdi_base = CSWRbank;
+			tdi_pin = CSWR;
+			tms_base = EXP0bank;
+			tms_pin = EXP0;
+			tck_base = PRGRWbank; //TODO make better ctl pin definition for this pin!
+			tck_pin = PRGRW;
+#else
+			//TODO
+#endif
+
+
+			//enable GPIO banks
+			//EXP_ENABLE();
+			CTL_ENABLE();		//SYSCLK done..?
+
+
+			break;
 		default: 
 			return ERR_UNKN_JTAG_LANE;
 	}
+
+	//initialize PBJE
+	jtag_init_pbje();
+
 	return SUCCESS;
 }
 

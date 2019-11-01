@@ -1,9 +1,19 @@
+-- PAUL'S BASIC JTAG ENGINE
+-- this module keeps track of JTAG statemachine current state
+-- so it can then know how to get to a different state
+-- This module is responsible for generating the TMS, TCK, TDI, TDO 
+-- pin toggling sequences necessary and send basic commands over
+-- to the PBJE running on the INLretro, or the cartridge mcu
+-- The actual engine running on the INLretro/cartridge is pretty dumb
+-- but has the hardware/physical interface, and the 'intelligence' resides here.
 
 -- create the module's table
-local jtag = {}
+local pbje = {}
 
 -- import required modules
 local dict = require "scripts.app.dict"
+local files = require "scripts.app.files"
+local time = require "scripts.app.time"
 
 -- file constants
 local pbje_loc	--physical location of PBJE engine so this script known how to set engine registers
@@ -25,7 +35,7 @@ end
 -- inside the board itself (ie CIC mcu) instead of on the inlretro programmer
 -- in these types of cases, want the jtag high level functions to be independent of
 -- where the PBJE engine is located physically.
-local function init_jtag_lua( location )
+local function init( location )
 
 	pbje_loc = location
 
@@ -119,6 +129,7 @@ local function set_run_get_cmd( command )
 		print("ERROR, pbje location must be initialized prior to setting registers")
 
 	elseif( pbje_loc == "INLRETRO" ) then
+		--TODO provide flag if don't want to wait on immediate processing (for long data streams)
 		rv = dict.jtag("SET_CMD_WAIT", command)
 		--verify command was done
 		if(rv ~= op_jtag["PBJE_DONE"]) then print("error JTAG not done, status: ", rv) end
@@ -405,12 +416,22 @@ local function scan( numbits, data_in, data_out, debug )
 	--scan out with TDI high
 	if( data_in == "HIGH" and data_out ) then
 		set_run_get_cmd("PBJE_TDO_SCAN1")
-		data_out = dict.jtag("GET_6B_DATA")
+		data_out = dict.jtag("GET_8B_DATA")
+--		if numbits <= 6*8 then
+--			data_out = dict.jtag("GET_8B_DATA")
+--		else
+--			data_out = dict.jtag("GET_32B_DATA")
+--		end
 
 	--scan out with TDI low
 	elseif( data_in == "LOW" and data_out ) then
 		set_run_get_cmd("PBJE_TDO_SCAN0")
-		data_out = dict.jtag("GET_6B_DATA")
+		data_out = dict.jtag("GET_8B_DATA")
+--		if numbits <= 6*8 then
+--			data_out = dict.jtag("GET_8B_DATA")
+--		else
+--			data_out = dict.jtag("GET_32B_DATA")
+--		end
 
 	--scan in with TDI high
 	elseif( data_in == "HIGH" and not data_out ) then
@@ -422,6 +443,7 @@ local function scan( numbits, data_in, data_out, debug )
 
 	--scan in ignoring TDO
 	elseif( data_in and not data_out ) then
+		--TODO support more than 16/64bits by calling TDI_SCAN_HOLD
 		set_data_2B(data_in)
 		set_run_get_cmd("PBJE_TDI_SCAN")
 
@@ -429,7 +451,12 @@ local function scan( numbits, data_in, data_out, debug )
 	elseif( data_in and data_out ) then
 		set_data_2B(data_in)
 		set_run_get_cmd("PBJE_FULL_SCAN")
-		data_out = dict.jtag("GET_6B_DATA")
+		data_out = dict.jtag("GET_8B_DATA")
+--		if numbits <= 6*8 then
+--			data_out = dict.jtag("GET_8B_DATA")
+--		else
+--			data_out = dict.jtag("GET_32B_DATA")
+--		end
 
 	else
 		print("ERROR, bad arguements to jtag scan function")
@@ -449,6 +476,83 @@ local function scan( numbits, data_in, data_out, debug )
 
 end
 
+
+--similar to scan above, but it doesn't exit SHIFT-DR state so we can call it over and over again
+local function scan_hold( numbits, data_in, data_out, debug )
+
+	--check to ensure current state is SHIFT-IR/DR
+	if not( cur_jtag_state == "SHIFT_IR" or cur_jtag_state == "SHIFT_DR") then
+		print("ERROR, jtag state must be SHIFT-IR/DR in order to scan data in/out")
+		return nil
+	end
+
+
+	--TODO analyze numbits to determine if needs to be split into several shorter scans
+	--currently all scans exit at end of shift
+	set_clk(numbits)
+	
+	--scan out with TDI high
+	if( data_in == "HIGH" and data_out ) then
+		set_run_get_cmd("PBJE_TDO_SCAN1_HOLD")
+		data_out = dict.jtag("GET_8B_DATA")
+--		if numbits <= 6*8 then
+--			data_out = dict.jtag("GET_8B_DATA")
+--		else
+--			data_out = dict.jtag("GET_32B_DATA")
+--		end
+
+	--scan out with TDI low
+	elseif( data_in == "LOW" and data_out ) then
+		set_run_get_cmd("PBJE_TDO_SCAN0_HOLD")
+		data_out = dict.jtag("GET_8B_DATA")
+--		if numbits <= 6*8 then
+--			data_out = dict.jtag("GET_8B_DATA")
+--		else
+--			data_out = dict.jtag("GET_32B_DATA")
+--		end
+
+	--scan in with TDI high
+	elseif( data_in == "HIGH" and not data_out ) then
+		set_run_get_cmd("PBJE_TDO_SCAN1_HOLD")
+
+	--scan in with TDI low
+	elseif( data_in == "LOW" and not data_out ) then
+		set_run_get_cmd("PBJE_TDO_SCAN0_HOLD")
+
+	--scan in ignoring TDO
+	elseif( data_in and not data_out ) then
+		--TODO support more than 16/64bits by calling TDI_SCAN_HOLD
+		set_data_2B(data_in)
+		set_run_get_cmd("PBJE_TDI_SCAN_HOLD")
+
+	--scan in data and capture scan out
+	elseif( data_in and data_out ) then
+		set_data_2B(data_in)
+		set_run_get_cmd("PBJE_FULL_SCAN_HOLD")
+		data_out = dict.jtag("GET_8B_DATA")
+	--	if numbits <= 6*8 then
+	--		data_out = dict.jtag("GET_8B_DATA")
+	--	else
+	--		data_out = dict.jtag("GET_32B_DATA")
+	--	end
+
+	else
+		print("ERROR, bad arguements to jtag scan function")
+		return nil
+	end
+
+--	--currently all scans exit at end of shift
+--	--state has now shifted to EXIT1
+--	if( cur_jtag_state == "SHIFT_IR" ) then
+--		cur_jtag_state = "EXIT1_IR"
+--	elseif( cur_jtag_state == "SHIFT_DR" ) then
+--		cur_jtag_state = "EXIT1_DR"
+--	end
+
+	--TODO only return the number of bits scanned, mask away everything else
+	return data_out
+
+end
 
 local function runtest( state, clks, time, debug )
 
@@ -487,206 +591,6 @@ local function runtest( state, clks, time, debug )
 end
 
 
-local function run_jtag( debug )
-
-
-	local rv
-
-	--setup lua portion of jtag engine
-	init_jtag_lua("INLRETRO")
-
-	--initialize JTAG port on USB device
-	dict.io("JTAG_INIT", "JTAG_ON_EXP0_3")
-
-	--first put/verify jtag statemachine is in RESET
-	goto_state("RESET")
-
-	--by default jtag should be in IDCODE or BYPASS if IDCODE not present
-	--The TDI pin doesn't even have to be working to scan out IDCODE by this means
-	
-	--change to SCAN-DR state
-	goto_state("SHIFT_DR")
-
-	--scan out 32bit IDCODE while scanning in 1's to TDI
-	rv = scan( 32, "HIGH", true )
-
-	print("return data:", string.format(" %X, ",rv))
-	if( rv == 0x1281043 ) then
-	-- Mach XO 256   01281043
-	-- 4032v	(01805043)
-	-- 4064v	(01809043)
-	--
-	-- 9536xl
-	-- //Loading device with 'idcode' instruction.
-	-- SIR 8 TDI (fe) SMASK (ff) ;
-	-- SDR 32 TDI (00000000) SMASK (ffffffff) TDO (f9602093) MASK (0fffffff) ;
-	--
-	-- 9572xl
-	-- //Loading device with 'idcode' instruction.
-	-- SIR 8 TDI (fe) SMASK (ff) ;
-	-- SDR 32 TDI (00000000) SMASK (ffffffff) TDO (f9604093) MASK (0fffffff) ;
-	-- test read gives 59604093
-		print("IDCODE matches MACHXO-256")
-	else
-		print("no match for IDCODE")
-	end
-	
-	--Mach XO verify ID code
---	! Check the IDCODE
---
---	! Shift in IDCODE(0x16) instruction
---	SIR     8       TDI  (16);
-	goto_state("SHIFT_IR")
-	scan( 8, 0x16)
-
-	--return to default state after SIR
-	--doesn't appear to actually be needed
---	goto_state("PAUSE_IR")
-
---	SDR     32      TDI  (FFFFFFFF)
---	                TDO  (01281043)
---	                MASK (FFFFFFFF);
-	goto_state("SHIFT_DR")
-	rv = scan( 32, "HIGH", true)
-	print("return data:", string.format(" %X, ",rv))
-
-
-	--xilinx IDCODE command is different
-	--//Loading device with 'idcode' instruction.
-	--SIR 8 TDI (fe) SMASK (ff) ;
-	--SDR 32 TDI (00000000) SMASK (ffffffff) TDO (f9602093) MASK (0fffffff) ;
---	goto_state("SHIFT_IR")
---	scan( 8, 0xfe)
---	goto_state("SHIFT_DR")
---	rv = scan( 32, "HIGH", true)
---	print("return data:", string.format(" %X, ",rv))
-
-
-	--MACH XO 256
-	--! Program Bscan register
-	--
-	--! Shift in Preload(0x1C) instruction
-	--SIR     8       TDI  (1C);	
-	--SDR     160     TDI  (FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
-	--the HIGHZ instruction seems more fitting...	 0x18
-	goto_state("SHIFT_IR")
-	scan( 8, 0x1c)
-	goto_state("SHIFT_DR")
-	scan( 160, "HIGH")	
-
-
---	! Enable the programming mode
---
---	! Shift in ISC ENABLE(0x15) instruction
---	SIR     8       TDI  (15);
-	goto_state("SHIFT_IR")
-	scan( 8, 0x15)
---	RUNTEST IDLE    5 TCK   1.00E-003 SEC;
-	runtest( "IDLE", 5 )
-
---
---
---	! Erase the device
---
---	! Shift in ISC SRAM ENABLE(0x55) instruction
---	SIR     8       TDI  (55);
-	goto_state("SHIFT_IR")
-	scan( 8, 0x55)
-	runtest( "IDLE", 5 )
---	RUNTEST IDLE    5 TCK   1.00E-003 SEC;
---
---	! Shift in ISC ERASE(0x03) instruction
---	SIR     8       TDI  (03);
-	goto_state("SHIFT_IR")
-	scan( 8, 0x03)
-	runtest( "IDLE", 5 )
---	RUNTEST IDLE    5 TCK   1.00E-003 SEC;
---
---	! Shift in ISC ENABLE(0x15) instruction
---	SIR     8       TDI  (15);
-	goto_state("SHIFT_IR")
-	scan( 8, 0x15)
-	runtest( "IDLE", 5 )
---	RUNTEST IDLE    5 TCK   1.00E-003 SEC;
---
---	! Shift in ISC ERASE(0x03) instruction
---	SIR     8       TDI  (03);
-	goto_state("SHIFT_IR")
-	scan( 8, 0x03)
-	--runtest( "IDLE", 5, 1 ) --seems to fail if under ~0.5sec
-	runtest( "IDLE", 5, 0.7 )
---	RUNTEST IDLE    5 TCK   1.00E+001 SEC;
---	SDR     1       TDI  (0)
---	                TDO  (1);  TDO must be set
-	goto_state("SHIFT_DR")
-	rv = scan( 1, 0x0, true) % 2	--mask out all but the last bit
-	if( rv == 1) then
-		print("MachXO-256 CPLD erasure success!!!")
-	else
-		print("failed to erase MachXO-256 CPLD")
-	end
-
-
---	! Read the status bit
---
---	! Shift in READ STATUS(0xB2) instruction
---	SIR     8       TDI  (B2);
-	goto_state("SHIFT_IR")
-	scan( 8, 0xb2)
-	runtest( "IDLE", 5 )
---	RUNTEST IDLE    5 TCK   1.00E-003 SEC;
---	SDR     1       TDI  (0)
---	                TDO  (0);
-	goto_state("SHIFT_DR")
-	rv = scan( 1, "LOW", true) % 2	--mask out all but the last bit
-	if( rv == 0 ) then
-		print("status bit clear as expected")
-	else
-		print("ERROR status bit was set, not sure what this means...")
-	end
-
-
---! Program Fuse Map
---
---! Shift in INIT ADDRESS(0x21) instruction
---SIR     8       TDI  (21);
---RUNTEST IDLE    5 TCK   1.00E-003 SEC;
---! Shift in BYPASS(0xFF) instruction
---SIR     8       TDI  (FF);
---RUNTEST IDLE    5 TCK   1.00E-003 SEC;
---! Shift in DATA SHIFT(0x02) instruction
---SIR     8       TDI  (02);
---! Shift in Row = 1
---SDR     192     TDI  (FFF7BFF3DEFFCEEFFF3BBFFCEEFFF3DFFFFDEFFF3BBFFCFF);
---! Shift in LSCC PROGRAM INCR RTI(0x67) instruction
---SIR     8       TDI  (67);
---RUNTEST IDLE    5 TCK   1.00E-002 SEC;
---STATE   DRPAUSE;
---! Shift in DATA SHIFT(0x02) instruction
---SIR     8       TDI  (02);
---! Shift in Row = 2
---SDR     192     TDI  (FFF7BFF3DEFFCEEFFF37BFFCF7FFFFBBFFCEEFFF37BFFCFF);
---! Shift in LSCC PROGRAM INCR RTI(0x67) instruction
---SIR     8       TDI  (67);
---RUNTEST IDLE    5 TCK   1.00E-002 SEC;
---STATE   DRPAUSE;
---! Shift in DATA SHIFT(0x02) instruction
---SIR     8       TDI  (02);
---! Shift in Row = 3
---SDR     192     TDI  (FFBFFFFFDEFFCFFFFFFBBFFCFFFFFF5FFFCFFFFFFFFFFFFF);
---! Shift in LSCC PROGRAM INCR RTI(0x67) instruction
---SIR     8       TDI  (67);
---RUNTEST IDLE    5 TCK   1.00E-002 SEC;
---STATE   DRPAUSE;
---! Shift in DATA SHIFT(0x02) instruction
---SIR     8       TDI  (02);
---! Shift in Row = 4
---SDR     192     TDI  (FFFFFFFFDEFFCFFFFFFBBFFCFFFFFFBBFFCFFFFFFFFFFFFF);
---
--- ....
-	
-end
-
 -- global variables so other modules can use them
 
 
@@ -694,9 +598,13 @@ end
 
 
 -- functions other modules are able to call
-jtag.wait_pbje_done = wait_pbje_done
-jtag.run_jtag = run_jtag
-jtag.sleep = sleep
+--jtag.wait_pbje_done = wait_pbje_done
+pbje.sleep = sleep
+pbje.init = init
+pbje.goto_state = goto_state
+pbje.scan = scan
+pbje.scan_hold = scan_hold
+pbje.runtest = runtest
 
 -- return the module's table
-return jtag
+return pbje

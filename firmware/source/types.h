@@ -15,6 +15,7 @@ typedef struct setup_packet{
 //typedef	void	(*write_funcptr) 	( uint8_t addrH, uint8_t addrL, uint8_t data );
 //typedef	uint8_t	(*read_funcptr)		( uint8_t addrH, uint8_t addrL );
 typedef	void	(*write_funcptr) 	( uint16_t addr, uint8_t data );
+typedef	void	(*write_funcptr_pg) 	( uint16_t addr, uint8_t *data );
 typedef	uint8_t	(*write_rv_funcptr) 	( uint16_t addr, uint8_t data );
 typedef	uint8_t	(*read_funcptr)		( uint16_t addr );
 typedef	void	(*write_snes_funcptr) 	( uint16_t addr, uint8_t data, uint8_t romsel );

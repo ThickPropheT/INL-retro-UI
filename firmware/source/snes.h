@@ -14,5 +14,7 @@ uint8_t snes_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t romsel, uint8_t
 
 void 	snes_5v_flash_wr( uint16_t addr, uint8_t data );
 void 	snes_3v_flash_wr( uint16_t addr, uint8_t data );
+uint8_t	snes_3v_verify_wr( uint16_t addr, uint8_t data );
+void 	snes_3v_buffer_wr( uint16_t addr, uint8_t *data );
 
 #endif
