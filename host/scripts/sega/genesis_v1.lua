@@ -54,7 +54,7 @@ local function dump_rom( file, rom_size_KB, debug )
 		end
 
 		-- Select desired bank.
-		dict.sega("SET_BANK", read_count)
+		dict.sega("GEN_SET_BANK", read_count)
 
 		dump.dumptofile(file, KB_per_bank/2, addr_base, "GENESIS_ROM_PAGE0", debug)
 		dump.dumptofile(file, KB_per_bank/2, addr_base, "GENESIS_ROM_PAGE1", debug)
@@ -156,7 +156,7 @@ end
 
 -- Reads and parses internal ROM header from first page of data.
 local function read_header()
-	dict.sega("SET_BANK", 0)
+	dict.sega("GEN_SET_BANK", 0)
 
 	local page0_data = ""
 	dump.dumptocallback(
@@ -207,7 +207,7 @@ local function process(process_opts, console_opts)
 		
 		-- If ROM size wasn't provided, attempt to use value in internal header.
 		local rom_size = console_opts["rom_size_kbyte"]
-		if rom_size == 0 then
+		if rom_size == 0 or rom_size == nil then
 			print("ROM Size not provided, " .. str_rom_size(genesis_header["rom_size"]) .. " detected.")
 			rom_size = genesis_header["rom_size"]
 		end
