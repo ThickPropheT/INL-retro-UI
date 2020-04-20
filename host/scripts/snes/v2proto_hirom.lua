@@ -17,12 +17,14 @@ local lorom_name = 'LoROM'
 -- http://old.smwiki.net/wiki/Internal_ROM_Header
 -- https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map
 -- https://patpend.net/technical/snes/sneskart.html
+-- https://snesdev.mesen.ca/wiki/index.php
 
 local hardware_type = {
     [0x00] = "ROM Only",
     [0x01] = "ROM and RAM",
     [0x02] = "ROM and Save RAM",
 	[0x03] = "ROM and DSP1",
+    [0x13] = "ROM and SuperFX",
 	[0x43] = "ROM and S-DD1",
 	[0xF3] = "ROM and CX4",
 
