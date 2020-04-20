@@ -26,6 +26,7 @@ local hardware_type = {
 	[0x03] = "ROM and DSP1",
     [0x13] = "ROM and SuperFX",
     [0x15] = "ROM and SuperFX and Save RAM",
+    [0x1A] = "ROM and SuperFX and Save RAM",
     [0x23] = "ROM and OBC1",
     [0x33] = "ROM and SA-1",
 	[0x43] = "ROM and S-DD1",
@@ -68,7 +69,8 @@ local ram_size_tbl = {
     [0x01] = "16 kilobits",
     [0x02] = "32 kilobits",
     [0x03] = "64 kilobits",
-    [0x05] = "256 kilobits"
+    [0x05] = "256 kilobits",
+    [0x06] = "512 kilobits"
 }
 
 -- Translates ram size in header to KBytes.
@@ -77,7 +79,8 @@ local ram_size_kb_tbl = {
     [0x01] = 2,
     [0x02] = 4,
     [0x03] = 8,
-    [0x05] = 32
+    [0x05] = 32,
+    [0x06] = 64
 }
 
 local destination_code = {
