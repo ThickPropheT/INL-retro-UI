@@ -65,7 +65,7 @@ local rom_size_kb_tbl = {
 }
 
 local ram_size_tbl = {
-    [0x00] = "No sram",
+    [0x00] = "None",
     [0x01] = "16 kilobits",
     [0x02] = "32 kilobits",
     [0x03] = "64 kilobits",
@@ -900,7 +900,7 @@ local function process(process_opts, console_opts)
             end
 
             assert(ram_size, "Save RAM Size unknown and not provided, please add ram size to console_opts")
-			print("Save RAM Size not provided, " .. ram_size .. " detected.")
+			print("Save RAM Size not provided, " .. ram_size .. " kilobytes detected.")
 		end
 
 		if (rom_size == 0) or (rom_size == nil) then
