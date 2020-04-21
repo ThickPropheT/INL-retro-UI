@@ -308,6 +308,9 @@ function print_header(internal_header)
 	local sram_size_str = "UNKNOWN - " .. hexfmt(internal_header["sram_size"])
 	if ram_size_tbl[internal_header["sram_size"]] then sram_size_str = ram_size_tbl[internal_header["sram_size"]] end
 
+    local exp_size_str = "UNKNOWN - " .. hexfmt(internal_header["exp_ram_size"])
+    if ram_size_tbl[internal_header["exp_ram_size"]] then exp_size_str = ram_size_tbl[internal_header["exp_ram_size"]] end
+
 	local destination_code_str = "UNKNOWN - " .. hexfmt(internal_header["destination_code"])
 	if destination_code[internal_header["destination_code"]] then
 		destination_code_str = destination_code[internal_header["destination_code"]]
@@ -323,6 +326,7 @@ function print_header(internal_header)
     print("Hardware Type:\t\t" .. rom_type_str)
     print("Rom Size Upper Bound:\t" .. rom_size_str)
     print("SRAM Size:\t\t" .. sram_size_str)
+    print("Expansion RAM Size:\t" .. exp_size_str)
     print("Destination Code:\t" .. destination_code_str)
     print("Developer:\t\t" .. developer_code_str)
     print("Version:\t\t" .. hexfmt(internal_header["version"]))
@@ -357,6 +361,7 @@ function get_header(map_adjust)
         rom_type = dict.snes("SNES_ROM_RD", addr_rom_type),
         rom_size = dict.snes("SNES_ROM_RD", addr_rom_size),
         sram_size = dict.snes("SNES_ROM_RD", addr_sram_size),
+        exp_ram_size = dict.snes("SNES_ROM_RD", addr_expansion_ram_size),
         destination_code = dict.snes("SNES_ROM_RD", addr_destination_code),
         developer_code = dict.snes("SNES_ROM_RD", addr_developer_code),
         version = dict.snes("SNES_ROM_RD", addr_version),
@@ -876,10 +881,26 @@ local function process(process_opts, console_opts)
 			end
 		end
 
+        -- Autodetect missing ram size
 		if (ram_size == 0) or (ram_size == nil) then
-			ram_size = ram_size_kb_tbl[internal_header["sram_size"]]
-            assert(ram_size, "SRAM Size unknown and not provided, please add ram size to console_opts")
-			print("SRAM Size not provided, " .. ram_size_tbl[internal_header["sram_size"]] .. " detected.")
+
+            sram_table = ram_size_kb_tbl[internal_header["sram_size"]]
+            exp_ram_table = ram_size_kb_tbl[internal_header["exp_ram_size"]]
+
+            -- Some titles (Yoshi's Story, Stunt Race FX) use expansion ram header value
+            -- ram_size will use sram value unless a valid size is found in expansion ram header
+            if (sram_table == 0) or (sram_table == nil) then
+                if exp_ram_table == nil then
+                    ram_size = sram_table
+                else
+                    ram_size = exp_ram_table
+                end
+            else
+                ram_size = sram_table
+            end
+
+            assert(ram_size, "Save RAM Size unknown and not provided, please add ram size to console_opts")
+			print("Save RAM Size not provided, " .. ram_size .. " detected.")
 		end
 
 		if (rom_size == 0) or (rom_size == nil) then
