@@ -12,8 +12,10 @@ local buffers = require "scripts.app.buffers"
 -- file constants & variables
 local mapname = "UxROM"
 
---local banktable_base = nil
-local banktable_base = 0xE473
+local banktable_base = nil
+-- banktable detection should work now,
+-- these curated addresses are probably no longer needed.
+--local banktable_base = 0xE473
 		--Nomolos' bank table is at $CC84
 		--wr_bank_table(0xCC84, 32)
 		--Owlia bank table
@@ -112,13 +114,14 @@ end
 
 --dump the PRG ROM
 local function dump_prgrom( file, rom_size_KB, debug )
-
 	local KB_per_read = 16
 	local num_reads = rom_size_KB / KB_per_read
 	local read_count = 0
 	local addr_base = 0x08	-- $8000
+	local fixed_bank_base = 0x0C -- search in $C000-$F000, the fixed bank
 
-	while ( read_count < num_reads ) do
+	-- Dump all banks except last/fixed bank.
+	while ( read_count < num_reads - 1) do
 
 		if debug then print( "dump PRG part ", read_count, " of ", num_reads) end
 
@@ -129,6 +132,10 @@ local function dump_prgrom( file, rom_size_KB, debug )
 
 		read_count = read_count + 1
 	end
+
+	-- Write fixed bank
+	if debug then print( "dump PRG part ", read_count, " of ", num_reads) end
+	dump.dumptofile( file, KB_per_read, fixed_bank_base, "NESCPU_4KB", false )
 
 end
 
@@ -331,7 +338,9 @@ local function process(process_opts, console_opts)
 		--find bank table to avoid bus conflicts
 		if ( banktable_base == nil ) then
 			local KB_per_bank = 16
-			banktable_base = find_banktable( prg_size / KB_per_bank )
+			-- Size is one byte smaller because table doesn't need fixed bank.
+			local banktable_size = prg_size / KB_per_bank - 1
+			banktable_base = find_banktable(banktable_size)
 			if ( banktable_base == nil ) then
 				print( "BANKTABLE NOT FOUND" )
 				return
@@ -344,7 +353,6 @@ local function process(process_opts, console_opts)
 		create_header(file, prg_size, chr_size)
 
 		--dump cart into file
-		--dump.dumptofile( file, prg_size, "UxROM", "PRGROM", true )
 		dump_prgrom(file, prg_size, false)
 
 		--close file
