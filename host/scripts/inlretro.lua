@@ -48,7 +48,6 @@ function main ()
 	local erase = require "scripts.app.erase"
 	local flash = require "scripts.app.flash"
 	local swim = require "scripts.app.swim"
-	local jtag = require "scripts.app.jtag"
 	local ciccom = require "scripts.app.ciccom"
 	local fwupdate = require "scripts.app.fwupdate"
 	local files = require "scripts.app.files"
