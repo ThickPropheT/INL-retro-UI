@@ -1,4 +1,3 @@
-
 -- create the module's table
 local v2proto = {}
 
@@ -26,7 +25,7 @@ local hardware_type = {
 	[0x03] = "ROM and DSP1",
     [0x13] = "ROM and SuperFX",
     [0x15] = "ROM and SuperFX and Save RAM",
-    [0x1A] = "ROM and SuperFX and Save RAM",
+    [0x1A] = "ROM and SuperFX and Save RAM (Stunt Race FX)",
     [0x23] = "ROM and OBC1",
     [0x33] = "ROM and SA-1",
 	[0x43] = "ROM and S-DD1",
