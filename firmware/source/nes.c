@@ -918,6 +918,7 @@ uint8_t nes_cpu_page_rd_toggle( uint8_t *data, uint8_t addrH, uint8_t first, uin
 		NOP();
 		NOP();
 		NOP();
+		NOP(); // EKH: Needed one more NOP for MMC3 PRG ROM
 
 		//latch data
 		DATA_RD(data[i]);
@@ -967,12 +968,14 @@ uint8_t nes_ppu_page_rd_poll( uint8_t *data, uint8_t addrH, uint8_t first, uint8
 	ADDRL(first);		//doing this prior to entry and right after latching
 	NOP();	//adding extra NOP as it was needed on PRG
 				//gives longest delay between address out and latching data
+	NOP();  // EKH: Needed another NOP for the first byte of 4k blocks on several MMC3 carts
 
 	for( i=0; i<=len; i++ ) {
 		//couple more NOP's waiting for data
 		if ( poll == FALSE ) {
 			NOP();	//one prob good enough considering the if/else
 			NOP();
+			NOP();  // EKH: Needed another one for several MMC3 carts
 		} else {
 			usbPoll();
 		}
