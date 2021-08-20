@@ -27,3 +27,11 @@ host/inlretro
 
 # VSCode Metadata
 .vscode
+
+# Visual Studio Metadata
+.vs
+obj
+bin
+packages
+*.VC.db
+*csproj.user
