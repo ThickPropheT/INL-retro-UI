@@ -26,7 +26,7 @@ namespace INL.Retro.Progdump.Interop
         public InteropAdapter(DirectoryInfo interopRoot)
         {
             if (!interopRoot.Exists)
-                throw new ArgumentException("Argument must be a path to a valid directory.", nameof(interopRoot));
+                throw new ArgumentException($"Argument must be a path to a valid directory.[{interopRoot.FullName}]", nameof(interopRoot));
 
             Directory.SetCurrentDirectory(interopRoot.FullName);
         }

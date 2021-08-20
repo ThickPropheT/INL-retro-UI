@@ -120,7 +120,12 @@ namespace INL.Retro.Progdump.Console.Operation.Dump
             _dumpCommand = new DelegateCommand(StartDump, CanDump);
 
             // TODO abstract this away somewhere
-            OutputLocation = Environment.CurrentDirectory;
+            OutputLocation = $@"{Environment.CurrentDirectory}\Dumps";
+
+            if (Directory.Exists(OutputLocation))
+                return;
+
+            Directory.CreateDirectory(OutputLocation);
         }
 
         protected override void OnConnectImpl(IConnectedDevice device)

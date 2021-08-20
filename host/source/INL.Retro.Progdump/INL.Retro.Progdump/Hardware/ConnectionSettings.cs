@@ -17,7 +17,7 @@ namespace INL.Retro.Progdump.Hardware
             ScriptFile = new FileInfo(scriptPath);
 
             if (!ScriptFile.Exists)
-                throw new ArgumentException("Argument must be a path to a valid file.", nameof(scriptPath));
+                throw new ArgumentException($"Argument must be a path to a valid file. [{ScriptFile.FullName}]", nameof(scriptPath));
         }
     }
 }

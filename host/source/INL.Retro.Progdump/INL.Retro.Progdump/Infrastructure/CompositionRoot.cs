@@ -15,9 +15,7 @@ namespace INL.Retro.Progdump.Infrastructure
     {
         public static MainView Compose()
         {
-            // TODO find a better way to get/structure this path
-            const string dumperRoot = @"F:\Games\Utilities\INL-retro-progdump-master";
-            var hostDirectory = $@"{dumperRoot}\host";
+            const string hostDirectory = @"..\";
 
             // TODO convert to log4net
             //var fileStream = new FileStream("TIMMEH.log", FileMode.Create);
