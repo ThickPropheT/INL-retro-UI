@@ -322,6 +322,36 @@ function print_header(internal_header)
     print("Checksum:\t\t" ..  hexfmt(internal_header["checksum"]))
 end
 
+local function get_rom_type_name(rom_type)
+	local rom_type_str = "UNKNOWN - " .. hexfmt(rom_type)
+
+	if hardware_type[rom_type] then
+		rom_type_str = hardware_type[rom_type]
+	end
+
+	return rom_type_str
+end
+
+local function get_destination_name(code)
+	local destination_code_str = "UNKNOWN - " .. hexfmt(code)
+
+	if destination_code[code] then
+		destination_code_str = destination_code[code]
+	end
+
+	return destination_code_str
+end
+
+local function get_developer_name(code)
+	local developer_code_str = "UNKNOWN - " .. hexfmt(code)
+
+	if developer_code[code] then
+		developer_code_str = developer_code[code]
+	end
+
+	return developer_code_str
+end
+
 function get_header(map_adjust)
 	local mapping = "unknown"
     -- Rom Registration Addresses (15 bytes)
@@ -343,15 +373,28 @@ function get_header(map_adjust)
     local addr_compliment_check = 0xFFDC - map_adjust   -- 2 bytes
     local addr_checksum = 0xFFDD - map_adjust           -- 2 bytes
 
-    local internal_header = {
-        mapping = mapping,
+	local rom_type = dict.snes("SNES_ROM_RD", addr_rom_type)
+	local destination_code = dict.snes("SNES_ROM_RD", addr_destination_code)
+	local developer_code = dict.snes("SNES_ROM_RD", addr_developer_code)
+
+	local internal_header = {
         rom_name = string_from_bytes(addr_rom_name, 21),
+
         map_mode = dict.snes("SNES_ROM_RD", addr_map_mode),
-        rom_type = dict.snes("SNES_ROM_RD", addr_rom_type),
-        rom_size = dict.snes("SNES_ROM_RD", addr_rom_size),
+        mapping = mapping,
+
+        rom_type = rom_type,
+        rom_type_name = get_rom_type_name(rom_type),
+
+        rom_size = rom_size_kb_tbl[dict.snes("SNES_ROM_RD", addr_rom_size)],
         sram_size = dict.snes("SNES_ROM_RD", addr_sram_size),
-        destination_code = dict.snes("SNES_ROM_RD", addr_destination_code),
-        developer_code = dict.snes("SNES_ROM_RD", addr_developer_code),
+
+        destination_code = destination_code,
+        destination_name = get_destination_name(destination_code),
+
+        developer_code = developer_code,
+        developer_name = get_developer_name(developer_code),
+
         version = dict.snes("SNES_ROM_RD", addr_version),
         compliment_check = word_from_two_bytes(addr_compliment_check),
         checksum = word_from_two_bytes(addr_checksum)
@@ -374,22 +417,67 @@ function isvalidheader(internal_header)
     return valid_rom_type and internal_header["rom_size"] and internal_header["sram_size"] and valid_destination_code
 end
 
-function test()
+function get_rom_header()
+
+	--initialize device i/o for SNES
+	dict.io("IO_RESET")
+	dict.io("SNES_INIT")
+
 	local hirom_header = get_header(0x0000)
 	local lorom_header = get_header(0x8000)
+
 	local internal_header = nil
-	if isvalidheader(hirom_header) then
-		print("Valid header found at HiROM address.")
-		internal_header = hirom_header
-	elseif isvalidheader(lorom_header) then
+
+	if isvalidheader(lorom_header) then
+
 		print("Valid header found at LoROM address.")
+
 		internal_header = lorom_header
+
+		-- $8000 LOROM
+		internal_header["rom_address_base"] = 0x80
+		-- LOROM typically sees the upper half (A15=1) of the first address 0b0000:1000_0000
+		internal_header["rom_start_bank"] = 0x00
+		-- LOROM has 32KB per bank
+		internal_header["rom_bank_size"] = 32
+
+		--A15-8 address of ram start
+		-- $0000 LOROM RAM start address
+		internal_header["sram_address_base"] = 0x00
+		--LOROM maps from 0x70 to 0x7D
+		internal_header["sram_start_bank"] = 0x70
+		-- LOROM has 32KB per bank
+		internal_header["sram_bank_size"] = 32
+
+		--some for lower half of bank only, some for both halfs...
+	elseif isvalidheader(hirom_header) then
+
+		print("Valid header found at HiROM address.")
+
+		internal_header = hirom_header
+
+		-- $0000 HIROM
+		internal_header["rom_address_base"] = 0x00
+		-- HIROM typically sees the last 4MByte as the first addresses = 0b1100:0000_0000
+		internal_header["rom_start_bank"] = 0xC0
+		-- HIROM has 64KB per bank
+		internal_header["rom_bank_size"] = 64
+
+		-- $6000 HIROM RAM start address
+		internal_header["sram_address_base"] = 0x60
+		--rombank = 0x40 --second HiROM bank (slow)
+		internal_header["sram_start_bank"] = 0x30
+		-- HIROM has 8KB per bank
+		internal_header["sram_bank_size"] = 8
+
 	end
+
 	if internal_header then
 		internal_header["mapping"] = mappingfrommapmode(internal_header["map_mode"])
 	else
 		print("Could not parse internal ROM header.")
 	end
+
 	return internal_header
 end
 
@@ -479,20 +567,11 @@ end
 
 --dump the SNES ROM starting at the provided bank
 --/ROMSEL is always low for this dump
-local function dump_rom( file, start_bank, rom_size_KB, mapping, debug )
+local function dump_rom_to_file( filename, address_base, start_bank, rom_size_KB, KB_per_bank, progress_callback, debug )
 
-	local KB_per_bank
-	local addr_base
+	print("\nDumping SNES ROM...")
 
-	if (mapping==lorom_name) then
-		KB_per_bank = 32	-- LOROM has 32KB per bank
-		addr_base = 0x80	-- $8000 LOROM
-	elseif (mapping==hirom_name) then
-		KB_per_bank = 64	-- HIROM has 64KB per bank
-		addr_base = 0x00	-- $0000 HIROM
-	else
-		print("ERROR!! mapping:", mapping, "not supported")
-	end
+	file = assert(io.open(filename, "wb"))
 
 	local num_reads = rom_size_KB / KB_per_bank
 	local read_count = 0
@@ -501,37 +580,59 @@ local function dump_rom( file, start_bank, rom_size_KB, mapping, debug )
 
 		if debug then print( "dump ROM part ", read_count, " of ", num_reads) end
 
-		if (read_count %8 == 0) then
-			print("dumping ROM bank: ", read_count, " of ", num_reads-1)
+		local doReport = read_count %8 == 0
+
+		if (doReport) then
+			print("dumping ROM bank: ", read_count, " of ", num_reads)
 		end
 
 		--select desired bank
 		dict.snes("SNES_SET_BANK", start_bank+read_count)
 
-		dump.dumptofile( file, KB_per_bank, addr_base, "SNESROM_PAGE", debug )
+		dump.dumptofile( file, KB_per_bank, address_base, "SNESROM_PAGE", debug )
+
+		if progress_callback and doReport then
+			progress_callback(read_count)
+		end
 
 		read_count = read_count + 1
 	end
+
+	if progress_callback then
+		progress_callback(num_reads)
+	end
+
+	assert(file:close())
+
+	print("DONE Dumping SNES ROM")
+end
+
+function dump_rom(internal_header, filename, progress_callback)
+
+	local address_base = internal_header["rom_address_base"]
+	local rombank = internal_header["rom_start_bank"]
+	local rom_size = internal_header["rom_size"]
+	local bank_size = internal_header["rom_bank_size"]
+
+	dump_rom_to_file(
+		filename,
+		address_base,
+		rombank,
+		rom_size,
+		bank_size,
+		progress_callback)
 
 end
 
 --dump the SNES RAM starting at the provided bank
 --this is currently only for lorom boards where /ROMSEL maps to RAM space
-local function dump_ram( file, start_bank, ram_size_KB, mapping, debug )
+local function dump_sram_to_file( filename, addr_base, start_bank, ram_size_KB, KB_per_bank, mapping, progress_callback, debug )
 
-	local KB_per_bank
-	local addr_base --A15-8 address of ram start
+	print("\nDumping SAVE RAM...")
 
-	--determine max ram per bank and base address
-	if (mapping == lorom_name) then
-		KB_per_bank = 32	-- LOROM has 32KB per bank
-		addr_base = 0x00	-- $0000 LOROM RAM start address
-	elseif (mapping == hirom_name) then
-		KB_per_bank = 8		-- HIROM has 8KB per bank
-		addr_base = 0x60	-- $6000 HIROM RAM start address
-	else
-		print("ERROR! mapping:", mapping, "not supported by dump_ram")
-	end
+	--may have to verify /RESET is high to enable SRAM
+
+	file = assert(io.open(filename, "wb"))
 
 	local num_banks
 
@@ -550,6 +651,12 @@ local function dump_ram( file, start_bank, ram_size_KB, mapping, debug )
 
 		if debug then print( "dump ROM part ", read_count, " of ", num_banks) end
 
+		local doReport = read_count %8 == 0
+
+		if (doReport) then
+			print("dumping ROM bank: ", read_count, " of ", num_banks)
+		end
+
 		--select desired bank
 		dict.snes("SNES_SET_BANK", start_bank+read_count)
 
@@ -559,12 +666,43 @@ local function dump_ram( file, start_bank, ram_size_KB, mapping, debug )
 			dump.dumptofile( file, KB_per_bank, addr_base, "SNESSYS_PAGE", false )
 		end
 
+		if progress_callback and doReport then
+			progress_callback(read_count)
+		end
+
 		read_count = read_count + 1
 	end
 
+	if progress_callback then
+		progress_callback(num_banks)
+	end
+
+	--may disable SRAM by placing /RESET low
+
+	--close file
+	assert(file:close())
+
+	print("DONE Dumping SAVE RAM")
+
 end
 
+function dump_sram(internal_header, filename, progress_callback)
 
+	local address_base = internal_header["sram_address_base"]
+	local rambank = internal_header["sram_start_bank"]
+	local ram_size = internal_header["sram_size"]
+	local bank_size = internal_header["sram_bank_size"]
+
+	dump_sram_to_file(
+		filename,
+		address_base,
+		rambank,
+		ram_size,
+		bank_size,
+		snes_mapping,
+		progress_callback)
+
+end
 
 --write a single byte to SNES ROM flash
 --writes to currently selected bank address
@@ -801,12 +939,6 @@ local function process(process_opts, console_opts)
 	local rv = nil
 	local file
 
-	--initialize device i/o for SNES
-	dict.io("IO_RESET")
-	dict.io("SNES_INIT")
-
-	local internal_header = nil
-
 	-- Use specified mapper if provided, otherwise autodetect.
 	local snes_mapping = console_opts["mapper"]
 	if (snes_mapping == lorom_name) then
@@ -820,9 +952,6 @@ local function process(process_opts, console_opts)
 		--rombank = 0x40 --second HiROM bank (slow)
 		rambank = 0x30
 	end
-
-	local dumpram = process_opts["dumpram"]
-	local ramdumpfile = process_opts["dumpram_filename"]
 
 	-- Use specified ram size if provided, otherwise autodetect.
 	local ram_size = console_opts["wram_size_kb"]
@@ -845,28 +974,24 @@ local function process(process_opts, console_opts)
 	local rombank --first bank of rom byte that contains A23-16
 	local rambank --first bank of ram
 
+	local internal_header = get_rom_header()
+
+	local do_test = process_opts["test"]
+
 --test cart by reading manf/prod ID
-	if test then
+	if do_test then
 
 		print("Testing SNES board");
-		internal_header = test()
 		print_header(internal_header)
 
 		-- Autodetect any missing parameters.
 		if isempty(snes_mapping) then
-			snes_mapping = internal_header["mapping"]
 			print("Mapping not provided, " .. snes_mapping .. " detected.")
-			if (snes_mapping == lorom_name) then
-				-- LOROM typically sees the upper half (A15=1) of the first address 0b0000:1000_0000
-				rombank = 0x00
-				rambank = 0x70 --LOROM maps from 0x70 to 0x7D
-						--some for lower half of bank only, some for both halfs...
-			elseif (snes_mapping == hirom_name) then
-				-- HIROM typically sees the last 4MByte as the first addresses = 0b1100:0000_0000
-				rombank = 0xC0
-				--rombank = 0x40 --second HiROM bank (slow)
-				rambank = 0x30
-			end
+
+			rombank = internal_header["rom_bank"]
+			rambank = internal_header["sram_bank"]
+			snes_mapping = internal_header["mapping"]
+
 		end
 
 		if (ram_size == 0) or (ram_size == nil) then
@@ -891,37 +1016,21 @@ local function process(process_opts, console_opts)
 
 
 --dump the ram to file
-	if dumpram then
+	if process_opts["dumpram"] then
 
-		print("\nDumping SAVE RAM...")
+		dump_sram(
+			internal_header,
+			process_opts["dumpram_filename"])
 
-		--may have to verify /RESET is high to enable SRAM
-
-		file = assert(io.open(ramdumpfile, "wb"))
-
-		--dump cart into file
-		dump_ram(file, rambank, ram_size, snes_mapping, true)
-
-		--may disable SRAM by placing /RESET low
-
-		--close file
-		assert(file:close())
-
-		print("DONE Dumping SAVE RAM")
 	end
 
 --dump the cart to dumpfile
 	if process_opts["read"] then
-		print("\nDumping SNES ROM...")
 
-		file = assert(io.open(process_opts["dump_filename"], "wb"))
+		dump_rom(
+			internal_header,
+			process_opts["dump_filename"])
 
-		--dump cart into file
-		dump_rom(file, rombank, rom_size, snes_mapping, false)
-
-		--close file
-		assert(file:close())
-		print("DONE Dumping SNES ROM")
 	end
 
 --erase the cart

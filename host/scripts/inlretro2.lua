@@ -205,6 +205,3 @@ function main()
         console_exec(process_opts, console_opts)
     end
 end
-
--- Don't do this. Next iteration will call a function, not the whole script.
-main()

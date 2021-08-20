@@ -2,7 +2,7 @@
 CFLAGS=-Wall -O
 LDFLAGS= -llua -lusb-1.0 -Lsource/lua
 INCLUDE= -I ./include -I ../shared
-LDFLAGS_WINDOWS= -L ./winlib $(LDFLAGS)
+LDFLAGS_WINDOWS= -L ./winlib $(LDFLAGS) -lole32
 LDFLAGS_UNIX= $(LDFLAGS) -lm
 CC= gcc
 
