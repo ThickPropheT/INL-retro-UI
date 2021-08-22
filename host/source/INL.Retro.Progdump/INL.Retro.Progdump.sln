@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31229.75
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "INL.Retro.Progdump", "INL.Retro.Progdump\INL.Retro.Progdump.csproj", "{0E1F080F-DEFD-4595-9D66-8DBC44961741}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "INL.Retro.ProgdumpConsole", "INL.Retro.ProgdumpConsole\INL.Retro.ProgdumpConsole.csproj", "{82A4B462-52A6-4CC1-A3C6-9D0AD3C15240}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "INL.Retro.Ui.Console", "INL.Retro.Ui.Console\INL.Retro.Ui.Console.csproj", "{82A4B462-52A6-4CC1-A3C6-9D0AD3C15240}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +24,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DD708F47-0A17-4066-9F2F-7330F23D6745}
 	EndGlobalSection
 EndGlobal

@@ -4,7 +4,7 @@ using INL.Retro.Progdump.Interop;
 using System;
 using System.Reflection;
 
-namespace INL.Retro.ProgdumpConsole
+namespace INL.Retro.Ui.Console
 {
     class Program
     {
