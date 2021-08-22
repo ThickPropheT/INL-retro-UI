@@ -1,9 +1,9 @@
-﻿<UserControl x:Class="INL.Retro.Progdump.Console.Nes.NesView"
+﻿<UserControl x:Class="INL.Retro.Ui.Console.Nes.NesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:INL.Retro.Progdump.Console.Nes"
+             xmlns:local="clr-namespace:INL.Retro.Ui.Console.Nes"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>

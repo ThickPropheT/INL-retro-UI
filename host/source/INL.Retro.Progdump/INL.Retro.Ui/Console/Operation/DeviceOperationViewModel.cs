@@ -1,9 +1,9 @@
-﻿using INL.Retro.Progdump.Hardware;
-using INL.Retro.Progdump.Hardware.Memory;
+﻿using INL.Retro.Ui.Hardware;
+using INL.Retro.Ui.Hardware.Memory;
 using Prism.Mvvm;
 using System.ComponentModel;
 
-namespace INL.Retro.Progdump.Console.Operation
+namespace INL.Retro.Ui.Console.Operation
 {
     public interface IDeviceOperationViewModel : INotifyPropertyChanged
     {

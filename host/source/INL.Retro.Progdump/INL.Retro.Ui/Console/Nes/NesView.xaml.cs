@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace INL.Retro.Progdump.Console.Nes
+namespace INL.Retro.Ui.Console.Nes
 {
     /// <summary>
     /// Interaction logic for NesView.xaml

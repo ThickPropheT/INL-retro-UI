@@ -1,8 +1,8 @@
-﻿using INL.Retro.Progdump.Mvvm.Extension;
+﻿using INL.Retro.Ui.Mvvm.Extension;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace INL.Retro.Progdump.Console.Operation.Summary
+namespace INL.Retro.Ui.Console.Operation.Summary
 {
     /// <summary>
     /// Interaction logic for SummaryLine.xaml

@@ -1,17 +1,16 @@
-﻿using INL.Retro.Progdump.Hardware;
-using INL.Retro.Progdump.Hardware.Memory;
-using INL.Retro.Progdump.Interop;
+﻿using INL.Retro.Ui.Hardware;
+using INL.Retro.Ui.Hardware.Memory;
+using INL.Retro.Ui.Interop;
 using System;
 using System.Reflection;
 
-namespace INL.Retro.Ui.Console
+namespace INL.Retro.UiConsole
 {
     class Program
     {
         static void Main(string[] args)
         {
-            const string dumperRoot = @"F:\Games\Utilities\INL-retro-progdump-master";
-            var hostDirectory = $@"{dumperRoot}\host";
+            const string hostDirectory = @"..\";
 
             var interopAdapter = new InteropAdapter(new System.IO.DirectoryInfo(hostDirectory));
             var deviceFactory = new DeviceFactory(interopAdapter);
@@ -22,7 +21,7 @@ namespace INL.Retro.Ui.Console
 
             IConnectedDevice connectedDevice;
             if (device.TryConnect(
-                new Progdump.Hardware.ConnectionSettings("./scripts/snes/v2proto_hirom.lua"),
+                new Ui.Hardware.ConnectionSettings("./scripts/snes/v2proto_hirom.lua"),
                 out connectedDevice))
             {
                 var header = connectedDevice.ReadHeader();

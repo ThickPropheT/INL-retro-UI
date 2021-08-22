@@ -1,12 +1,12 @@
-﻿using INL.Retro.Progdump.Console;
-using INL.Retro.Progdump.Mvvm.Extension;
+﻿using INL.Retro.Ui.Console;
+using INL.Retro.Ui.Mvvm.Extension;
 using Prism.Commands;
 using Prism.Mvvm;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Input;
 
-namespace INL.Retro.Progdump.Mvvm
+namespace INL.Retro.Ui.Mvvm
 {
     public interface IMainViewModel : ILifecycleViewModel, INotifyPropertyChanged
     {

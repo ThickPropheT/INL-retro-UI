@@ -1,4 +1,4 @@
-﻿namespace INL.Retro.Progdump.Console.Nes
+﻿namespace INL.Retro.Ui.Console.Nes
 {
     public interface INesViewModel : IConsoleViewModel
     {

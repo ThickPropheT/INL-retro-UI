@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace INL.Retro.Progdump.Console.Operation.Summary
+namespace INL.Retro.Ui.Console.Operation.Summary
 {
     /// <summary>
     /// Interaction logic for SummaryViewModel.xaml

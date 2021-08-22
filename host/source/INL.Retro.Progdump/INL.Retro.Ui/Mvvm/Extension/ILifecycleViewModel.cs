@@ -1,4 +1,4 @@
-﻿namespace INL.Retro.Progdump.Mvvm.Extension
+﻿namespace INL.Retro.Ui.Mvvm.Extension
 {
     public interface ILifecycleViewModel
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace INL.Retro.Progdump.Extensions
+namespace INL.Retro.Ui.Extensions
 {
     public static class TypeExtensions
     {

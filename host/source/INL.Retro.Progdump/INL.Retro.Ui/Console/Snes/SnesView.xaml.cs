@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace INL.Retro.Progdump.Console.Snes
+namespace INL.Retro.Ui.Console.Snes
 {
     /// <summary>
     /// Interaction logic for SnesView.xaml

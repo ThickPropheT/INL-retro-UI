@@ -1,9 +1,9 @@
-﻿using INL.Retro.Progdump.Hardware;
+﻿using INL.Retro.Ui.Hardware;
 using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace INL.Retro.Progdump.Interop
+namespace INL.Retro.Ui.Interop
 {
 #pragma warning disable IDE1006 // Naming Styles
 

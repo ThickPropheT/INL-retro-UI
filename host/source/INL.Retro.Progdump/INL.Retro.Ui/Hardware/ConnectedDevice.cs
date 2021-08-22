@@ -1,8 +1,8 @@
-﻿using INL.Retro.Progdump.Hardware.Memory;
-using INL.Retro.Progdump.Interop;
+﻿using INL.Retro.Ui.Hardware.Memory;
+using INL.Retro.Ui.Interop;
 using System;
 
-namespace INL.Retro.Progdump.Hardware
+namespace INL.Retro.Ui.Hardware
 {
     public interface IConnectedDevice : IDisposable
     {

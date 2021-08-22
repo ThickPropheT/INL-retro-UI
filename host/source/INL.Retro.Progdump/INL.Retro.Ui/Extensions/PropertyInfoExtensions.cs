@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
 
-namespace INL.Retro.Progdump.Extensions
+namespace INL.Retro.Ui.Extensions
 {
     public static class PropertyInfoExtensions
     {

@@ -1,6 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:local="clr-namespace:INL.Retro.Progdump.Mvvm"
-                    xmlns:ext="clr-namespace:INL.Retro.Progdump.Mvvm.Extension">
+                    xmlns:local="clr-namespace:INL.Retro.Ui.Mvvm"
+                    xmlns:ext="clr-namespace:INL.Retro.Ui.Mvvm.Extension">
     <ext:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
 </ResourceDictionary>

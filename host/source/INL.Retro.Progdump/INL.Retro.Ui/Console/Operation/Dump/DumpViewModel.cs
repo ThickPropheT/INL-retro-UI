@@ -1,6 +1,6 @@
-﻿using INL.Retro.Progdump.Hardware;
-using INL.Retro.Progdump.Hardware.Memory;
-using INL.Retro.Progdump.Mvvm.Extension;
+﻿using INL.Retro.Ui.Hardware;
+using INL.Retro.Ui.Hardware.Memory;
+using INL.Retro.Ui.Mvvm.Extension;
 using Prism.Commands;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace INL.Retro.Progdump.Console.Operation.Dump
+namespace INL.Retro.Ui.Console.Operation.Dump
 {
     public interface IDumpViewModel : IDeviceOperationViewModel
     {

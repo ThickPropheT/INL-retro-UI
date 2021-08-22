@@ -53,6 +53,12 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\INL.Retro.Ui\INL.Retro.Ui.csproj">
+      <Project>{0E1F080F-DEFD-4595-9D66-8DBC44961741}</Project>
+      <Name>INL.Retro.Ui</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="PreBuildEvent" Condition="'$(PreBuildEvent)'!=''" DependsOnTargets="$(PreBuildEventDependsOn)">
     <Exec WorkingDirectory="$(OutDir)" Command="$(PreBuildEvent)" ContinueOnError="false" />

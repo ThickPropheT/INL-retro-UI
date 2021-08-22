@@ -1,11 +1,11 @@
-﻿using INL.Retro.Progdump.Console.Operation;
-using INL.Retro.Progdump.Hardware;
-using INL.Retro.Progdump.Hardware.Memory;
+﻿using INL.Retro.Ui.Console.Operation;
+using INL.Retro.Ui.Hardware;
+using INL.Retro.Ui.Hardware.Memory;
 using Prism.Mvvm;
 using System;
 using System.Linq;
 
-namespace INL.Retro.Progdump.Console
+namespace INL.Retro.Ui.Console
 {
     public interface IConsoleViewModel
     {

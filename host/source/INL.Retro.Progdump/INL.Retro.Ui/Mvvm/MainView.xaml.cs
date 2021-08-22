@@ -1,7 +1,7 @@
-﻿using INL.Retro.Progdump.Mvvm.Extension;
+﻿using INL.Retro.Ui.Mvvm.Extension;
 using System.Windows;
 
-namespace INL.Retro.Progdump.Mvvm
+namespace INL.Retro.Ui.Mvvm
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

@@ -1,15 +1,15 @@
-﻿using INL.Retro.Progdump.Console;
-using INL.Retro.Progdump.Console.Operation;
-using INL.Retro.Progdump.Console.Operation.Dump;
-using INL.Retro.Progdump.Console.Operation.Summary;
-using INL.Retro.Progdump.Console.Snes;
-using INL.Retro.Progdump.Hardware;
-using INL.Retro.Progdump.Interop;
-using INL.Retro.Progdump.Mvvm;
-using INL.Retro.Progdump.Mvvm.Extension;
+﻿using INL.Retro.Ui.Console;
+using INL.Retro.Ui.Console.Operation;
+using INL.Retro.Ui.Console.Operation.Dump;
+using INL.Retro.Ui.Console.Operation.Summary;
+using INL.Retro.Ui.Console.Snes;
+using INL.Retro.Ui.Hardware;
+using INL.Retro.Ui.Interop;
+using INL.Retro.Ui.Mvvm;
+using INL.Retro.Ui.Mvvm.Extension;
 using System.IO;
 
-namespace INL.Retro.Progdump.Infrastructure
+namespace INL.Retro.Ui.Infrastructure
 {
     public static class CompositionRoot
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace INL.Retro.Progdump.Hardware
+namespace INL.Retro.Ui.Hardware
 {
     public interface IConnectionSettings
     {

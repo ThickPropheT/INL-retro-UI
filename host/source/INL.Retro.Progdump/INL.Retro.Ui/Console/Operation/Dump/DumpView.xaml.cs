@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace INL.Retro.Progdump.Console.Operation.Dump
+namespace INL.Retro.Ui.Console.Operation.Dump
 {
     /// <summary>
     /// Interaction logic for DumpView.xaml

@@ -1,7 +1,7 @@
-﻿using INL.Retro.Progdump.Interop;
+﻿using INL.Retro.Ui.Interop;
 using System;
 
-namespace INL.Retro.Progdump.Hardware
+namespace INL.Retro.Ui.Hardware
 {
     public interface IConnection : IDisposable
     {

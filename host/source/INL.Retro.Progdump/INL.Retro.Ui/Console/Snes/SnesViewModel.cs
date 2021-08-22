@@ -1,7 +1,7 @@
-﻿using INL.Retro.Progdump.Console.Operation;
-using INL.Retro.Progdump.Hardware;
+﻿using INL.Retro.Ui.Console.Operation;
+using INL.Retro.Ui.Hardware;
 
-namespace INL.Retro.Progdump.Console.Snes
+namespace INL.Retro.Ui.Console.Snes
 {
     public interface ISnesViewModel : IConsoleViewModel
     {

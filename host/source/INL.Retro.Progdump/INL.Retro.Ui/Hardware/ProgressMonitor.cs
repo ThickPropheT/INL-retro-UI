@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace INL.Retro.Progdump.Hardware
+namespace INL.Retro.Ui.Hardware
 {
     public interface IReportProgress
     {

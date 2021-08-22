@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Windows;
 
-namespace INL.Retro.Progdump.Mvvm.Extension
+namespace INL.Retro.Ui.Mvvm.Extension
 {
     public class DependencyProperty<TOwner>
     {

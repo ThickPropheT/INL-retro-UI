@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace INL.Retro.Progdump.Interop
+namespace INL.Retro.Ui.Interop
 {
     internal enum STD_HANDLE
     {

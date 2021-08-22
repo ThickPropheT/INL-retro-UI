@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace INL.Retro.Progdump.Mvvm.Extension
+namespace INL.Retro.Ui.Mvvm.Extension
 {
     public static class DependencyObjectExtensions
     {

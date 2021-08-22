@@ -3,7 +3,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace INL.Retro.Progdump.Mvvm.Extension
+namespace INL.Retro.Ui.Mvvm.Extension
 {
     public interface IDirectorySelector
     {

@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace INL.Retro.Progdump.Mvvm.Extension
+namespace INL.Retro.Ui.Mvvm.Extension
 {
     [ValueConversion(typeof(bool), typeof(bool))]
     public class InverseBooleanConverter : IValueConverter

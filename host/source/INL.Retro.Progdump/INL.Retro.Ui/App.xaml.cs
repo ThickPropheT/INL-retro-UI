@@ -1,8 +1,8 @@
-﻿using INL.Retro.Progdump.Infrastructure;
+﻿using INL.Retro.Ui.Infrastructure;
 using System;
 using System.Windows;
 
-namespace INL.Retro.Progdump
+namespace INL.Retro.Ui
 {
     /// <summary>
     /// Interaction logic for App.xaml

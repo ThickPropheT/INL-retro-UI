@@ -1,7 +1,7 @@
-﻿<Application x:Class="INL.Retro.Progdump.App"
+﻿<Application x:Class="INL.Retro.Ui.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:INL.Retro.Progdump">
+             xmlns:local="clr-namespace:INL.Retro.Ui">
     <Application.Resources>
         <ResourceDictionary Source="Mvvm/Resources.xaml"/>
     </Application.Resources>

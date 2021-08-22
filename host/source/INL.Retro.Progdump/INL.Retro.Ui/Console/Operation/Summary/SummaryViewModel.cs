@@ -1,6 +1,6 @@
-﻿using INL.Retro.Progdump.Hardware.Memory;
+﻿using INL.Retro.Ui.Hardware.Memory;
 
-namespace INL.Retro.Progdump.Console.Operation.Summary
+namespace INL.Retro.Ui.Console.Operation.Summary
 {
     public interface ISummaryViewModel : IDeviceOperationViewModel
     {

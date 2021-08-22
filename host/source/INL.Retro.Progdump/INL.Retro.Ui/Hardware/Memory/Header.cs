@@ -1,4 +1,4 @@
-﻿namespace INL.Retro.Progdump.Hardware.Memory
+﻿namespace INL.Retro.Ui.Hardware.Memory
 {
     public interface IHeader
     {

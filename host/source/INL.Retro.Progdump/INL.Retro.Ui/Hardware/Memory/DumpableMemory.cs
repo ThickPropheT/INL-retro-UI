@@ -1,7 +1,7 @@
-﻿using INL.Retro.Progdump.Interop;
+﻿using INL.Retro.Ui.Interop;
 using System;
 
-namespace INL.Retro.Progdump.Hardware.Memory
+namespace INL.Retro.Ui.Hardware.Memory
 {
     public interface IDumpableMemory
     {
