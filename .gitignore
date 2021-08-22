@@ -35,3 +35,6 @@ bin
 packages
 *.VC.db
 *csproj.user
+
+# INL-retro-UI
+Dumps
